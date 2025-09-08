@@ -1,6 +1,15 @@
-import { Text, View,  StyleSheet } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import LoginScreen from './LoginScreen';
+
 
 export default function Index() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  if (!isLoggedIn) {
+    return <LoginScreen onLogin={() => setIsLoggedIn(true)} />;
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Home screen</Text>
