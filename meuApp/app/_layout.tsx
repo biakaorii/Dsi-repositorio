@@ -5,6 +5,15 @@ export default function Layout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="loginScreen" />
+      <Stack.Screen name="home" />
     </Stack>
   );
+}
+
+// tsconfig.json
+{
+  "compilerOptions": {
+    // other options
+    "jsx": "react-jsx"
+  }
 }
