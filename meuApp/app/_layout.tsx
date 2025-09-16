@@ -6,14 +6,8 @@ export default function Layout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="loginScreen" />
       <Stack.Screen name="home" />
+      <Stack.Screen name="cadastro" />
     </Stack>
   );
 }
 
-// tsconfig.json
-{
-  "compilerOptions": {
-    // other options
-    "jsx": "react-jsx"
-  }
-}
