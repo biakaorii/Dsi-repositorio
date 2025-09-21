@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Image, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Link, useRouter } from 'expo-router'; // Importei o useRouter para a navegação
+import { Link, useRouter } from 'expo-router'; 
 
 export default function RecuperarSenhaScreenVisual() {
   const [email, setEmail] = useState('');
@@ -11,7 +11,7 @@ export default function RecuperarSenhaScreenVisual() {
   const router = useRouter();
 
   const handleRedefinirSenha = () => {
-    // Lógica para o botão
+    
     if (!novaSenha || !confirmarSenha) {
       Alert.alert('Atenção', 'Por favor, preencha os campos da nova senha.');
       return;
@@ -21,11 +21,11 @@ export default function RecuperarSenhaScreenVisual() {
       return;
     }
 
-    // Se tudo estiver certo
+    
     console.log('E-mail:', email);
     console.log('Nova Senha:', novaSenha);
     Alert.alert('Sucesso!', 'Sua senha foi redefinida.');
-    router.push('/login'); // Navega para o login
+    router.push('/login'); 
   };
 
   return (
@@ -55,7 +55,7 @@ export default function RecuperarSenhaScreenVisual() {
             autoCapitalize="none"
           />
 
-          {/* NOVO CAMPO - NOVA SENHA */}
+          
           <Text style={styles.fieldLabel}>Nova senha</Text>
           <TextInput
             style={styles.input}
@@ -63,10 +63,10 @@ export default function RecuperarSenhaScreenVisual() {
             placeholderTextColor="#8a8a8a"
             value={novaSenha}
             onChangeText={setNovaSenha}
-            secureTextEntry // Esconde a senha
+            secureTextEntry 
           />
 
-          {/* NOVO CAMPO - CONFIRMAR NOVA SENHA */}
+          
           <Text style={styles.fieldLabel}>Confirmar nova senha</Text>
           <TextInput
             style={styles.input}
@@ -77,7 +77,7 @@ export default function RecuperarSenhaScreenVisual() {
             secureTextEntry // Esconde a senha
           />
 
-          {/* Lógica do botão foi atualizada */}
+          
           <TouchableOpacity style={styles.button} onPress={handleRedefinirSenha}>
             <Text style={styles.buttonText}>REDEFINIR SENHA</Text>
           </TouchableOpacity>
@@ -96,7 +96,7 @@ export default function RecuperarSenhaScreenVisual() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff', // Fundo branco
+    backgroundColor: '#ffffff', 
   },
   content: {
     flex: 1,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     alignSelf: 'flex-start',
     marginBottom: 6,
-    marginTop: 10, // Adicionado um espaço extra entre os campos
+    marginTop: 10, 
     color: '#4b4b4b',
     fontSize: 13,
   },
