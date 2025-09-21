@@ -8,7 +8,7 @@ import {
   Image 
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { useRouter } from "expo-router";
+ import { useRouter, Link } from "expo-router";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState<string>("");
@@ -43,10 +43,13 @@ export default function LoginScreen() {
         onChangeText={setPassword}
         secureTextEntry
       />
+ 
+
+            
       
-      <TouchableOpacity>
-        <Text style={styles.link}>Esqueceu a senha?</Text>
-      </TouchableOpacity>
+      <Link href="/recuperar_senha" style={styles.forgotPasswordLink}>
+        <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
+      </Link>
 
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Entrar</Text>
@@ -119,5 +122,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textDecorationLine: "underline",
     fontWeight: 'bold', 
+  },
+  forgotPasswordLink: {
+    marginTop: 15,
+    padding: 5,
+    textAlign :'center',
+  },
+  forgotPasswordText: {
+    color: '#2f7b45',
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
