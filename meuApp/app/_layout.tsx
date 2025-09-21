@@ -4,9 +4,10 @@ export default function Layout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="loginScreen" />
+      <Stack.Screen name="logirrn" />
       <Stack.Screen name="home" />
       <Stack.Screen name="cadastro" />
+      <Stack.Screen name="recuperar_senha" />
     </Stack>
   );
 }
