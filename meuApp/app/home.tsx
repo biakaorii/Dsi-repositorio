@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Link } from 'expo-router'; 
 
 export default function HomeScreen() {
   return (
@@ -78,9 +79,11 @@ export default function HomeScreen() {
         <TouchableOpacity>
           <Ionicons name="home" size={26} color="#2E7D32" />
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="search-outline" size={26} color="#777" />
-        </TouchableOpacity>
+        <Link href="/search" asChild>
+          <TouchableOpacity>
+            <Ionicons name="search-outline" size={26} color="#777" />
+          </TouchableOpacity>
+        </Link>
         <TouchableOpacity>
           <Ionicons name="book-outline" size={26} color="#777" />
         </TouchableOpacity>
