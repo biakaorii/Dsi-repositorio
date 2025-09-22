@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import {Link } from "expo-router";
 
-export default function RecuperarSenhaEmail() {
+export default function RecuperarSenhaCodigo() {
   return (
     <View style={styles.container}>
       <Image
@@ -13,27 +12,24 @@ export default function RecuperarSenhaEmail() {
       />
 
       <Text style={styles.title}>Recuperar senha</Text>
-      <Text style={styles.subtitle}>
-        Digite seu e-mail para receber o código de redefinição de senha
-      </Text>
+      <Text style={styles.subtitle}>Digite o código de recuperação de senha</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="seu@email.com"
+        placeholder="12345"
         placeholderTextColor="#8a8a8a"
       />
-    <Link href={'/recuperar_senha_codigo'} asChild>
+    <Link href={'/recuperar_senha_nova'} asChild>
       <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Enviar código</Text>
+        <Text style={styles.buttonText}>Confirmar código</Text>
       </TouchableOpacity>
-    </Link>
+      </Link>
     </View>
-
   );
 }
+
 const styles = StyleSheet.create({
   container: {
-
     flex: 1, justifyContent: 'center', alignItems: 'center',
     backgroundColor: '#fff', padding: 28,
   },
@@ -67,4 +63,3 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
