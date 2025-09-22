@@ -8,6 +8,7 @@ export default function Layout() {
       <Stack.Screen name="home" />
       <Stack.Screen name="cadastro" />
       <Stack.Screen name="recuperar_senha" />
+      <Stack.Screen name="usuario" />
     </Stack>
   );
 }
