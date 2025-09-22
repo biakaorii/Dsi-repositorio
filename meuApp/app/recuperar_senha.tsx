@@ -1,162 +1,232 @@
+// app/recuperar_senha.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Image, Alert } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { Link, useRouter } from 'expo-router'; 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 
-export default function RecuperarSenhaScreenVisual() {
+const RecuperarSenha = () => {
+  const [step, setStep] = useState(1); // 1: email, 2: código, 3: nova senha
   const [email, setEmail] = useState('');
-  // NOVOS ESTADOS para as senhas
-  const [novaSenha, setNovaSenha] = useState('');
-  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   const router = useRouter();
 
-  const handleRedefinirSenha = () => {
-    
-    if (!novaSenha || !confirmarSenha) {
-      Alert.alert('Atenção', 'Por favor, preencha os campos da nova senha.');
-      return;
-    }
-    if (novaSenha !== confirmarSenha) {
+  // Validação de senha
+  const isValidPassword = () => {
+    if (newPassword !== confirmPassword) {
       Alert.alert('Erro', 'As senhas não coincidem.');
-      return;
+      return false;
     }
-
-    
-    console.log('E-mail:', email);
-    console.log('Nova Senha:', novaSenha);
-    Alert.alert('Sucesso!', 'Sua senha foi redefinida.');
-    router.push('/login'); 
+    if (newPassword.length < 8) {
+      Alert.alert('Erro', 'A senha deve ter pelo menos 8 caracteres.');
+      return false;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      Alert.alert('Erro', 'A senha deve conter pelo menos uma letra maiúscula.');
+      return false;
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      Alert.alert('Erro', 'A senha deve conter pelo menos uma letra minúscula.');
+      return false;
+    }
+    if (!/\d/.test(newPassword)) {
+      Alert.alert('Erro', 'A senha deve conter pelo menos um número.');
+      return false;
+    }
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      Alert.alert('Erro', 'A senha deve conter pelo menos um caractere especial.');
+      return false;
+    }
+    return true;
   };
 
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
-      <StatusBar style="dark" />
-      <View style={styles.content}>
-        <Text style={styles.screenLabel}>Redefinir Senha</Text>
+  const handleNextStep = () => {
+    switch (step) {
+      case 1:
+        if (!email.includes('@')) {
+          Alert.alert('Erro', 'Por favor, insira um e-mail válido.');
+          return;
+        }
+        Alert.alert('Sucesso', 'Código enviado para seu e-mail!');
+        setStep(2);
+        break;
+      case 2:
+        if (code.length !== 4 || !/^\d+$/.test(code)) {
+          Alert.alert('Erro', 'Código inválido.');
+          return;
+        }
+        Alert.alert('Sucesso', 'Código verificado!');
+        setStep(3);
+        break;
+      case 3:
+        if (!isValidPassword()) return;
+        Alert.alert('Sucesso', 'Senha redefinida com sucesso!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              setEmail('');
+              setCode('');
+              setNewPassword('');
+              setConfirmPassword('');
+              router.push('/login'); // redirecionamento para login
+            },
+          },
+        ]);
+        break;
+    }
+  };
 
-        <Image
-          source={require('../assets/images/icon.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-
-        <View style={styles.form}>
-          <Text style={styles.fieldLabel}>E-mail cadastrado</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="seu@email.com"
-            placeholderTextColor="#8a8a8a"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          
-          <Text style={styles.fieldLabel}>Nova senha</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="********"
-            placeholderTextColor="#8a8a8a"
-            value={novaSenha}
-            onChangeText={setNovaSenha}
-            secureTextEntry 
-          />
-
-          
-          <Text style={styles.fieldLabel}>Confirmar nova senha</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="********"
-            placeholderTextColor="#8a8a8a"
-            value={confirmarSenha}
-            onChangeText={setConfirmarSenha}
-            secureTextEntry // Esconde a senha
-          />
-
-          
-          <TouchableOpacity style={styles.button} onPress={handleRedefinirSenha}>
-            <Text style={styles.buttonText}>REDEFINIR SENHA</Text>
-          </TouchableOpacity>
-
-          <Link href="/login" asChild>
-            <TouchableOpacity style={styles.secondaryButton}>
-              <Text style={styles.secondaryText}>Voltar para o login</Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+  const renderStep1 = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>Recuperar senha</Text>
+      <Text style={styles.subtitle}>
+        Digite seu e-mail para receber o código de redefinição de senha
+      </Text>
+      <TextInput
+        style={styles.input}
+        placeholder="seu@email.com"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+        <Text style={styles.buttonText}>Enviar código</Text>
+      </TouchableOpacity>
+    </View>
   );
-}
+
+  const renderStep2 = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>Recuperar senha</Text>
+      <Text style={styles.subtitle}>
+        Digite o código de recuperação de senha
+      </Text>
+      <TextInput
+        style={styles.input}
+        placeholder="1234"
+        value={code}
+        onChangeText={setCode}
+        keyboardType="number-pad"
+        maxLength={4}
+      />
+      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+        <Text style={styles.buttonText}>Confirmar Código</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderStep3 = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>Recuperar senha</Text>
+      <Text style={styles.subtitle}>
+        Redefina sua senha
+      </Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nova senha"
+        secureTextEntry
+        value={newPassword}
+        onChangeText={setNewPassword}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Confirmar senha"
+        secureTextEntry
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+      />
+      <Text style={styles.passwordRules}>
+        A senha deve conter:
+        <Text style={styles.ruleItem}> • Letras maiúsculas</Text>
+        <Text style={styles.ruleItem}> • Números</Text>
+        <Text style={styles.ruleItem}> • Letras minúsculas</Text>
+        <Text style={styles.ruleItem}> • Um caractere especial</Text>
+      </Text>
+      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+        <Text style={styles.buttonText}>Definir senha</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      {step === 1 && renderStep1()}
+      {step === 2 && renderStep2()}
+      {step === 3 && renderStep3()}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff', 
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: 28,
-  },
-  screenLabel: {
-    position: 'absolute',
-    top: 40,
-    left: 28,
-    color: '#bfbfbf',
-    fontSize: 13,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 40,
-  },
-  form: {
-    width: '100%',
     alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fbfbf9f9',
   },
-  fieldLabel: {
-    alignSelf: 'flex-start',
-    marginBottom: 6,
-    marginTop: 10, 
-    color: '#4b4b4b',
-    fontSize: 13,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#000',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#666',
+    paddingHorizontal: 20,
   },
   input: {
-    width: '100%',
-    height: 44,
-    backgroundColor: '#f3f9ea',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginBottom: 14,
+    width: 312,
+    height: 45,
+    alignSelf: 'center',
+    backgroundColor: '#EDF5C4',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#e0e6d0',
-    color: '#0b2f1a',
+    borderColor: '#000',
   },
   button: {
-    width: '100%',
-    height: 44,
-    backgroundColor: '#2f7b45',
-    borderRadius: 8,
-    alignItems: 'center',
+    width: 312,
+    height: 45,
+    alignSelf: 'center',
+    backgroundColor: '#2E8B57',
+    borderRadius: 15,
     justifyContent: 'center',
-    marginTop: 6,
+    alignItems: 'center',
+    marginTop: 20,
   },
   buttonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  secondaryButton: {
-    marginTop: 14,
-    padding: 5,
+  passwordRules: {
+    fontSize: 12,
+    textAlign: 'left',
+    marginTop: 10,
+    color: '#666',
+    width: 312,
+    paddingHorizontal: 15,
+    alignSelf: 'center',
   },
-  secondaryText: {
-    color: '#2f7b45',
-    fontWeight: '600',
+  ruleItem: {
+    fontSize: 12,
+    color: '#666',
   },
 });
+
+export default RecuperarSenha;
