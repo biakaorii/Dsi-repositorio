@@ -1,2 +1,7 @@
 node_modules
 .expo
+lib
+CACHEDIR.TAG
+pyvenv.cfg
+__pycache__
+bin
