@@ -1,8 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
+  const router = useRouter();
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -84,7 +86,7 @@ export default function HomeScreen() {
         <TouchableOpacity>
           <Ionicons name="book-outline" size={26} color="#777" />
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/usuario')}>
           <Ionicons name="person-outline" size={26} color="#777" />
         </TouchableOpacity>
       </View>
