@@ -1,162 +1,159 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Image, Alert } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { Link, useRouter } from 'expo-router'; 
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-export default function RecuperarSenhaScreenVisual() {
-  const [email, setEmail] = useState('');
-  // NOVOS ESTADOS para as senhas
-  const [novaSenha, setNovaSenha] = useState('');
-  const [confirmarSenha, setConfirmarSenha] = useState('');
-  const router = useRouter();
-
-  const handleRedefinirSenha = () => {
-    
-    if (!novaSenha || !confirmarSenha) {
-      Alert.alert('Atenção', 'Por favor, preencha os campos da nova senha.');
-      return;
-    }
-    if (novaSenha !== confirmarSenha) {
-      Alert.alert('Erro', 'As senhas não coincidem.');
-      return;
-    }
-
-    
-    console.log('E-mail:', email);
-    console.log('Nova Senha:', novaSenha);
-    Alert.alert('Sucesso!', 'Sua senha foi redefinida.');
-    router.push('/login'); 
-  };
-
+export default function HomeScreen() {
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
-      <StatusBar style="dark" />
-      <View style={styles.content}>
-        <Text style={styles.screenLabel}>Redefinir Senha</Text>
-
-        <Image
-          source={require('../assets/images/icon.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-
-        <View style={styles.form}>
-          <Text style={styles.fieldLabel}>E-mail cadastrado</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="seu@email.com"
-            placeholderTextColor="#8a8a8a"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          
-          <Text style={styles.fieldLabel}>Nova senha</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="********"
-            placeholderTextColor="#8a8a8a"
-            value={novaSenha}
-            onChangeText={setNovaSenha}
-            secureTextEntry 
-          />
-
-          
-          <Text style={styles.fieldLabel}>Confirmar nova senha</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="********"
-            placeholderTextColor="#8a8a8a"
-            value={confirmarSenha}
-            onChangeText={setConfirmarSenha}
-            secureTextEntry // Esconde a senha
-          />
-
-          
-          <TouchableOpacity style={styles.button} onPress={handleRedefinirSenha}>
-            <Text style={styles.buttonText}>REDEFINIR SENHA</Text>
-          </TouchableOpacity>
-
-          <Link href="/login" asChild>
-            <TouchableOpacity style={styles.secondaryButton}>
-              <Text style={styles.secondaryText}>Voltar para o login</Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Início</Text>
+        <Ionicons name="notifications-outline" size={24} color="#2E7D32" />
       </View>
-    </KeyboardAvoidingView>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Banner */}
+        <View style={styles.banner}>
+          <Text style={styles.bannerText}>Descubra novos livros 📚</Text>
+        </View>
+
+        {/* Sessão: Recomendados */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recomendados para você</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.card}>
+              <Image
+                source={{ uri: "https://covers.openlibrary.org/b/id/8221256-L.jpg" }}
+                style={styles.bookImage}
+              />
+              <Text style={styles.bookTitle}>O Hobbit</Text>
+            </View>
+            <View style={styles.card}>
+              <Image
+                source={{ uri: "https://covers.openlibrary.org/b/id/9281731-L.jpg" }}
+                style={styles.bookImage}
+              />
+              <Text style={styles.bookTitle}>1984</Text>
+            </View>
+            <View style={styles.card}>
+              <Image
+                source={{ uri: "https://covers.openlibrary.org/b/id/10521215-L.jpg" }}
+                style={styles.bookImage}
+              />
+              <Text style={styles.bookTitle}>Orgulho e Preconceito</Text>
+            </View>
+          </ScrollView>
+        </View>
+
+        {/* Sessão: Continuar Lendo */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Continuar lendo</Text>
+          <View style={styles.readingCard}>
+            <Image
+              source={{ uri: "https://covers.openlibrary.org/b/id/10521656-L.jpg" }}
+              style={styles.readingImage}
+            />
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={styles.readingTitle}>Harry Potter</Text>
+              <Text style={styles.readingProgress}>Capítulo 8 de 20</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#2E7D32" />
+          </View>
+        </View>
+
+        {/* Sessão: Gêneros Populares */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Gêneros Populares</Text>
+          <View style={styles.tagsContainer}>
+            <View style={styles.tag}><Text style={styles.tagText}>Fantasia</Text></View>
+            <View style={styles.tag}><Text style={styles.tagText}>Romance</Text></View>
+            <View style={styles.tag}><Text style={styles.tagText}>Suspense</Text></View>
+            <View style={styles.tag}><Text style={styles.tagText}>Ciência</Text></View>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Barra de navegação inferior */}
+      <View style={styles.navbar}>
+        <TouchableOpacity>
+          <Ionicons name="home" size={26} color="#2E7D32" />
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <Ionicons name="search-outline" size={26} color="#777" />
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <Ionicons name="book-outline" size={26} color="#777" />
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <Ionicons name="person-outline" size={26} color="#777" />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff', 
+  container: { flex: 1, backgroundColor: "#fff" },
+
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 20,
+    alignItems: "center",
   },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 28,
+  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#2E7D32" },
+
+  banner: {
+    backgroundColor: "#E8F5E9",
+    padding: 20,
+    marginHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 20,
   },
-  screenLabel: {
-    position: 'absolute',
-    top: 40,
-    left: 28,
-    color: '#bfbfbf',
-    fontSize: 13,
-  },
-  logo: {
+  bannerText: { fontSize: 16, fontWeight: "600", color: "#2E7D32" },
+
+  section: { marginBottom: 20, paddingHorizontal: 20 },
+  sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 10, color: "#333" },
+
+  card: {
+    backgroundColor: "#F1F8E9",
+    padding: 10,
+    borderRadius: 12,
+    marginRight: 10,
     width: 120,
-    height: 120,
-    marginBottom: 40,
+    alignItems: "center",
   },
-  form: {
-    width: '100%',
-    alignItems: 'center',
+  bookImage: { width: 80, height: 110, borderRadius: 8, marginBottom: 8 },
+  bookTitle: { fontSize: 13, fontWeight: "500", textAlign: "center", color: "#2E7D32" },
+
+  readingCard: {
+    flexDirection: "row",
+    backgroundColor: "#F1F8E9",
+    borderRadius: 12,
+    padding: 10,
+    alignItems: "center",
   },
-  fieldLabel: {
-    alignSelf: 'flex-start',
-    marginBottom: 6,
-    marginTop: 10, 
-    color: '#4b4b4b',
-    fontSize: 13,
-  },
-  input: {
-    width: '100%',
-    height: 44,
-    backgroundColor: '#f3f9ea',
-    borderRadius: 8,
+  readingImage: { width: 50, height: 70, borderRadius: 8 },
+  readingTitle: { fontSize: 14, fontWeight: "bold", color: "#333" },
+  readingProgress: { fontSize: 12, color: "#2E7D32" },
+
+  tagsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  tag: {
+    backgroundColor: "#C8E6C9",
+    paddingVertical: 5,
     paddingHorizontal: 12,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#e0e6d0',
-    color: '#0b2f1a',
+    borderRadius: 20,
+    marginRight: 10,
+    marginBottom: 10,
   },
-  button: {
-    width: '100%',
-    height: 44,
-    backgroundColor: '#2f7b45',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    marginTop: 14,
-    padding: 5,
-  },
-  secondaryText: {
-    color: '#2f7b45',
-    fontWeight: '600',
+  tagText: { fontSize: 13, color: "#2E7D32", fontWeight: "500" },
+
+  navbar: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    backgroundColor: "#E8F5E9",
   },
 });
