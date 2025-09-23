@@ -1,14 +1,16 @@
 import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 export default function PerfilScreen() {
+  const router = useRouter();
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Perfil</Text>
-        <Ionicons name="settings-outline" size={24} color="#333" />
+        <Ionicons name="settings-outline" size={24} color="#2E7D32" />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -74,7 +76,7 @@ export default function PerfilScreen() {
 
       {/* Barra de navegação inferior */}
       <View style={styles.navbar}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/home")}>
           <Ionicons name="home-outline" size={26} color="#777" />
         </TouchableOpacity>
         <TouchableOpacity>
@@ -83,8 +85,8 @@ export default function PerfilScreen() {
         <TouchableOpacity>
           <Ionicons name="book-outline" size={26} color="#777" />
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="person" size={26} color="#333" />
+        <TouchableOpacity onPress={() => router.push("/usuario")}>
+          <Ionicons name="person" size={26} color="#2E7D32" />
         </TouchableOpacity>
       </View>
     </View>
@@ -99,7 +101,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
   },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#333" },
+  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#2E7D32" },
 
   profileSection: { alignItems: "center", marginVertical: 20 },
   profileImage: { width: 100, height: 100, borderRadius: 50, marginBottom: 10 },
@@ -110,7 +112,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     paddingVertical: 15,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#E8F5E9",
     marginHorizontal: 20,
     borderRadius: 12,
   },
@@ -123,17 +125,17 @@ const styles = StyleSheet.create({
 
   tagsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tag: {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#C8E6C9",
     paddingVertical: 5,
     paddingHorizontal: 12,
     borderRadius: 20,
   },
-  tagText: { fontSize: 13, color: "#333" },
+  tagText: { fontSize: 13, color: "#2E7D32", fontWeight: '500' },
 
   optionButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#F1F8E9",
     padding: 12,
     borderRadius: 10,
     marginBottom: 10,
@@ -146,6 +148,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderTopWidth: 1,
     borderTopColor: "#ddd",
-    backgroundColor: "#fff",
+    backgroundColor: "#E8F5E9",
   },
 });
