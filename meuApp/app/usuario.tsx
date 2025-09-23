@@ -17,7 +17,7 @@ export default function PerfilScreen() {
         {/* Foto e Nome */}
         <View style={styles.profileSection}>
           <Image
-            source={{ uri: "https://i.pravatar.cc/150" }}
+            source={{ uri: "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png" }}
             style={styles.profileImage}
           />
           <Text style={styles.profileName}>Rhuan Victor</Text>
