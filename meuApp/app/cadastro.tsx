@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { useRouter } from "expo-router";
 
 export default function RegisterScreen() {
@@ -18,7 +18,8 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Criar Conta</Text>
+      <Image style={styles.icon} source={require("../assets/images/icon.png")} />
+
 
       <TextInput
         style={styles.input}
@@ -68,6 +69,12 @@ const styles = StyleSheet.create({
     justifyContent: "center", 
     padding: 20, 
     backgroundColor: "#fbfbf9f9" 
+  },
+  icon: {
+    width: 148,
+    height: 98,
+    alignSelf: 'center',
+    marginBottom: 50 
   },
   title: {
     fontSize: 24,
