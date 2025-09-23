@@ -1,159 +1,224 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,} from 'react-native';
+import { useRouter } from 'expo-router';
 
-export default function HomeScreen() {
-  return (
+const RecuperarSenha = () => {
+  const [step, setStep] = useState(1); // 1: email, 2: código, 3: nova senha
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const router = useRouter();
+
+  // Validação de senha
+  const isValidPassword = () => {
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Erro', 'As senhas não coincidem.');
+      return false;
+    }
+    if (newPassword.length < 8) {
+      Alert.alert('Erro', 'A senha deve ter pelo menos 8 caracteres.');
+      return false;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      Alert.alert('Erro', 'A senha deve conter pelo menos uma letra maiúscula.');
+      return false;
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      Alert.alert('Erro', 'A senha deve conter pelo menos uma letra minúscula.');
+      return false;
+    }
+    if (!/\d/.test(newPassword)) {
+      Alert.alert('Erro', 'A senha deve conter pelo menos um número.');
+      return false;
+    }
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      Alert.alert('Erro', 'A senha deve conter pelo menos um caractere especial.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleNextStep = () => {
+    switch (step) {
+      case 1:
+        if (!email.includes('@')) {
+          Alert.alert('Erro', 'Por favor, insira um e-mail válido.');
+          return;
+        }
+        Alert.alert('Sucesso', 'Código enviado para seu e-mail!');
+        setStep(2);
+        break;
+      case 2:
+        if (code.length !== 4 || !/^\d+$/.test(code)) {
+          Alert.alert('Erro', 'Código inválido.');
+          return;
+        }
+        Alert.alert('Sucesso', 'Código verificado!');
+        setStep(3);
+        break;
+      case 3:
+        if (!isValidPassword()) return;
+        Alert.alert('Sucesso', 'Senha redefinida com sucesso!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              setEmail('');
+              setCode('');
+              setNewPassword('');
+              setConfirmPassword('');
+              router.push('/login'); // redirecionamento para login
+            },
+          },
+        ]);
+        break;
+    }
+  };
+
+  const renderStep1 = () => (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Início</Text>
-        <Ionicons name="notifications-outline" size={24} color="#2E7D32" />
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Banner */}
-        <View style={styles.banner}>
-          <Text style={styles.bannerText}>Descubra novos livros 📚</Text>
-        </View>
-
-        {/* Sessão: Recomendados */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recomendados para você</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.card}>
-              <Image
-                source={{ uri: "https://covers.openlibrary.org/b/id/8221256-L.jpg" }}
-                style={styles.bookImage}
-              />
-              <Text style={styles.bookTitle}>O Hobbit</Text>
-            </View>
-            <View style={styles.card}>
-              <Image
-                source={{ uri: "https://covers.openlibrary.org/b/id/9281731-L.jpg" }}
-                style={styles.bookImage}
-              />
-              <Text style={styles.bookTitle}>1984</Text>
-            </View>
-            <View style={styles.card}>
-              <Image
-                source={{ uri: "https://covers.openlibrary.org/b/id/10521215-L.jpg" }}
-                style={styles.bookImage}
-              />
-              <Text style={styles.bookTitle}>Orgulho e Preconceito</Text>
-            </View>
-          </ScrollView>
-        </View>
-
-        {/* Sessão: Continuar Lendo */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Continuar lendo</Text>
-          <View style={styles.readingCard}>
-            <Image
-              source={{ uri: "https://covers.openlibrary.org/b/id/10521656-L.jpg" }}
-              style={styles.readingImage}
-            />
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.readingTitle}>Harry Potter</Text>
-              <Text style={styles.readingProgress}>Capítulo 8 de 20</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#2E7D32" />
-          </View>
-        </View>
-
-        {/* Sessão: Gêneros Populares */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Gêneros Populares</Text>
-          <View style={styles.tagsContainer}>
-            <View style={styles.tag}><Text style={styles.tagText}>Fantasia</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>Romance</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>Suspense</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>Ciência</Text></View>
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* Barra de navegação inferior */}
-      <View style={styles.navbar}>
-        <TouchableOpacity>
-          <Ionicons name="home" size={26} color="#2E7D32" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="search-outline" size={26} color="#777" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="book-outline" size={26} color="#777" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="person-outline" size={26} color="#777" />
-        </TouchableOpacity>
-      </View>
+      <Text style={styles.title}>Recuperar senha</Text>
+      <Text style={styles.subtitle}>
+        Digite seu e-mail para receber o código de redefinição de senha
+      </Text>
+      <TextInput
+        style={styles.input}
+        placeholder="seu@email.com"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+        <Text style={styles.buttonText}>Enviar código</Text>
+      </TouchableOpacity>
     </View>
   );
-}
+
+  const renderStep2 = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>Recuperar senha</Text>
+      <Text style={styles.subtitle}>
+        Digite o código de recuperação de senha
+      </Text>
+      <TextInput
+        style={styles.input}
+        placeholder="1234"
+        value={code}
+        onChangeText={setCode}
+        keyboardType="number-pad"
+        maxLength={4}
+      />
+      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+        <Text style={styles.buttonText}>Confirmar Código</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderStep3 = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>Recuperar senha</Text>
+      <Text style={styles.subtitle}>
+        Redefina sua senha
+      </Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nova senha"
+        secureTextEntry
+        value={newPassword}
+        onChangeText={setNewPassword}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Confirmar senha"
+        secureTextEntry
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+      />
+      <Text style={styles.passwordRules}>
+        A senha deve conter:
+        <Text style={styles.ruleItem}> • Letras maiúsculas</Text>
+        <Text style={styles.ruleItem}> • Números</Text>
+        <Text style={styles.ruleItem}> • Letras minúsculas</Text>
+        <Text style={styles.ruleItem}> • Um caractere especial</Text>
+      </Text>
+      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+        <Text style={styles.buttonText}>Definir senha</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      {step === 1 && renderStep1()}
+      {step === 2 && renderStep2()}
+      {step === 3 && renderStep3()}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
-    alignItems: "center",
+    backgroundColor: '#fbfbf9f9',
   },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#2E7D32" },
-
-  banner: {
-    backgroundColor: "#E8F5E9",
-    padding: 20,
-    marginHorizontal: 20,
-    borderRadius: 12,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
     marginBottom: 20,
+    color: '#000',
+    textAlign: 'center',
   },
-  bannerText: { fontSize: 16, fontWeight: "600", color: "#2E7D32" },
-
-  section: { marginBottom: 20, paddingHorizontal: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 10, color: "#333" },
-
-  card: {
-    backgroundColor: "#F1F8E9",
-    padding: 10,
-    borderRadius: 12,
-    marginRight: 10,
-    width: 120,
-    alignItems: "center",
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#666',
+    paddingHorizontal: 20,
   },
-  bookImage: { width: 80, height: 110, borderRadius: 8, marginBottom: 8 },
-  bookTitle: { fontSize: 13, fontWeight: "500", textAlign: "center", color: "#2E7D32" },
-
-  readingCard: {
-    flexDirection: "row",
-    backgroundColor: "#F1F8E9",
-    borderRadius: 12,
-    padding: 10,
-    alignItems: "center",
-  },
-  readingImage: { width: 50, height: 70, borderRadius: 8 },
-  readingTitle: { fontSize: 14, fontWeight: "bold", color: "#333" },
-  readingProgress: { fontSize: 12, color: "#2E7D32" },
-
-  tagsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  tag: {
-    backgroundColor: "#C8E6C9",
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    marginRight: 10,
+  input: {
+    width: 312,
+    height: 45,
+    alignSelf: 'center',
+    backgroundColor: '#EDF5C4',
+    borderRadius: 15,
+    paddingHorizontal: 15,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#000',
   },
-  tagText: { fontSize: 13, color: "#2E7D32", fontWeight: "500" },
-
-  navbar: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#ddd",
-    backgroundColor: "#E8F5E9",
+  button: {
+    width: 312,
+    height: 45,
+    alignSelf: 'center',
+    backgroundColor: '#2E8B57',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  passwordRules: {
+    fontSize: 12,
+    textAlign: 'left',
+    marginTop: 10,
+    color: '#666',
+    width: 312,
+    paddingHorizontal: 15,
+    alignSelf: 'center',
+  },
+  ruleItem: {
+    fontSize: 12,
+    color: '#666',
   },
 });
+
+export default RecuperarSenha;
