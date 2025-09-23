@@ -43,7 +43,7 @@ export default function HomeScreen() {
                 source={{ uri: "https://covers.openlibrary.org/b/id/10521215-L.jpg" }}
                 style={styles.bookImage}
               />
-              <Text style={styles.bookTitle}>Orgulho e Preconceito</Text>
+              <Text style={styles.bookTitle}>Harry Potter e a Pedra Filosofal</Text>
             </View>
           </ScrollView>
         </View>

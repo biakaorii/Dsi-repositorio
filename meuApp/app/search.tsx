@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, ScrollView, Image } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  ScrollView, 
+  Image, 
+  StyleSheet 
+} from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from 'expo-router';
 
@@ -92,8 +100,8 @@ export default function Search() {
   );
 }
 
-// estilos
-const styles = {
+// estilos corrigidos com StyleSheet
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 50,
@@ -112,7 +120,7 @@ const styles = {
     flex: 1,
     fontSize: 16,
     paddingVertical: 4,
-    fontWeight: 'bold'
+    fontWeight: "bold", // ✅ corrigido
   },
   clearText: {
     fontSize: 14,
@@ -128,28 +136,26 @@ const styles = {
   },
   chip: {
     paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     borderRadius: 20,
     backgroundColor: '#E8F5E9',
     marginRight: 8,
     marginBottom: 8,
-    paddingHorizontal: 12,
   },
   chipText: {
     fontSize: 14,
     color: '#2E7D32',
-    fontWeight: 'bold'
+    fontWeight: "bold", // ✅ corrigido
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold", // ✅ corrigido
     marginVertical: 12,
     paddingHorizontal: 12,
   },
   sectionRow: {
     flexDirection: 'row',
     marginBottom: 16,
-    
   },
   bookCard: {
     flex: 1,
@@ -161,13 +167,11 @@ const styles = {
     width: 80,
     height: 120,
     borderRadius: 6,
-    
   },
   bookTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600", // ✅ corrigido
     marginTop: 6,
-    
   },
   bookAuthor: {
     fontSize: 12,
@@ -185,4 +189,4 @@ const styles = {
     borderTopColor: "#ddd",
     backgroundColor: "#E8F5E9",
   },
-};
+});
