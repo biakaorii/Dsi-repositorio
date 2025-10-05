@@ -27,7 +27,7 @@ export default function ProgressoScreen() {
       { id: 9, titulo: "Neuromancer", paginasLidas: 0, totalPaginas: 320 },
     ]
   });
-
+  // Função para atualizar o progresso de leitura
   const atualizarPaginas = (id: number, incremento: number, categoria: 'lendo' | 'lidos' | 'queroLer') => {
     setLivros(prevLivros => ({
       ...prevLivros,
@@ -78,7 +78,7 @@ export default function ProgressoScreen() {
           onPress={() => setCategoriaAtiva('lendo')}
         >
           <Text style={[styles.categoryButtonText, categoriaAtiva === 'lendo' && styles.categoryButtonTextActive]}>
-            📖 Lendo
+            Lendo
           </Text>
         </TouchableOpacity>
         <TouchableOpacity 
@@ -86,7 +86,7 @@ export default function ProgressoScreen() {
           onPress={() => setCategoriaAtiva('lidos')}
         >
           <Text style={[styles.categoryButtonText, categoriaAtiva === 'lidos' && styles.categoryButtonTextActive]}>
-            ✅ Lidos
+            Lidos
           </Text>
         </TouchableOpacity>
         <TouchableOpacity 
@@ -94,7 +94,7 @@ export default function ProgressoScreen() {
           onPress={() => setCategoriaAtiva('queroLer')}
         >
           <Text style={[styles.categoryButtonText, categoriaAtiva === 'queroLer' && styles.categoryButtonTextActive]}>
-            📚 Quero Ler
+            Quero Ler
           </Text>
         </TouchableOpacity>
       </View>
