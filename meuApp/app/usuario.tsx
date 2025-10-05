@@ -22,6 +22,15 @@ export default function PerfilScreen() {
           />
           <Text style={styles.profileName}>Rhuan Victor</Text>
           <Text style={styles.profileSubtitle}>Leitor ávido de ficção</Text>
+          
+          {/* Botão Acompanhar Progresso */}
+          <TouchableOpacity 
+            style={styles.progressButton}
+            onPress={() => router.push("/progresso")}
+          >
+            <Ionicons name="trending-up-outline" size={18} color="#fff" />
+            <Text style={styles.progressButtonText}>Acompanhar Progresso</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Estatísticas */}
@@ -106,7 +115,23 @@ const styles = StyleSheet.create({
   profileSection: { alignItems: "center", marginVertical: 20 },
   profileImage: { width: 100, height: 100, borderRadius: 50, marginBottom: 10 },
   profileName: { fontSize: 18, fontWeight: "bold", color: "#333" },
-  profileSubtitle: { fontSize: 14, color: "#666" },
+  profileSubtitle: { fontSize: 14, color: "#666", marginBottom: 15 },
+
+  progressButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2E7D32",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginTop: 10,
+  },
+  progressButtonText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: "#fff",
+    fontWeight: "600",
+  },
 
   statsContainer: {
     flexDirection: "row",
