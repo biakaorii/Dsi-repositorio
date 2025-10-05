@@ -6,10 +6,10 @@ import { useRouter } from "expo-router";
 export default function ProgressoScreen() {
   const router = useRouter();
   
-  // Estado para controlar a categoria ativa
+
   const [categoriaAtiva, setCategoriaAtiva] = useState<'lendo' | 'lidos' | 'queroLer'>('lendo');
   
-  // Estados para controlar os livros por categoria
+
   const [livros, setLivros] = useState({
     lendo: [
       { id: 1, titulo: "O Senhor dos Anéis", paginasLidas: 240, totalPaginas: 400 },
@@ -27,7 +27,7 @@ export default function ProgressoScreen() {
       { id: 9, titulo: "Neuromancer", paginasLidas: 0, totalPaginas: 320 },
     ]
   });
-  // Função para atualizar o progresso de leitura
+ 
   const atualizarPaginas = (id: number, incremento: number, categoria: 'lendo' | 'lidos' | 'queroLer') => {
     setLivros(prevLivros => ({
       ...prevLivros,
@@ -43,7 +43,7 @@ export default function ProgressoScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+    
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#2E7D32" />
@@ -52,7 +52,7 @@ export default function ProgressoScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* Resumo Geral */}
+    
       <View style={styles.summaryContainer}>
         <Text style={styles.summaryTitle}>Resumo de Leitura</Text>
         <View style={styles.summaryStats}>
@@ -71,7 +71,7 @@ export default function ProgressoScreen() {
         </View>
       </View>
 
-      {/* Botões de Categoria */}
+     
       <View style={styles.categoryButtons}>
         <TouchableOpacity 
           style={[styles.categoryButton, categoriaAtiva === 'lendo' && styles.categoryButtonActive]}
@@ -100,7 +100,7 @@ export default function ProgressoScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Conteúdo baseado na categoria ativa */}
+      
         <View style={styles.section}>
           {categoriaAtiva === 'lendo' && (
             <>
@@ -169,7 +169,6 @@ export default function ProgressoScreen() {
           )}
         </View>
 
-        {/* Meta de Leitura */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Meta Anual</Text>
           <View style={styles.goalContainer}>
@@ -181,7 +180,6 @@ export default function ProgressoScreen() {
           </View>
         </View>
 
-        {/* Estatísticas Mensais */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Este Mês</Text>
           <View style={styles.monthlyStats}>
