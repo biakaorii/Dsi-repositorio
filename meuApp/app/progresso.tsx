@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import Slider from '@react-native-community/slider';
 
 export default function ProgressoScreen() {
   const router = useRouter();
@@ -12,29 +13,129 @@ export default function ProgressoScreen() {
 
   const [livros, setLivros] = useState({
     lendo: [
-      { id: 1, titulo: "O Senhor dos Anéis", paginasLidas: 240, totalPaginas: 400 },
-      { id: 2, titulo: "1984", paginasLidas: 75, totalPaginas: 300 },
-      { id: 3, titulo: "Dom Casmurro", paginasLidas: 160, totalPaginas: 200 },
+      { 
+        id: 1, 
+        titulo: "O Senhor dos Anéis", 
+        paginasLidas: 240, 
+        totalPaginas: 400,
+        imagem: "https://m.media-amazon.com/images/I/7125+5E40JL._AC_UF1000,1000_QL80_.jpg"
+      },
+      { 
+        id: 2, 
+        titulo: "1984", 
+        paginasLidas: 75, 
+        totalPaginas: 300,
+        imagem: "https://m.media-amazon.com/images/I/819js3EQwbL._AC_UF1000,1000_QL80_.jpg"
+      },
+      { 
+        id: 3, 
+        titulo: "Dom Casmurro", 
+        paginasLidas: 160, 
+        totalPaginas: 200,
+        imagem: "https://m.media-amazon.com/images/I/71KCQq8KjbL._AC_UF1000,1000_QL80_.jpg"
+      },
     ],
     lidos: [
-      { id: 4, titulo: "Harry Potter", paginasLidas: 450, totalPaginas: 450 },
-      { id: 5, titulo: "O Pequeno Príncipe", paginasLidas: 120, totalPaginas: 120 },
-      { id: 6, titulo: "Orgulho e Preconceito", paginasLidas: 280, totalPaginas: 280 },
+      { 
+        id: 4, 
+        titulo: "Harry Potter", 
+        paginasLidas: 450, 
+        totalPaginas: 450,
+        imagem: "https://m.media-amazon.com/images/I/81YOuOGFCJL._AC_UF1000,1000_QL80_.jpg"
+      },
+      { 
+        id: 5, 
+        titulo: "O Pequeno Príncipe", 
+        paginasLidas: 120, 
+        totalPaginas: 120,
+        imagem: "https://m.media-amazon.com/images/I/61P1btIal9L._AC_UF1000,1000_QL80_.jpg"
+      },
+      { 
+        id: 6, 
+        titulo: "Orgulho e Preconceito", 
+        paginasLidas: 280, 
+        totalPaginas: 280,
+        imagem: "https://m.media-amazon.com/images/I/71Q1tPupKjL._AC_UF1000,1000_QL80_.jpg"
+      },
     ],
     queroLer: [
-      { id: 7, titulo: "Cem Anos de Solidão", paginasLidas: 0, totalPaginas: 350 },
-      { id: 8, titulo: "O Nome do Vento", paginasLidas: 0, totalPaginas: 680 },
-      { id: 9, titulo: "Neuromancer", paginasLidas: 0, totalPaginas: 320 },
+      { 
+        id: 7, 
+        titulo: "Cem Anos de Solidão", 
+        paginasLidas: 0, 
+        totalPaginas: 350,
+        imagem: "https://m.media-amazon.com/images/I/91TvVQS7loL._AC_UF1000,1000_QL80_.jpg",
+        salvo: true
+      },
+      { 
+        id: 8, 
+        titulo: "O Nome do Vento", 
+        paginasLidas: 0, 
+        totalPaginas: 680,
+        imagem: "https://m.media-amazon.com/images/I/91dJ3j2WhUL._AC_UF1000,1000_QL80_.jpg",
+        salvo: true
+      },
+      { 
+        id: 9, 
+        titulo: "Neuromancer", 
+        paginasLidas: 0, 
+        totalPaginas: 320,
+        imagem: "https://m.media-amazon.com/images/I/51fULh2zYDL._AC_UF1000,1000_QL80_.jpg",
+        salvo: false
+      },
     ]
   });
  
-  const atualizarPaginas = (id: number, incremento: number, categoria: 'lendo' | 'lidos' | 'queroLer') => {
+  const atualizarPorcentagem = (id: number, porcentagem: number, categoria: 'lendo' | 'lidos' | 'queroLer') => {
     setLivros(prevLivros => ({
       ...prevLivros,
       [categoria]: prevLivros[categoria].map(livro => {
         if (livro.id === id) {
-          const novasPaginas = Math.max(0, Math.min(livro.totalPaginas, livro.paginasLidas + incremento));
+          const novasPaginas = Math.round((porcentagem / 100) * livro.totalPaginas);
           return { ...livro, paginasLidas: novasPaginas };
+        }
+        return livro;
+      })
+    }));
+  };
+
+  const atualizarPaginasNumero = (id: number, paginas: number, categoria: 'lendo' | 'lidos' | 'queroLer') => {
+    setLivros(prevLivros => ({
+      ...prevLivros,
+      [categoria]: prevLivros[categoria].map(livro => {
+        if (livro.id === id) {
+          const novasPaginas = Math.max(0, Math.min(livro.totalPaginas, paginas));
+          return { ...livro, paginasLidas: novasPaginas };
+        }
+        return livro;
+      })
+    }));
+  };
+
+
+
+  const moverLivroParaLidos = (id: number) => {
+    setLivros(prevLivros => {
+      const livroParaMover = prevLivros.lendo.find(livro => livro.id === id);
+      if (livroParaMover) {
+        return {
+          ...prevLivros,
+          lendo: prevLivros.lendo.filter(livro => livro.id !== id),
+          lidos: [...prevLivros.lidos, { ...livroParaMover, paginasLidas: livroParaMover.totalPaginas }]
+        };
+      }
+      return prevLivros;
+    });
+    // Mostrar automaticamente a categoria "Lidos" após mover o livro
+    setCategoriaAtiva('lidos');
+  };
+
+  const alternarSalvoQueroLer = (id: number) => {
+    setLivros(prevLivros => ({
+      ...prevLivros,
+      queroLer: prevLivros.queroLer.map(livro => {
+        if (livro.id === id) {
+          return { ...livro, salvo: !livro.salvo };
         }
         return livro;
       })
@@ -106,31 +207,73 @@ export default function ProgressoScreen() {
             <>
               {livros.lendo.map((livro) => {
                 const progresso = (livro.paginasLidas / livro.totalPaginas) * 100;
+                const livroCompleto = progresso >= 100;
+                
                 return (
-                  <View key={livro.id} style={styles.bookProgress}>
+                  <View key={livro.id} style={[styles.bookProgress, livroCompleto && styles.completedReadingBook]}>
                     <View style={styles.bookHeader}>
-                      <Text style={styles.bookTitle}>{livro.titulo}</Text>
-                      <View style={styles.pageControls}>
-                        <TouchableOpacity 
-                          style={styles.controlButton}
-                          onPress={() => atualizarPaginas(livro.id, -5, 'lendo')}
-                        >
-                          <Ionicons name="remove" size={16} color="#2E7D32" />
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                          style={styles.controlButton}
-                          onPress={() => atualizarPaginas(livro.id, 5, 'lendo')}
-                        >
-                          <Ionicons name="add" size={16} color="#2E7D32" />
-                        </TouchableOpacity>
+                      <View style={styles.bookInfo}>
+                        <Image source={{ uri: livro.imagem }} style={styles.bookCover} />
+                        <Text style={styles.bookTitle}>{livro.titulo}</Text>
                       </View>
                     </View>
-                    <View style={styles.progressBar}>
-                      <View style={[styles.progressFill, { width: `${progresso}%` }]} />
+                    
+                    {/* Controles de Progresso */}
+                    <View style={styles.progressControls}>
+                      {/* Input Direto de Páginas */}
+                      <View style={styles.pageInputContainer}>
+                        <Text style={styles.inputLabel}>Página atual:</Text>
+                        <View style={styles.pageInputRow}>
+                          <TextInput
+                            style={styles.pageInput}
+                            value={livro.paginasLidas.toString()}
+                            onChangeText={(text) => {
+                              const paginas = parseInt(text) || 0;
+                              atualizarPaginasNumero(livro.id, paginas, 'lendo');
+                            }}
+                            keyboardType="numeric"
+                            maxLength={4}
+                          />
+                          <Text style={styles.totalPages}>/ {livro.totalPaginas}</Text>
+                        </View>
+                      </View>
+
+
+
+                      {/* Slider Visual */}
+                      <View style={styles.sliderContainer}>
+                        <Slider
+                          style={styles.slider}
+                          minimumValue={0}
+                          maximumValue={livro.totalPaginas}
+                          value={livro.paginasLidas}
+                          onValueChange={(value) => atualizarPaginasNumero(livro.id, Math.round(value), 'lendo')}
+                          minimumTrackTintColor={livroCompleto ? '#4CAF50' : '#2E7D32'}
+                          maximumTrackTintColor="#E0E0E0"
+                          thumbTintColor={livroCompleto ? '#4CAF50' : '#2E7D32'}
+                          step={1}
+                        />
+                      </View>
                     </View>
-                    <Text style={styles.progressText}>
-                      Página {livro.paginasLidas} de {livro.totalPaginas} ({Math.round(progresso)}%)
-                    </Text>
+                    
+                    <View style={styles.progressInfo}>
+                      <Text style={styles.progressText}>
+                        {livroCompleto ? 
+                          "Livro concluído! " : 
+                          `Página ${livro.paginasLidas} de ${livro.totalPaginas} (${Math.round(progresso)}%)`
+                        }
+                      </Text>
+                      
+                      {livroCompleto && (
+                        <TouchableOpacity 
+                          style={styles.moveToReadButton}
+                          onPress={() => moverLivroParaLidos(livro.id)}
+                        >
+                          <Ionicons name="checkmark-circle" size={16} color="#fff" />
+                          <Text style={styles.moveToReadButtonText}>Marcar como Lido</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 );
               })}
@@ -142,7 +285,10 @@ export default function ProgressoScreen() {
               {livros.lidos.map((livro) => (
                 <View key={livro.id} style={[styles.bookProgress, styles.completedBook]}>
                   <View style={styles.bookHeader}>
-                    <Text style={styles.bookTitle}>{livro.titulo}</Text>
+                    <View style={styles.bookInfo}>
+                      <Image source={{ uri: livro.imagem }} style={styles.bookCover} />
+                      <Text style={styles.bookTitle}>{livro.titulo}</Text>
+                    </View>
                     <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
                   </View>
                   <View style={styles.progressBar}>
@@ -157,42 +303,41 @@ export default function ProgressoScreen() {
           {categoriaAtiva === 'queroLer' && (
             <>
               {livros.queroLer.map((livro) => (
-                <View key={livro.id} style={[styles.bookProgress, styles.wishlistBook]}>
+                <View key={livro.id} style={[
+                  styles.bookProgress, 
+                  livro.salvo ? styles.wishlistBook : styles.wishlistBookUnsaved
+                ]}>
                   <View style={styles.bookHeader}>
-                    <Text style={styles.bookTitle}>{livro.titulo}</Text>
-                    <Ionicons name="bookmark-outline" size={20} color="#FF9800" />
+                    <View style={styles.bookInfo}>
+                      <Image source={{ uri: livro.imagem }} style={styles.bookCover} />
+                      <Text style={styles.bookTitle}>{livro.titulo}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => alternarSalvoQueroLer(livro.id)}>
+                      <Ionicons 
+                        name={livro.salvo ? "bookmark" : "bookmark-outline"} 
+                        size={20} 
+                        color={livro.salvo ? "#FF9800" : "#CCC"} 
+                      />
+                    </TouchableOpacity>
                   </View>
-                  <Text style={styles.progressText}>{livro.totalPaginas} páginas</Text>
+                  <View style={styles.wishlistInfo}>
+                    <Text style={styles.progressText}>
+                      {livro.totalPaginas} páginas
+                    </Text>
+                    <Text style={[
+                      styles.wishlistStatus,
+                      { color: livro.salvo ? "#FF9800" : "#999" }
+                    ]}>
+                      {livro.salvo ? "Na lista de desejos" : "Clique no ícone para salvar"}
+                    </Text>
+                  </View>
                 </View>
               ))}
             </>
           )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Meta Anual</Text>
-          <View style={styles.goalContainer}>
-            <Text style={styles.goalText}>12 de 15 livros lidos</Text>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: '80%' }]} />
-            </View>
-            <Text style={styles.progressText}>80% da meta atingida!</Text>
-          </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Este Mês</Text>
-          <View style={styles.monthlyStats}>
-            <View style={styles.statItem}>
-              <Ionicons name="book-outline" size={20} color="#2E7D32" />
-              <Text style={styles.statText}>2 livros finalizados</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Ionicons name="time-outline" size={20} color="#2E7D32" />
-              <Text style={styles.statText}>45 horas de leitura</Text>
-            </View>
-          </View>
-        </View>
       </ScrollView>
     </View>
   );
@@ -236,6 +381,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
+  bookInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  bookCover: {
+    width: 40,
+    height: 60,
+    borderRadius: 4,
+    marginRight: 12,
+    backgroundColor: "#f0f0f0",
+  },
   bookTitle: { fontSize: 14, fontWeight: "600", color: "#333", flex: 1 },
   pageControls: {
     flexDirection: "row",
@@ -260,6 +417,44 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF8E1",
     borderLeftWidth: 4,
     borderLeftColor: "#FF9800",
+  },
+  wishlistBookUnsaved: {
+    backgroundColor: "#F5F5F5",
+    borderLeftWidth: 4,
+    borderLeftColor: "#CCC",
+  },
+  wishlistInfo: {
+    gap: 4,
+  },
+  wishlistStatus: {
+    fontSize: 11,
+    fontStyle: "italic",
+  },
+  completedReadingBook: {
+    backgroundColor: "#E8F5E9",
+    borderLeftWidth: 4,
+    borderLeftColor: "#4CAF50",
+    borderWidth: 2,
+    borderColor: "#4CAF50",
+  },
+  progressInfo: {
+    gap: 8,
+  },
+  moveToReadButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#4CAF50",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+    marginTop: 5,
+  },
+  moveToReadButtonText: {
+    marginLeft: 5,
+    fontSize: 12,
+    color: "#fff",
+    fontWeight: "600",
   },
 
   categoryButtons: {
@@ -303,20 +498,58 @@ const styles = StyleSheet.create({
   },
   progressText: { fontSize: 12, color: "#666" },
 
-  goalContainer: {
-    backgroundColor: "#F1F8E9",
+  progressControls: {
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
     padding: 15,
-    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
   },
-  goalText: { fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 10 },
-
-  monthlyStats: { gap: 12 },
-  statItem: {
+  
+  pageInputContainer: {
+    marginBottom: 15,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  pageInputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F1F8E9",
-    padding: 12,
-    borderRadius: 8,
+    justifyContent: "center",
   },
-  statText: { marginLeft: 10, fontSize: 14, color: "#333" },
+  pageInput: {
+    borderWidth: 2,
+    borderColor: "#2E7D32",
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+    minWidth: 45,
+    maxWidth: 45,
+    backgroundColor: "#fff",
+  },
+  totalPages: {
+    fontSize: 16,
+    color: "#666",
+    marginLeft: 8,
+    fontWeight: "500",
+  },
+
+
+
+  sliderContainer: {
+    paddingHorizontal: 5,
+  },
+  slider: {
+    width: "100%",
+    height: 30,
+  },
+
+
 });

@@ -68,7 +68,10 @@ export default function PerfilScreen() {
         {/* Ações */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Opções</Text>
-          <TouchableOpacity style={styles.optionButton}>
+          <TouchableOpacity 
+            style={styles.optionButton}
+            onPress={() => router.push("/editarPerfil")}
+          >
             <Ionicons name="create-outline" size={20} color="#333" />
             <Text style={styles.optionText}>Editar Perfil</Text>
           </TouchableOpacity>
