@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,} from 'react-native';
 import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message';
 
 const RecuperarSenha = () => {
-  const [step, setStep] = useState(1); // 1: email, 2: código, 3: nova senha
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -47,7 +48,6 @@ const RecuperarSenha = () => {
           Alert.alert('Erro', 'Por favor, insira um e-mail válido.');
           return;
         }
-        Alert.alert('Sucesso', 'Código enviado para seu e-mail!');
         setStep(2);
         break;
       case 2:
@@ -55,23 +55,25 @@ const RecuperarSenha = () => {
           Alert.alert('Erro', 'Código inválido.');
           return;
         }
-        Alert.alert('Sucesso', 'Código verificado!');
         setStep(3);
         break;
       case 3:
         if (!isValidPassword()) return;
-        Alert.alert('Sucesso', 'Senha redefinida com sucesso!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              setEmail('');
-              setCode('');
-              setNewPassword('');
-              setConfirmPassword('');
-              router.push('/login'); // redirecionamento para login
-            },
+
+        Toast.show({
+          type: 'success',
+          text1: 'Sucesso',
+          text2: 'Senha redefinida com sucesso!',
+          visibilityTime: 3000,
+          autoHide: true,
+          onHide: () => {
+            setEmail('');
+            setCode('');
+            setNewPassword('');
+            setConfirmPassword('');
+            router.push('/login');
           },
-        ]);
+        });
         break;
     }
   };
