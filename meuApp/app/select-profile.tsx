@@ -15,7 +15,6 @@ export default function SelectProfileScreen() {
         router.push('/entrepreneur-form');
         break;
       case 'critico':
-        // Se quiser implementar depois
         router.push('/critic-form'); // opcional
         break;
       default:
@@ -28,27 +27,32 @@ export default function SelectProfileScreen() {
       <Text style={styles.title}>Selecione seu perfil</Text>
 
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, styles.profileButton]}
         onPress={() => handleSelect('leitor')}
       >
-        <Text style={styles.buttonText}>Leitor</Text>
+        <Text style={[styles.buttonText, styles.profileButtonText]}>Leitor</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, styles.profileButton]}
         onPress={() => handleSelect('empreendedor')}
       >
-        <Text style={styles.buttonText}>Empreendedor</Text>
+        <Text style={[styles.buttonText, styles.profileButtonText]}>Empreendedor</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, styles.profileButton]}
         onPress={() => handleSelect('critico')}
       >
-        <Text style={styles.buttonText}>Crítico</Text>
+        <Text style={[styles.buttonText, styles.profileButtonText]}>Crítico</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.button, styles.continueButton]}>
+      <TouchableOpacity
+        style={[styles.button, styles.continueButton]}
+        onPress={() => { 
+          router.push('/home')
+        }}
+      >
         <Text style={styles.buttonText}>Continuar</Text>
       </TouchableOpacity>
     </View>
@@ -71,18 +75,26 @@ const styles = StyleSheet.create({
   button: {
     width: '80%',
     paddingVertical: 15,
-    borderWidth: 1,
-    borderColor: '#4CAF50',
-    borderRadius: 8,
+    borderRadius: 15, // igual ao seu cadastro
     marginBottom: 15,
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#4CAF50',
-    fontSize: 18,
+  profileButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#2E8B57', // borda verde
+  },
+  profileButtonText: {
+    color: '#2E8B57', // texto verde
+    fontWeight: 'bold',
   },
   continueButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#2E8B57', // fundo verde
     borderColor: 'transparent',
+  },
+  buttonText: {
+    color: '#fff', // texto branco para o botão verde
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
