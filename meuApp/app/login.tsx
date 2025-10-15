@@ -20,7 +20,7 @@ export default function LoginScreen() {
     console.log("Senha:", password);
 
     // depois tu pode trocar por validação de login
-    router.push("/select-profile"); 
+    router.push("/home"); 
   };
 
   return (
