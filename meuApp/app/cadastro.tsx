@@ -13,7 +13,7 @@ export default function RegisterScreen() {
     console.log("Nome:", name);
     console.log("Email:", email);
     console.log("Senha:", password);
-    router.push("/home");
+    router.push("/select-profile");
   };
 
   return (

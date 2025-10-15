@@ -15,6 +15,9 @@ export default function Layout() {
         <Stack.Screen name="recuperar_senha" />
         <Stack.Screen name="usuario" />
         <Stack.Screen name="search"/>
+        <Stack.Screen name="select-profile"/>
+        <Stack.Screen name="reader-form"/>
+        <Stack.Screen name="entrepreneur-form"/>
       </Stack>
       <Toast topOffset={height / 2 - 60} />
     </>
