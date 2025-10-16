@@ -1,31 +1,78 @@
+// app/cadastro.tsx
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Image, 
+  Alert,
+  ActivityIndicator
+} from "react-native";
 import { useRouter } from "expo-router";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { signUp } = useAuth();
 
-  const handleRegister = () => {
-    console.log("Nome:", name);
-    console.log("Email:", email);
-    console.log("Senha:", password);
-    router.push("/select-profile");
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleRegister = async () => {
+    if (!name || !email || !password || !confirm) {
+      Alert.alert("Erro", "Preencha todos os campos");
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      Alert.alert("Erro", "Email inválido");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
+    if (password !== confirm) {
+      Alert.alert("Erro", "As senhas não coincidem");
+      return;
+    }
+
+    setLoading(true);
+
+    const result = await signUp(name, email, password);
+
+    setLoading(false);
+
+    if (result.success) {
+      Alert.alert("Sucesso", "Conta criada com sucesso!", [
+        { text: "OK", onPress: () => router.push("/select-profile") }
+      ]);
+    } else {
+      Alert.alert("Erro", result.error || "Erro ao criar conta");
+    }
   };
 
   return (
     <View style={styles.container}>
       <Image style={styles.icon} source={require("../assets/images/icon.png")} />
 
-
       <TextInput
         style={styles.input}
         placeholder="Nome"
         value={name}
         onChangeText={setName}
+        editable={!loading}
       />
 
       <TextInput
@@ -34,6 +81,8 @@ export default function RegisterScreen() {
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
+        autoCapitalize="none"
+        editable={!loading}
       />
 
       <TextInput
@@ -42,6 +91,7 @@ export default function RegisterScreen() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        editable={!loading}
       />
 
       <TextInput
@@ -50,13 +100,22 @@ export default function RegisterScreen() {
         value={confirm}
         onChangeText={setConfirm}
         secureTextEntry
+        editable={!loading}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Cadastrar</Text>
+      <TouchableOpacity 
+        style={[styles.button, loading && styles.buttonDisabled]} 
+        onPress={handleRegister}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Cadastrar</Text>
+        )}
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.back()}>
+      <TouchableOpacity onPress={() => router.back()} disabled={loading}>
         <Text style={styles.link}>Já tem uma conta? Entrar</Text>
       </TouchableOpacity>
     </View>
@@ -75,13 +134,6 @@ const styles = StyleSheet.create({
     height: 98,
     alignSelf: 'center',
     marginBottom: 50 
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 20,
-    color: "#2E8B57",
   },
   input: {
     width: 312,
@@ -104,6 +156,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20,
     marginBottom: 20,
+  },
+  buttonDisabled: {
+    backgroundColor: "#9CA3AF",
   },
   buttonText: { 
     color: "#fff", 
