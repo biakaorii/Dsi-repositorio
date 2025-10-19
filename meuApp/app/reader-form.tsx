@@ -17,16 +17,17 @@ const ReaderFormScreen = () => {
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
 
   const genres = [
-    'romance',
-    'fantasia',
-    'ficção',
-    'suspense',
-    'terror',
-    'ação',
-    'drama',
-    'mistério',
-    'literatura brasileira',
-    'literatura estrangeira',
+    'Romance',
+    'Fantasia',
+    'Ficção',
+    'Suspense',
+    'Terror',
+    'Aventura',
+    'Drama',
+    'Mistério',
+    'Literatura brasileira',
+    'Literatura estrangeira',
+    'Religião e espiritualidade',
   ];
 
   const toggleGenre = (genre: string) => {

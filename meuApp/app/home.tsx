@@ -86,7 +86,7 @@ export default function HomeScreen() {
             <Ionicons name="search-outline" size={26} color="#777" />
           </TouchableOpacity>
         </Link>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/progresso')}>
           <Ionicons name="book-outline" size={26} color="#777" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/usuario')}>
