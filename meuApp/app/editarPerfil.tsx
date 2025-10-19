@@ -1,30 +1,61 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from "react-native";
+// app/editarPerfil.tsx
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function EditarPerfilScreen() {
   const router = useRouter();
-  
-  // Estados para os campos do perfil
-  const [nome, setNome] = useState("Rhuan Victor");
-  const [email, setEmail] = useState("rhuan.victor@email.com");
-  const [bio, setBio] = useState("Leitor ávido de ficção");
-  const [generosFavoritos, setGenerosFavoritos] = useState("Fantasia, Romance, Suspense");
+  const { user, loading: authLoading, updateUser } = useAuth();
 
-  const salvarPerfil = () => {
-    // Aqui você pode implementar a lógica para salvar no banco de dados
-    Alert.alert(
-      "Perfil Atualizado",
-      "Suas informações foram salvas com sucesso!",
-      [
-        {
-          text: "OK",
-          onPress: () => router.back()
-        }
-      ]
-    );
+  const [nome, setNome] = useState("");
+  const [bio, setBio] = useState("");
+  const [generosFavoritos, setGenerosFavoritos] = useState("");
+
+  // Preencher os campos quando o usuário for carregado
+  useEffect(() => {
+    if (user) {
+      setNome(user.name || "");
+      setBio(user.bio || "");
+      setGenerosFavoritos(user.genres?.join(", ") || "");
+    }
+  }, [user]);
+
+  const salvarPerfil = async () => {
+    if (!user) return;
+
+    // Converter gêneros de string para array
+    const genresArray = generosFavoritos
+      .split(",")
+      .map(g => g.trim())
+      .filter(g => g.length > 0);
+
+    try {
+      await updateUser({
+        name: nome,
+        bio: bio,
+        genres: genresArray,
+      });
+
+      Alert.alert(
+        "Perfil Atualizado",
+        "Suas informações foram salvas com sucesso!",
+        [{ text: "OK", onPress: () => router.back() }]
+      );
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível salvar as alterações.");
+    }
   };
+
+  // Mostrar loading enquanto carrega o usuário
+  if (authLoading || !user) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2E7D32" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -52,21 +83,16 @@ export default function EditarPerfilScreen() {
           />
         </View>
 
-        {/* Campo Email */}
+        {/* Campo Email (somente leitura) */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Digite seu email"
-            keyboardType="email-address"
-            autoCapitalize="none"
+            value={user.email}
+            editable={false}
             placeholderTextColor="#999"
           />
         </View>
-
-
 
         {/* Campo Bio */}
         <View style={styles.inputGroup}>
@@ -75,7 +101,7 @@ export default function EditarPerfilScreen() {
             style={[styles.input, styles.textArea]}
             value={bio}
             onChangeText={setBio}
-            placeholder="Conte um pouco sobre você e seus gostos literários"
+            placeholder="Conte um pouco sobre você..."
             multiline
             numberOfLines={3}
             textAlignVertical="top"
@@ -90,26 +116,13 @@ export default function EditarPerfilScreen() {
             style={styles.input}
             value={generosFavoritos}
             onChangeText={setGenerosFavoritos}
-            placeholder="Ex: Fantasia, Romance, Ficção Científica"
+            placeholder="Ex: Fantasia, Romance"
             placeholderTextColor="#999"
           />
           <Text style={styles.hint}>Separe os gêneros por vírgula</Text>
         </View>
 
-        {/* Seção de Configurações */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Configurações da Conta</Text>
-          
-          <TouchableOpacity style={styles.configOption}>
-            <View style={styles.configOptionLeft}>
-              <Ionicons name="lock-closed-outline" size={20} color="#333" />
-              <Text style={styles.configText}>Alterar Senha</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Botão de Salvar Principal */}
+        {/* Botão Salvar Principal */}
         <TouchableOpacity style={styles.saveButtonMain} onPress={salvarPerfil}>
           <Ionicons name="checkmark-circle" size={20} color="#fff" />
           <Text style={styles.saveButtonText}>Salvar Alterações</Text>
@@ -122,6 +135,13 @@ export default function EditarPerfilScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "#fff",
+},
+
   container: { 
     flex: 1, 
     backgroundColor: "#fff" 

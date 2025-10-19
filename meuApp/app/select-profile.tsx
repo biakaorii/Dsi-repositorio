@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   button: {
     width: '80%',
     paddingVertical: 15,
-    borderRadius: 15, // igual ao seu cadastro
+    borderRadius: 15,
     marginBottom: 15,
     alignItems: 'center',
   },
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   continueButton: {
-    backgroundColor: '#2E8B57', // fundo verde
+    backgroundColor: '#2E8B57',
     borderColor: 'transparent',
   },
   buttonText: {

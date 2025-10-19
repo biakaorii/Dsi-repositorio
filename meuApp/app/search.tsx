@@ -9,7 +9,7 @@ import {
   StyleSheet 
 } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 
 const categories = [
   "romance", "fantasia", "ficção", "suspense", "terror", "ação", 
@@ -23,6 +23,7 @@ const mockBooks = [
 
 export default function Search() {
   const [query, setQuery] = useState('');
+  const router = useRouter();
 
   const renderCategory = (item: string) => (
     <TouchableOpacity key={item} style={styles.chip}>
@@ -89,7 +90,7 @@ export default function Search() {
             <Ionicons name="search-outline" size={26} color="#2E7D32" />
           </TouchableOpacity>
         </Link>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/progresso')}>
           <Ionicons name="book-outline" size={26} color="#777" />
         </TouchableOpacity>
         <TouchableOpacity>

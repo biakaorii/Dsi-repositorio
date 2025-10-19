@@ -1,10 +1,50 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
+
+
 
 export default function PerfilScreen() {
   const router = useRouter();
+  const { user, loading, signOut } = useAuth();
+  
+  const handleLogout = async () => {
+  try {
+    await signOut();
+    router.replace("/login"); // redireciona e remove a tela atual do histórico
+  } catch (error) {
+    console.error("Erro ao sair:", error);
+  }
+};
+
+  // Enquanto carrega ou se não houver usuário
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2E7D32" />
+        </View>
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ textAlign: "center", marginTop: 50 }}>
+          Nenhum usuário logado
+        </Text>
+      </View>
+    );
+  }
+
+  // Dados do usuário
+  const name = user.name || "Usuário";
+  const bio = user.bio || "Leitor ávido";
+  const genres = user.genres || ["Fantasia", "Romance", "Suspense"]; // fallback
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -17,14 +57,16 @@ export default function PerfilScreen() {
         {/* Foto e Nome */}
         <View style={styles.profileSection}>
           <Image
-            source={{ uri: "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png" }}
+            source={{
+              uri: "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png",
+            }}
             style={styles.profileImage}
           />
-          <Text style={styles.profileName}>Rhuan Victor</Text>
-          <Text style={styles.profileSubtitle}>Leitor ávido de ficção</Text>
-          
+          <Text style={styles.profileName}>{name}</Text>
+          <Text style={styles.profileSubtitle}>{bio}</Text>
+
           {/* Botão Acompanhar Progresso */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.progressButton}
             onPress={() => router.push("/progresso")}
           >
@@ -53,22 +95,18 @@ export default function PerfilScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Gêneros Favoritos</Text>
           <View style={styles.tagsContainer}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Fantasia</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Romance</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Suspense</Text>
-            </View>
+            {genres.map((genre, index) => (
+              <View key={index} style={styles.tag}>
+                <Text style={styles.tagText}>{genre}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
         {/* Ações */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Opções</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.optionButton}
             onPress={() => router.push("/editarPerfil")}
           >
@@ -79,7 +117,7 @@ export default function PerfilScreen() {
             <Ionicons name="book-outline" size={20} color="#333" />
             <Text style={styles.optionText}>Meus Reviews</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.optionButton}>
+          <TouchableOpacity style={styles.optionButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#E63946" />
             <Text style={[styles.optionText, { color: "#E63946" }]}>Sair</Text>
           </TouchableOpacity>
@@ -91,7 +129,7 @@ export default function PerfilScreen() {
         <TouchableOpacity onPress={() => router.push("/home")}>
           <Ionicons name="home-outline" size={26} color="#777" />
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/search")}>
           <Ionicons name="search-outline" size={26} color="#777" />
         </TouchableOpacity>
         <TouchableOpacity>
@@ -107,6 +145,11 @@ export default function PerfilScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -158,7 +201,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 20,
   },
-  tagText: { fontSize: 13, color: "#2E7D32", fontWeight: '500' },
+  tagText: { fontSize: 13, color: "#2E7D32", fontWeight: "500" },
 
   optionButton: {
     flexDirection: "row",
