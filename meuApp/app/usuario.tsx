@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIn
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
-
+import BottomNavBar from "../components/BottomNavBar";
 
 
 export default function PerfilScreen() {
@@ -125,20 +125,8 @@ export default function PerfilScreen() {
       </ScrollView>
 
       {/* Barra de navegação inferior */}
-      <View style={styles.navbar}>
-        <TouchableOpacity onPress={() => router.push("/home")}>
-          <Ionicons name="home-outline" size={26} color="#777" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/search")}>
-          <Ionicons name="search-outline" size={26} color="#777" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="book-outline" size={26} color="#777" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/usuario")}>
-          <Ionicons name="person" size={26} color="#2E7D32" />
-        </TouchableOpacity>
-      </View>
+      <BottomNavBar />
+
     </View>
   );
 }

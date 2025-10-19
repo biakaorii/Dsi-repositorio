@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from 'expo-router';
+import BottomNavBar from "../components/BottomNavBar";
 
 const categories = [
   "romance", "fantasia", "ficção", "suspense", "terror", "ação", 
@@ -79,24 +80,8 @@ export default function Search() {
       </ScrollView>
 
       {/* Navbar inferior */}
-      <View style={styles.navbar}>
-        <Link href="/home" asChild>
-          <TouchableOpacity>
-            <Ionicons name="home" size={26} color="#777" />
-          </TouchableOpacity>
-        </Link>
-        <Link href="/search" asChild>
-          <TouchableOpacity>
-            <Ionicons name="search-outline" size={26} color="#2E7D32" />
-          </TouchableOpacity>
-        </Link>
-        <TouchableOpacity onPress={() => router.push('/progresso')}>
-          <Ionicons name="book-outline" size={26} color="#777" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="person-outline" size={26} color="#777" />
-        </TouchableOpacity>
-      </View>
+      <BottomNavBar />
+
     </View>
   );
 }
