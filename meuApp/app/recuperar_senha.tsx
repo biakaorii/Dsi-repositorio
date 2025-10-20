@@ -1,89 +1,81 @@
+// app/recuperar_senha.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../config/firebaseConfig'; // ✅ Ajuste o caminho se necessário
 
 const RecuperarSenha = () => {
-  const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Validação de senha
-  const isValidPassword = () => {
-    if (newPassword !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem.');
-      return false;
-    }
-    if (newPassword.length < 8) {
-      Alert.alert('Erro', 'A senha deve ter pelo menos 8 caracteres.');
-      return false;
-    }
-    if (!/[A-Z]/.test(newPassword)) {
-      Alert.alert('Erro', 'A senha deve conter pelo menos uma letra maiúscula.');
-      return false;
-    }
-    if (!/[a-z]/.test(newPassword)) {
-      Alert.alert('Erro', 'A senha deve conter pelo menos uma letra minúscula.');
-      return false;
-    }
-    if (!/\d/.test(newPassword)) {
-      Alert.alert('Erro', 'A senha deve conter pelo menos um número.');
-      return false;
-    }
-    if (!/[^A-Za-z0-9]/.test(newPassword)) {
-      Alert.alert('Erro', 'A senha deve conter pelo menos um caractere especial.');
-      return false;
-    }
-    return true;
+  const showError = (message: string) => {
+    Toast.show({
+      type: 'error',
+      text1: 'Erro',
+      text2: message,
+      visibilityTime: 3000,
+      autoHide: true,
+      topOffset: 50,
+      bottomOffset: 40,
+    });
   };
 
-  const handleNextStep = () => {
-    switch (step) {
-      case 1:
-        if (!email.includes('@')) {
-          Alert.alert('Erro', 'Por favor, insira um e-mail válido.');
-          return;
-        }
-        setStep(2);
-        break;
-      case 2:
-        if (code.length !== 4 || !/^\d+$/.test(code)) {
-          Alert.alert('Erro', 'Código inválido.');
-          return;
-        }
-        setStep(3);
-        break;
-      case 3:
-        if (!isValidPassword()) return;
+  const handleSendResetEmail = async () => {
+    if (!email.includes('@')) {
+      showError('Por favor, insira um e-mail válido.');
+      return;
+    }
 
-        Toast.show({
-          type: 'success',
-          text1: 'Sucesso',
-          text2: 'Senha redefinida com sucesso!',
-          visibilityTime: 3000,
-          autoHide: true,
-          onHide: () => {
-            setEmail('');
-            setCode('');
-            setNewPassword('');
-            setConfirmPassword('');
-            router.push('/login');
-          },
-        });
-        break;
+    setLoading(true);
+    try {
+      // ✅ Envia e-mail de redefinição diretamente ao Firebase
+      await sendPasswordResetEmail(auth, email);
+
+      Toast.show({
+        type: 'success',
+        text1: 'E-mail enviado!',
+        text2: 'Verifique sua caixa de entrada (e spam) para redefinir sua senha.',
+        visibilityTime: 5000,
+        autoHide: true,
+        topOffset: 50,
+        bottomOffset: 40,
+        onHide: () => {
+          router.replace('/login');
+        },
+      });
+    } catch (error: any) {
+      console.error('Erro ao enviar e-mail:', error);
+      let message = 'Não foi possível enviar o e-mail.';
+      if (error.code === 'auth/user-not-found') {
+        message = 'Nenhum usuário cadastrado com este e-mail.';
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'E-mail inválido.';
+      } else if (error.code === 'auth/missing-email') {
+        message = 'Por favor, digite um e-mail.';
+      }
+      showError(message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const renderStep1 = () => (
+  return (
     <View style={styles.container}>
-      <Text style={styles.title}>Recuperar senha</Text>
+      <Text style={styles.title}>Esqueceu sua senha?</Text>
       <Text style={styles.subtitle}>
-        Digite seu e-mail para receber o código de redefinição de senha
+        Digite seu e-mail e enviaremos um link seguro para redefinir sua senha.
       </Text>
+
       <TextInput
         style={styles.input}
         placeholder="seu@email.com"
@@ -91,71 +83,30 @@ const RecuperarSenha = () => {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+        editable={!loading}
       />
-      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-        <Text style={styles.buttonText}>Enviar código</Text>
-      </TouchableOpacity>
-    </View>
-  );
 
-  const renderStep2 = () => (
-    <View style={styles.container}>
-      <Text style={styles.title}>Recuperar senha</Text>
-      <Text style={styles.subtitle}>
-        Digite o código de recuperação de senha
-      </Text>
-      <TextInput
-        style={styles.input}
-        placeholder="1234"
-        value={code}
-        onChangeText={setCode}
-        keyboardType="number-pad"
-        maxLength={4}
-      />
-      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-        <Text style={styles.buttonText}>Confirmar Código</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={handleSendResetEmail}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={styles.buttonText}>Enviar link de redefinição</Text>
+        )}
       </TouchableOpacity>
-    </View>
-  );
 
-  const renderStep3 = () => (
-    <View style={styles.container}>
-      <Text style={styles.title}>Recuperar senha</Text>
-      <Text style={styles.subtitle}>
-        Redefina sua senha
-      </Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nova senha"
-        secureTextEntry
-        value={newPassword}
-        onChangeText={setNewPassword}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirmar senha"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
-      <Text style={styles.passwordRules}>
-        A senha deve conter:
-        <Text style={styles.ruleItem}> • Letras maiúsculas</Text>
-        <Text style={styles.ruleItem}> • Números</Text>
-        <Text style={styles.ruleItem}> • Letras minúsculas</Text>
-        <Text style={styles.ruleItem}> • Um caractere especial</Text>
-      </Text>
-      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-        <Text style={styles.buttonText}>Definir senha</Text>
+      <TouchableOpacity
+        style={{ marginTop: 20 }}
+        onPress={() => router.push('/login')}
+        disabled={loading}
+      >
+        <Text style={styles.backLink}>Voltar para o login</Text>
       </TouchableOpacity>
-    </View>
-  );
 
-  return (
-    <View style={styles.container}>
-      {step === 1 && renderStep1()}
-      {step === 2 && renderStep2()}
-      {step === 3 && renderStep3()}
+      <Toast />
     </View>
   );
 };
@@ -206,23 +157,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
+  buttonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
   buttonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  passwordRules: {
-    fontSize: 12,
-    textAlign: 'left',
-    marginTop: 10,
-    color: '#666',
-    width: 312,
-    paddingHorizontal: 15,
-    alignSelf: 'center',
-  },
-  ruleItem: {
-    fontSize: 12,
-    color: '#666',
+  backLink: {
+    color: '#2E8B57',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
 

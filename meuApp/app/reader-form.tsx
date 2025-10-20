@@ -6,14 +6,14 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../contexts/AuthContext'; // ✅ Caminho correto
+import { useAuth } from '../contexts/AuthContext';
+import Toast from 'react-native-toast-message';
 
 const ReaderFormScreen = () => {
   const router = useRouter();
-  const { updateUser, user } = useAuth(); // ✅ Pega updateUser e user
+  const { updateUser, user } = useAuth();
 
   const [readingGoal, setReadingGoal] = useState('');
   const [age, setAge] = useState('');
@@ -41,37 +41,51 @@ const ReaderFormScreen = () => {
     }
   };
 
+  const showToast = (type: 'success' | 'error' | 'info', text1: string, text2?: string) => {
+    Toast.show({
+      type,
+      text1,
+      text2,
+      visibilityTime: 2500, // 2.5 segundos
+      autoHide: true,
+      topOffset: 50,
+      bottomOffset: 40,
+    });
+  };
+
   const handleSubmit = async () => {
     if (!readingGoal || !age) {
-      Alert.alert('Atenção', 'Preencha seu objetivo de leitura e idade!');
+      showToast('error', 'Atenção', 'Preencha seu objetivo de leitura e idade!');
       return;
     }
 
     if (!user) {
-      Alert.alert('Erro', 'Usuário não autenticado');
+      showToast('error', 'Erro', 'Usuário não autenticado');
       return;
     }
 
-    // ✅ Dados a serem salvos
     const dataToSave = {
       readingGoal,
       age,
-      genres: selectedGenres, // ← array de strings
+      genres: selectedGenres,
       profileType: 'leitor' as const,
     };
 
     try {
-      const result = await updateUser(dataToSave); // ✅ Chama updateUser
+      const result = await updateUser(dataToSave);
 
       if (result.success) {
-        Alert.alert('Sucesso!', 'Seu perfil foi atualizado!');
-        router.replace('/home');
+        showToast('success', 'Sucesso!', 'Seu perfil foi atualizado!');
+        // Aguarda um pouco para o toast ser visto antes de navegar
+        setTimeout(() => {
+          router.replace('/home');
+        }, 1000);
       } else {
-        Alert.alert('Erro', result.error || 'Falha ao salvar.');
+        showToast('error', 'Erro', result.error || 'Falha ao salvar.');
       }
     } catch (error) {
       console.error('Erro inesperado:', error);
-      Alert.alert('Erro', 'Ocorreu um erro. Tente novamente.');
+      showToast('error', 'Erro', 'Ocorreu um erro. Tente novamente.');
     }
   };
 
@@ -124,6 +138,9 @@ const ReaderFormScreen = () => {
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Salvar Perfil</Text>
       </TouchableOpacity>
+
+      {/* Componente Toast */}
+      <Toast />
     </View>
   );
 };
