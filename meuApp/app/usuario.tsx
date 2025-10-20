@@ -1,25 +1,33 @@
+// app/usuario.tsx
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
 import BottomNavBar from "../components/BottomNavBar";
 
-
 export default function PerfilScreen() {
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
-  
-  const handleLogout = async () => {
-  try {
-    await signOut();
-    router.replace("/login"); // redireciona e remove a tela atual do histórico
-  } catch (error) {
-    console.error("Erro ao sair:", error);
-  }
-};
 
-  // Enquanto carrega ou se não houver usuário
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.replace("/login");
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    }
+  };
+
+  // Enquanto carrega
   if (loading) {
     return (
       <View style={styles.container}>
@@ -30,6 +38,7 @@ export default function PerfilScreen() {
     );
   }
 
+  // Se não houver usuário autenticado
   if (!user) {
     return (
       <View style={styles.container}>
@@ -42,8 +51,8 @@ export default function PerfilScreen() {
 
   // Dados do usuário
   const name = user.name || "Usuário";
-  const bio = user.bio || "Leitor ávido";
-  const genres = user.genres || ["Fantasia", "Romance", "Suspense"]; // fallback
+  // ✅ Prioriza readingGoal, depois bio, depois fallback
+  const bio = user.readingGoal || user.bio || "Leitor ávido";
 
   return (
     <View style={styles.container}>
@@ -91,15 +100,23 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        {/* Preferências */}
+        {/* Preferências: Gêneros Favoritos */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Gêneros Favoritos</Text>
           <View style={styles.tagsContainer}>
-            {genres.map((genre, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{genre}</Text>
-              </View>
-            ))}
+            {user.genres && Array.isArray(user.genres) ? (
+              user.genres
+                .filter(genre => typeof genre === 'string' && genre.trim() !== '')
+                .map((genre) => (
+                  <View key={genre} style={styles.tag}>
+                    <Text style={styles.tagText}>{genre}</Text>
+                  </View>
+                ))
+            ) : (
+              <Text style={{ color: "#666", fontStyle: "italic" }}>
+                Nenhum gênero selecionado
+              </Text>
+            )}
           </View>
         </View>
 
@@ -126,7 +143,6 @@ export default function PerfilScreen() {
 
       {/* Barra de navegação inferior */}
       <BottomNavBar />
-
     </View>
   );
 }
@@ -200,13 +216,4 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   optionText: { marginLeft: 10, fontSize: 15, color: "#333" },
-
-  navbar: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#ddd",
-    backgroundColor: "#E8F5E9",
-  },
 });
