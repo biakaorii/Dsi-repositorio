@@ -9,10 +9,13 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext'; // ✅ Caminho correto
 
 const ReaderFormScreen = () => {
   const router = useRouter();
-  const [name, setName] = useState('');
+  const { updateUser, user } = useAuth(); // ✅ Pega updateUser e user
+
+  const [readingGoal, setReadingGoal] = useState('');
   const [age, setAge] = useState('');
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
 
@@ -38,21 +41,38 @@ const ReaderFormScreen = () => {
     }
   };
 
-  const handleSubmit = () => {
-    if (!name || !age) {
-      Alert.alert('Atenção', 'Preencha nome e idade!');
+  const handleSubmit = async () => {
+    if (!readingGoal || !age) {
+      Alert.alert('Atenção', 'Preencha seu objetivo de leitura e idade!');
       return;
     }
 
-    console.log({
-      name,
-      age,
-      genres: selectedGenres,
-      profileType: 'leitor',
-    });
+    if (!user) {
+      Alert.alert('Erro', 'Usuário não autenticado');
+      return;
+    }
 
-    Alert.alert('Sucesso!', 'Cadastro finalizado com sucesso!');
-    router.replace('/home');
+    // ✅ Dados a serem salvos
+    const dataToSave = {
+      readingGoal,
+      age,
+      genres: selectedGenres, // ← array de strings
+      profileType: 'leitor' as const,
+    };
+
+    try {
+      const result = await updateUser(dataToSave); // ✅ Chama updateUser
+
+      if (result.success) {
+        Alert.alert('Sucesso!', 'Seu perfil foi atualizado!');
+        router.replace('/home');
+      } else {
+        Alert.alert('Erro', result.error || 'Falha ao salvar.');
+      }
+    } catch (error) {
+      console.error('Erro inesperado:', error);
+      Alert.alert('Erro', 'Ocorreu um erro. Tente novamente.');
+    }
   };
 
   return (
@@ -61,10 +81,14 @@ const ReaderFormScreen = () => {
 
       <TextInput
         style={styles.input}
-        placeholder="Nome"
-        value={name}
-        onChangeText={setName}
+        placeholder="Qual seu objetivo com a leitura?"
+        value={readingGoal}
+        onChangeText={setReadingGoal}
+        multiline
+        numberOfLines={2}
+        textAlignVertical="top"
       />
+
       <TextInput
         style={styles.input}
         placeholder="Idade"
@@ -73,7 +97,7 @@ const ReaderFormScreen = () => {
         onChangeText={setAge}
       />
 
-      <Text style={styles.subtitle}>Insira suas preferências de gêneros para leitura</Text>
+      <Text style={styles.subtitle}>Seus gêneros favoritos</Text>
 
       <View style={styles.genresContainer}>
         {genres.map((genre) => (
@@ -98,7 +122,7 @@ const ReaderFormScreen = () => {
       </View>
 
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Cadastrar</Text>
+        <Text style={styles.buttonText}>Salvar Perfil</Text>
       </TouchableOpacity>
     </View>
   );
@@ -107,7 +131,7 @@ const ReaderFormScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center', // ✅ Centraliza verticalmente
+    justifyContent: 'center', // Centraliza verticalmente
     padding: 20,
     backgroundColor: '#fff',
   },
@@ -149,8 +173,8 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   selectedGenre: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+    backgroundColor: '#2E8B57',
+    borderColor: '#2E8B57',
   },
   genreText: {
     fontSize: 14,
@@ -160,12 +184,15 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   button: {
-    width: '100%',
-    paddingVertical: 15,
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 30,
+    width: 312,
+    height: 45,
+    alignSelf: 'center',
+    backgroundColor: "#2E8B57",
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 20,
   },
   buttonText: {
     color: '#fff',

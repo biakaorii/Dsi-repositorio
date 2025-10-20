@@ -20,6 +20,7 @@ interface UserData {
   profileType?: 'leitor' | 'empreendedor' | 'critico';
   age?: string;
   genres?: string[];
+  readingGoal?: string;
   businessName?: string;
   cnpj?: string;
   address?: string;

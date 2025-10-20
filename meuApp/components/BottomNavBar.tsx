@@ -1,28 +1,60 @@
+// components/BottomNavBar.tsx
 import React from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { Link } from "expo-router";
+import { useRouter, Link, usePathname } from "expo-router";
+
+const navItems = [
+  { route: "/home", icon: "home", activeIcon: "home" },
+  { route: "/search", icon: "search-outline", activeIcon: "search" },
+  { route: "/progresso", icon: "book-outline", activeIcon: "book" },
+  { route: "/usuario", icon: "person-outline", activeIcon: "person" },
+] as const;
 
 export default function BottomNavBar() {
   const router = useRouter();
+  const currentRoute = usePathname();
+
+  const getIconColor = (route: (typeof navItems)[number]["route"]) => {
+    return currentRoute === route ? "#2E7D32" : "#777";
+  };
+
+  const getIconName = (item: (typeof navItems)[number]) => {
+    return currentRoute === item.route ? item.activeIcon : item.icon;
+  };
 
   return (
     <View style={styles.navbar}>
-      <TouchableOpacity onPress={() => router.push('/home')}>
-        <Ionicons name="home" size={26} color="#2E7D32" />
-      </TouchableOpacity>
-      <Link href="/search" asChild>
-        <TouchableOpacity>
-          <Ionicons name="search-outline" size={26} color="#777" />
-        </TouchableOpacity>
-      </Link>
-      <TouchableOpacity onPress={() => router.push('/progresso')}>
-        <Ionicons name="book-outline" size={26} color="#777" />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push('/usuario')}>
-        <Ionicons name="person-outline" size={26} color="#777" />
-      </TouchableOpacity>
+      {navItems.map((item) => {
+        if (item.route === "/search") {
+          // Usa Link para /search (como no original)
+          return (
+            <Link key={item.route} href={item.route} asChild>
+              <TouchableOpacity>
+                <Ionicons
+                  name={getIconName(item)}
+                  size={26}
+                  color={getIconColor(item.route)}
+                />
+              </TouchableOpacity>
+            </Link>
+          );
+        } else {
+          
+          return (
+            <TouchableOpacity
+              key={item.route}
+              onPress={() => router.push(item.route)}
+            >
+              <Ionicons
+                name={getIconName(item)}
+                size={26}
+                color={getIconColor(item.route)}
+              />
+            </TouchableOpacity>
+          );
+        }
+      })}
     </View>
   );
 }
