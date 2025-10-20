@@ -96,17 +96,20 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#F8F9FA',
     marginHorizontal: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
   input: {
     flex: 1,
     fontSize: 16,
     paddingVertical: 4,
     fontWeight: "bold", // ✅ corrigido
+    color: '#333',
   },
   clearText: {
     fontSize: 14,
