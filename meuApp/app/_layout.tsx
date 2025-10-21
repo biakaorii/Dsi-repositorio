@@ -25,6 +25,7 @@ export default function Layout() {
           <Stack.Screen name="editarPerfil"/>
           <Stack.Screen name="progresso"/>
           <Stack.Screen name="book-details"/>
+          <Stack.Screen name="detalhe_livro"/>
         </Stack>
         <Toast topOffset={height / 2 - 60} />
       </ReviewsProvider>
