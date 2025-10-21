@@ -1,12 +1,99 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { Link } from "expo-router";
-import BottomNavBar from "../components/BottomNavBar";
+import { useRouter, Link } from "expo-router";
+
+type Book = {
+  title: string;
+  author: string;
+  coverUrl: string;
+  genre: string;
+  synopsis: string;
+};
+
+const books: Book[] = [
+  {
+    title: "Percy Jackson e o Ladrão de Raios",
+    author: "Rick Riordan",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/142313494X-L.jpg",
+    genre: "Fantasia, Aventura",
+    synopsis:
+      "Percy descobre ser um semideus e parte em uma missão para recuperar o raio-mestre de Zeus e evitar uma guerra entre os deuses.",
+  },
+  {
+    title: "O Senhor dos Anéis: A Sociedade do Anel",
+    author: "J.R.R. Tolkien",
+    coverUrl: "https://covers.openlibrary.org/b/id/8231856-L.jpg",
+    genre: "Fantasia Épica",
+    synopsis:
+      "Frodo inicia a jornada para destruir o Um Anel, acompanhado por uma sociedade de heróis.",
+  },
+  {
+    title: "Dom Quixote",
+    author: "Miguel de Cervantes",
+    coverUrl: "https://covers.openlibrary.org/b/id/554615-L.jpg",
+    genre: "Clássico, Sátira",
+    synopsis:
+      "Um fidalgo idealista decide tornar-se cavaleiro andante e vive aventuras ao lado de Sancho Pança.",
+  },
+  {
+    title: "O Pequeno Príncipe",
+    author: "Antoine de Saint-Exupéry",
+    coverUrl: "https://covers.openlibrary.org/b/id/240726-L.jpg",
+    genre: "Fábula, Filosofia",
+    synopsis:
+      "Um pequeno príncipe viaja por planetas e reflete sobre amizade, amor e a essência das coisas.",
+  },
+  {
+    title: "A Arte da Guerra",
+    author: "Sun Tzu",
+    coverUrl: "https://covers.openlibrary.org/b/id/11153267-L.jpg",
+    genre: "Estratégia, Filosofia",
+    synopsis:
+      "Tratado clássico sobre estratégia e táticas aplicáveis à guerra e à vida.",
+  },
+  {
+    title: "1984",
+    author: "George Orwell",
+    coverUrl: "https://covers.openlibrary.org/b/id/9281731-L.jpg",
+    genre: "Distopia",
+    synopsis:
+      "Winston Smith luta contra um regime totalitário que controla pensamentos e reescreve a história.",
+  },
+  {
+    title: "O Hobbit",
+    author: "J.R.R. Tolkien",
+    coverUrl: "https://covers.openlibrary.org/b/id/8221256-L.jpg",
+    genre: "Fantasia",
+    synopsis:
+      "Bilbo Bolseiro embarca em uma aventura com anões para recuperar um tesouro guardado por um dragão.",
+  },
+  {
+    title: "Harry Potter e a Pedra Filosofal",
+    author: "J.K. Rowling",
+    coverUrl: "https://covers.openlibrary.org/b/id/10521215-L.jpg",
+    genre: "Fantasia",
+    synopsis:
+      "Harry descobre ser um bruxo e enfrenta os primeiros desafios em Hogwarts.",
+  },
+];
 
 export default function HomeScreen() {
   const router = useRouter();
+
+  const openDetails = (book: Book) => {
+    router.push({
+      pathname: "/book-details",
+      params: {
+        title: book.title,
+        author: book.author,
+        coverUrl: book.coverUrl,
+        genre: book.genre,
+        synopsis: book.synopsis,
+      },
+    });
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -21,35 +108,20 @@ export default function HomeScreen() {
           <Text style={styles.bannerText}>Descubra novos livros 📚</Text>
         </View>
 
-        {/* Sessão: Recomendados */}
+        {/* Recomendados */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recomendados para você</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.card}>
-              <Image
-                source={{ uri: "https://covers.openlibrary.org/b/id/8221256-L.jpg" }}
-                style={styles.bookImage}
-              />
-              <Text style={styles.bookTitle}>O Hobbit</Text>
-            </View>
-            <View style={styles.card}>
-              <Image
-                source={{ uri: "https://covers.openlibrary.org/b/id/9281731-L.jpg" }}
-                style={styles.bookImage}
-              />
-              <Text style={styles.bookTitle}>1984</Text>
-            </View>
-            <View style={styles.card}>
-              <Image
-                source={{ uri: "https://covers.openlibrary.org/b/id/10521215-L.jpg" }}
-                style={styles.bookImage}
-              />
-              <Text style={styles.bookTitle}>Harry Potter e a Pedra Filosofal</Text>
-            </View>
+            {books.map((b) => (
+              <TouchableOpacity key={b.title} style={styles.card} onPress={() => openDetails(b)}>
+                <Image source={{ uri: b.coverUrl }} style={styles.bookImage} />
+                <Text numberOfLines={2} style={styles.bookTitle}>{b.title}</Text>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         </View>
 
-        {/* Sessão: Continuar Lendo */}
+        {/* Continuar Lendo */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Continuar lendo</Text>
           <View style={styles.readingCard}>
@@ -65,7 +137,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Sessão: Gêneros Populares */}
+        {/* Gêneros Populares */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Gêneros Populares</Text>
           <View style={styles.tagsContainer}>
@@ -75,9 +147,38 @@ export default function HomeScreen() {
             <View style={styles.tag}><Text style={styles.tagText}>Ciência</Text></View>
           </View>
         </View>
+
+        {/* Mais Livros para Explorar (Carrossel duplicado) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Mais Livros para Explorar</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {books.map((b) => (
+              <TouchableOpacity key={`explore-${b.title}`} style={styles.card} onPress={() => openDetails(b)}>
+                <Image source={{ uri: b.coverUrl }} style={styles.bookImage} />
+                <Text numberOfLines={2} style={styles.bookTitle}>{b.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
       </ScrollView>
 
-      <BottomNavBar />
+      {/* Barra de navegação inferior */}
+      <View style={styles.navbar}>
+        <TouchableOpacity>
+          <Ionicons name="home" size={26} color="#2E7D32" />
+        </TouchableOpacity>
+        <Link href="/search" asChild>
+          <TouchableOpacity>
+            <Ionicons name="search-outline" size={26} color="#777" />
+          </TouchableOpacity>
+        </Link>
+        <TouchableOpacity>
+          <Ionicons name="book-outline" size={26} color="#777" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/usuario")}>
+          <Ionicons name="person-outline" size={26} color="#777" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -110,11 +211,11 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 12,
     marginRight: 10,
-    width: 120,
+    width: 140,
     alignItems: "center",
   },
-  bookImage: { width: 80, height: 110, borderRadius: 8, marginBottom: 8 },
-  bookTitle: { fontSize: 13, fontWeight: "500", textAlign: "center", color: "#2E7D32" },
+  bookImage: { width: 90, height: 120, borderRadius: 8, marginBottom: 8 },
+  bookTitle: { fontSize: 12, fontWeight: "600", textAlign: "center", color: "#2E7D32" },
 
   readingCard: {
     flexDirection: "row",
