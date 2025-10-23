@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, Link } from "expo-router";
+import BottomNavBar from "../components/BottomNavBar";
 
 type Book = {
   title: string;
@@ -163,22 +164,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Barra de navegação inferior */}
-      <View style={styles.navbar}>
-        <TouchableOpacity>
-          <Ionicons name="home" size={26} color="#2E7D32" />
-        </TouchableOpacity>
-        <Link href="/search" asChild>
-          <TouchableOpacity>
-            <Ionicons name="search-outline" size={26} color="#777" />
-          </TouchableOpacity>
-        </Link>
-        <TouchableOpacity>
-          <Ionicons name="book-outline" size={26} color="#777" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/usuario")}>
-          <Ionicons name="person-outline" size={26} color="#777" />
-        </TouchableOpacity>
-      </View>
+      <BottomNavBar />
     </View>
   );
 }
