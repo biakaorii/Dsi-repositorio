@@ -1,9 +1,10 @@
 // app/editarPerfil.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
+import Toast from 'react-native-toast-message';
 
 export default function EditarPerfilScreen() {
   const router = useRouter();
@@ -38,13 +39,27 @@ export default function EditarPerfilScreen() {
         genres: genresArray,
       });
 
-      Alert.alert(
-        "Perfil Atualizado",
-        "Suas informações foram salvas com sucesso!",
-        [{ text: "OK", onPress: () => router.back() }]
-      );
+      Toast.show({
+        type: 'success',
+        text1: 'Perfil Atualizado',
+        text2: 'Suas informações foram salvas com sucesso!',
+        visibilityTime: 2500,
+        autoHide: true,
+        topOffset: 50,
+      });
+      
+      setTimeout(() => {
+        router.back();
+      }, 1000);
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar as alterações.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível salvar as alterações.',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
     }
   };
 
@@ -130,6 +145,8 @@ export default function EditarPerfilScreen() {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      <Toast />
     </View>
   );
 }

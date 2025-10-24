@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useReviews, Review } from "../contexts/ReviewsContext";
+import Toast from 'react-native-toast-message';
 
 export default function BookDetailsScreen() {
   const router = useRouter();
@@ -71,17 +72,38 @@ export default function BookDetailsScreen() {
 
   const handleSubmitReview = async () => {
     if (!user) {
-      Alert.alert("Atenção", "Faça login para avaliar");
+      Toast.show({
+        type: 'error',
+        text1: 'Atenção',
+        text2: 'Faça login para avaliar',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return;
     }
 
     if (rating === 0) {
-      Alert.alert("Atenção", "Selecione uma avaliação");
+      Toast.show({
+        type: 'error',
+        text1: 'Atenção',
+        text2: 'Selecione uma avaliação',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return;
     }
 
     if (!comment.trim()) {
-      Alert.alert("Atenção", "Escreva um comentário");
+      Toast.show({
+        type: 'error',
+        text1: 'Atenção',
+        text2: 'Escreva um comentário',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return;
     }
 
@@ -97,16 +119,27 @@ export default function BookDetailsScreen() {
     setSubmitting(false);
 
     if (result.success) {
-      Alert.alert(
-        "Sucesso",
-        isEditing ? "Review atualizado!" : "Review publicado!"
-      );
+      Toast.show({
+        type: 'success',
+        text1: 'Sucesso',
+        text2: isEditing ? 'Review atualizado!' : 'Review publicado!',
+        visibilityTime: 2500,
+        autoHide: true,
+        topOffset: 50,
+      });
       if (!isEditing) {
         setRating(0);
         setComment("");
       }
     } else {
-      Alert.alert("Erro", result.error || "Erro ao salvar review");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: result.error || 'Erro ao salvar review',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
     }
   };
 
@@ -122,13 +155,27 @@ export default function BookDetailsScreen() {
           onPress: async () => {
             const result = await deleteReview(reviewId);
             if (result.success) {
-              Alert.alert("Sucesso", "Review excluído!");
+              Toast.show({
+                type: 'success',
+                text1: 'Sucesso',
+                text2: 'Review excluído!',
+                visibilityTime: 2500,
+                autoHide: true,
+                topOffset: 50,
+              });
               setRating(0);
               setComment("");
               setIsEditing(false);
               setEditingReviewId(null);
             } else {
-              Alert.alert("Erro", result.error || "Erro ao excluir");
+              Toast.show({
+                type: 'error',
+                text1: 'Erro',
+                text2: result.error || 'Erro ao excluir',
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
             }
           },
         },
@@ -138,7 +185,14 @@ export default function BookDetailsScreen() {
 
   const handleLike = async (reviewId: string) => {
     if (!user) {
-      Alert.alert("Atenção", "Faça login para curtir");
+      Toast.show({
+        type: 'error',
+        text1: 'Atenção',
+        text2: 'Faça login para curtir',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return;
     }
 
@@ -341,6 +395,8 @@ export default function BookDetailsScreen() {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      <Toast />
     </View>
   );
 }

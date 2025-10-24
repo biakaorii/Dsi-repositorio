@@ -7,11 +7,11 @@ import {
   TouchableOpacity, 
   StyleSheet, 
   Image, 
-  Alert,
   ActivityIndicator
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
+import Toast from 'react-native-toast-message';
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
@@ -29,22 +29,50 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!name || !email || !password || !confirm) {
-      Alert.alert("Erro", "Preencha todos os campos");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Preencha todos os campos',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert("Erro", "Email inválido");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Email inválido',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'A senha deve ter pelo menos 6 caracteres',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return;
     }
 
     if (password !== confirm) {
-      Alert.alert("Erro", "As senhas não coincidem");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'As senhas não coincidem',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return;
     }
 
@@ -58,7 +86,14 @@ export default function RegisterScreen() {
       // Redirecionar para select-profile sem Alert
       router.replace("/select-profile");
     } else {
-      Alert.alert("Erro", result.error || "Erro ao criar conta");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: result.error || 'Erro ao criar conta',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
     }
   };     
 
@@ -117,6 +152,8 @@ export default function RegisterScreen() {
       <TouchableOpacity onPress={() => router.back()} disabled={loading}>
         <Text style={styles.link}>Já tem uma conta? Entrar</Text>
       </TouchableOpacity>
+
+      <Toast />
     </View>
   );
 }
