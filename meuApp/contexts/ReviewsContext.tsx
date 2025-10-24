@@ -68,6 +68,13 @@ export function ReviewsProvider({ children }: { children: ReactNode }) {
 
   // Listener em tempo real para reviews
   useEffect(() => {
+    // Só inicia o listener se houver usuário autenticado
+    if (!user) {
+      setReviews([]);
+      setLoading(false);
+      return;
+    }
+
     const reviewsRef = collection(db, 'reviews');
     const q = query(reviewsRef, orderBy('createdAt', 'desc'));
 
@@ -103,7 +110,7 @@ export function ReviewsProvider({ children }: { children: ReactNode }) {
     );
 
     return unsubscribe;
-  }, []);
+  }, [user]);
 
   // Criar review
   async function createReview(
