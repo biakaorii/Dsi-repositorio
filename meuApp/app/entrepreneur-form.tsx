@@ -7,8 +7,8 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 
 const EntrepreneurFormScreen = () => {
@@ -19,7 +19,14 @@ const EntrepreneurFormScreen = () => {
 
   const handleSubmit = () => {
     if (!businessName || !cnpj || !address) {
-      Alert.alert('Atenção', 'Preencha todos os campos!');
+      Toast.show({
+        type: 'error',
+        text1: 'Atenção',
+        text2: 'Preencha todos os campos!',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return;
     }
 
@@ -30,8 +37,18 @@ const EntrepreneurFormScreen = () => {
       profileType: 'empreendedor',
     });
 
-    Alert.alert('Sucesso!', 'Cadastro finalizado com sucesso!');
-    router.replace('/home');
+    Toast.show({
+      type: 'success',
+      text1: 'Sucesso!',
+      text2: 'Cadastro finalizado com sucesso!',
+      visibilityTime: 2500,
+      autoHide: true,
+      topOffset: 50,
+    });
+    
+    setTimeout(() => {
+      router.replace('/home');
+    }, 1000);
   };
 
   return (
@@ -62,6 +79,8 @@ const EntrepreneurFormScreen = () => {
       <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
         <Text style={styles.submitButtonText}>Continuar</Text>
       </TouchableOpacity>
+
+      <Toast />
     </View>
   );
 };

@@ -7,12 +7,12 @@ import {
   TouchableOpacity, 
   StyleSheet, 
   Image,
-  Alert,
   ActivityIndicator
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter, Link } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
+import Toast from 'react-native-toast-message';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState<string>("");
@@ -23,7 +23,14 @@ export default function LoginScreen() {
 
   const handleLogin = async (): Promise<void> => {
     if (!email || !password) {
-      Alert.alert("Erro", "Preencha todos os campos");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Preencha todos os campos',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return;
     }
 
@@ -36,7 +43,14 @@ export default function LoginScreen() {
     if (result.success) {
       router.replace("/home");
     } else {
-      Alert.alert("Erro", result.error || "Erro ao fazer login");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: result.error || 'Erro ao fazer login',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
     }
   };
 
@@ -85,6 +99,7 @@ export default function LoginScreen() {
         <Text style={styles.cadastrolink}>Cadastre-se</Text>
       </TouchableOpacity>
 
+      <Toast />
       <StatusBar style="auto" />
     </View>
   );
