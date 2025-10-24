@@ -45,6 +45,11 @@ export default function Search() {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Pesquisar</Text>
+      </View>
+
       {/* Barra de busca */}
       <View style={styles.searchBar}>
         <Ionicons name="search" size={20} color="#555" style={{ marginRight: 6 }} />
@@ -90,8 +95,18 @@ export default function Search() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50,
     backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 20,
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#2E7D32",
   },
   searchBar: {
     flexDirection: 'row',
