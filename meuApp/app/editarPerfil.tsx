@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import Toast from 'react-native-toast-message';
 import * as ImagePicker from 'expo-image-picker';
-import { uploadProfilePhoto } from '@/utils/uploadProfilePhoto';
+import { uploadProfilePhoto, deleteProfilePhoto } from '@/utils/uploadProfilePhoto';
 
 export default function EditarPerfilScreen() {
   const router = useRouter();
@@ -17,6 +17,7 @@ export default function EditarPerfilScreen() {
   const [generosFavoritos, setGenerosFavoritos] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [imageKey, setImageKey] = useState(0); // Para forçar reload da imagem
 
   // Preencher os campos quando o usuário for carregado
   useEffect(() => {
@@ -99,10 +100,30 @@ export default function EditarPerfilScreen() {
 
       // Se há uma nova imagem, fazer upload
       if (profileImage && profileImage !== user.profilePhotoUrl) {
+        console.log('🔵 Nova foto detectada, processando...');
+        
+        // 1. Deletar foto antiga do Supabase (se existir)
+        if (user.profilePhotoUrl) {
+          console.log('🗑️ Deletando foto antiga do Supabase...');
+          const deleted = await deleteProfilePhoto(user.uid);
+          if (deleted) {
+            console.log('✅ Foto antiga deletada com sucesso');
+          } else {
+            console.log('⚠️ Não foi possível deletar foto antiga (pode não existir)');
+          }
+        }
+        
+        // 2. Fazer upload da nova foto
+        console.log('📤 Fazendo upload da nova foto...');
         const uploadedUrl = await uploadProfilePhoto(profileImage, user.uid);
+        
         if (uploadedUrl) {
+          console.log('✅ Nova foto enviada com sucesso!');
           photoUrl = uploadedUrl;
+          // Adicionar timestamp para forçar reload no Android
+          photoUrl = `${uploadedUrl}?t=${Date.now()}`;
         } else {
+          console.log('❌ Erro ao fazer upload da nova foto');
           Toast.show({
             type: 'error',
             text1: 'Erro',
@@ -111,6 +132,8 @@ export default function EditarPerfilScreen() {
             autoHide: true,
             topOffset: 50,
           });
+          setUploading(false);
+          return; // Não continua se o upload falhar
         }
       }
 
@@ -120,6 +143,12 @@ export default function EditarPerfilScreen() {
         genres: genresArray,
         profilePhotoUrl: photoUrl,
       });
+
+      // Forçar atualização da imagem no estado local
+      if (photoUrl) {
+        setProfileImage(photoUrl);
+        setImageKey(prev => prev + 1); // Força re-render da imagem
+      }
 
       Toast.show({
         type: 'success',
@@ -180,8 +209,9 @@ export default function EditarPerfilScreen() {
           <View style={styles.photoContainer}>
             <View style={styles.photoWrapper}>
               <Image
+                key={`profile-${imageKey}`} // Força re-render quando mudar
                 source={{
-                  uri: profileImage || "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png",
+                  uri: profileImage ? `${profileImage}?t=${imageKey}` : "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png",
                 }}
                 style={styles.profilePhoto}
               />

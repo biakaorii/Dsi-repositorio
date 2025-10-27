@@ -53,7 +53,10 @@ export default function PerfilScreen() {
   const name = user.name || "Usuário";
   // ✅ Prioriza readingGoal, depois bio, depois fallback
   const bio = user.readingGoal || user.bio || "Leitor ávido";
-  const profileImageUrl = user.profilePhotoUrl || "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png";
+  // Adiciona timestamp para forçar reload da imagem
+  const profileImageUrl = user.profilePhotoUrl 
+    ? `${user.profilePhotoUrl}?t=${Date.now()}` 
+    : "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png";
 
   return (
     <View style={styles.container}>
