@@ -1,10 +1,12 @@
 // app/editarPerfil.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import Toast from 'react-native-toast-message';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadProfilePhoto } from '@/utils/uploadProfilePhoto';
 
 export default function EditarPerfilScreen() {
   const router = useRouter();
@@ -13,6 +15,8 @@ export default function EditarPerfilScreen() {
   const [nome, setNome] = useState("");
   const [bio, setBio] = useState("");
   const [generosFavoritos, setGenerosFavoritos] = useState("");
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Preencher os campos quando o usuário for carregado
   useEffect(() => {
@@ -20,11 +24,46 @@ export default function EditarPerfilScreen() {
       setNome(user.name || "");
       setBio(user.bio || "");
       setGenerosFavoritos(user.genres?.join(", ") || "");
+      setProfileImage(user.profilePhotoUrl || null);
     }
   }, [user]);
 
+  // Solicitar permissões para a galeria
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão Negada', 'É necessário permitir o acesso à galeria para alterar a foto de perfil.');
+      return false;
+    }
+    return true;
+  };
+
+  // Selecionar imagem da galeria
+  const pickImage = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setProfileImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar imagem:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem.');
+    }
+  };
+
   const salvarPerfil = async () => {
     if (!user) return;
+
+    setUploading(true);
 
     // Converter gêneros de string para array
     const genresArray = generosFavoritos
@@ -33,10 +72,30 @@ export default function EditarPerfilScreen() {
       .filter(g => g.length > 0);
 
     try {
+      let photoUrl = user.profilePhotoUrl;
+
+      // Se há uma nova imagem, fazer upload
+      if (profileImage && profileImage !== user.profilePhotoUrl) {
+        const uploadedUrl = await uploadProfilePhoto(profileImage, user.uid);
+        if (uploadedUrl) {
+          photoUrl = uploadedUrl;
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Erro',
+            text2: 'Não foi possível fazer upload da foto.',
+            visibilityTime: 3000,
+            autoHide: true,
+            topOffset: 50,
+          });
+        }
+      }
+
       await updateUser({
         name: nome,
         bio: bio,
         genres: genresArray,
+        profilePhotoUrl: photoUrl,
       });
 
       Toast.show({
@@ -60,6 +119,8 @@ export default function EditarPerfilScreen() {
         autoHide: true,
         topOffset: 50,
       });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -80,12 +141,39 @@ export default function EditarPerfilScreen() {
           <Ionicons name="arrow-back" size={24} color="#2E7D32" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Editar Perfil</Text>
-        <TouchableOpacity onPress={salvarPerfil}>
-          <Text style={styles.saveButton}>Salvar</Text>
+        <TouchableOpacity onPress={salvarPerfil} disabled={uploading}>
+          {uploading ? (
+            <ActivityIndicator size="small" color="#2E7D32" />
+          ) : (
+            <Text style={styles.saveButton}>Salvar</Text>
+          )}
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
+        {/* Foto de Perfil */}
+        <View style={styles.photoSection}>
+          <Text style={styles.sectionTitle}>Foto de Perfil</Text>
+          <View style={styles.photoContainer}>
+            <Image
+              source={{
+                uri: profileImage || "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png",
+              }}
+              style={styles.profilePhoto}
+            />
+            <TouchableOpacity
+              style={styles.changePhotoButton}
+              onPress={pickImage}
+              disabled={uploading}
+            >
+              <Ionicons name="camera" size={20} color="#fff" />
+              <Text style={styles.changePhotoText}>
+                {uploading ? "Enviando..." : "Alterar Foto"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Campo Nome */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Nome Completo</Text>
@@ -138,9 +226,19 @@ export default function EditarPerfilScreen() {
         </View>
 
         {/* Botão Salvar Principal */}
-        <TouchableOpacity style={styles.saveButtonMain} onPress={salvarPerfil}>
-          <Ionicons name="checkmark-circle" size={20} color="#fff" />
-          <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+        <TouchableOpacity 
+          style={[styles.saveButtonMain, uploading && styles.saveButtonMainDisabled]} 
+          onPress={salvarPerfil}
+          disabled={uploading}
+        >
+          {uploading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Ionicons name="checkmark-circle" size={20} color="#fff" />
+              <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+            </>
+          )}
         </TouchableOpacity>
 
         <View style={styles.bottomSpacing} />
@@ -186,6 +284,37 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
+  },
+
+  photoSection: {
+    alignItems: "center",
+    marginBottom: 30,
+    paddingVertical: 20,
+  },
+  photoContainer: {
+    alignItems: "center",
+  },
+  profilePhoto: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 15,
+    borderWidth: 3,
+    borderColor: "#2E7D32",
+  },
+  changePhotoButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2E7D32",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+  },
+  changePhotoText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 8,
   },
 
   inputGroup: {
@@ -257,6 +386,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     marginTop: 20,
+  },
+  saveButtonMainDisabled: {
+    backgroundColor: "#A5D6A7",
+    opacity: 0.6,
   },
   saveButtonText: {
     color: "#fff",
