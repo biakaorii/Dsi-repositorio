@@ -25,6 +25,7 @@ interface UserData {
   cnpj?: string;
   address?: string;
   bio?: string;
+  profilePhotoUrl?: string;
   createdAt: string;
 }
 
