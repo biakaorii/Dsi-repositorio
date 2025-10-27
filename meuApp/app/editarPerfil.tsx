@@ -1,6 +1,6 @@
 // app/editarPerfil.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Image, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Image, Alert, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,18 +44,41 @@ export default function EditarPerfilScreen() {
     if (!hasPermission) return;
 
     try {
+      console.log('🔵 Abrindo galeria com editor...');
+      
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: true, // ✅ Ativa editor nativo para ajustar
+        aspect: [1, 1], // ✅ Formato quadrado/circular
         quality: 0.8,
+        allowsMultipleSelection: false,
+        // Configurações extras para garantir editor
+        presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
+      });
+
+      console.log('🔵 Resultado:', {
+        canceled: result.canceled,
+        hasAssets: result.assets && result.assets.length > 0,
       });
 
       if (!result.canceled && result.assets[0]) {
+        console.log('✅ Imagem selecionada e ajustada!');
         setProfileImage(result.assets[0].uri);
+        
+        // Feedback visual de sucesso
+        Toast.show({
+          type: 'success',
+          text1: 'Foto Selecionada! ✓',
+          text2: 'Imagem ajustada. Clique em "Salvar" para confirmar',
+          visibilityTime: 2500,
+          autoHide: true,
+          topOffset: 50,
+        });
+      } else {
+        console.log('⚠️ Usuário cancelou a seleção');
       }
     } catch (error) {
-      console.error('Erro ao selecionar imagem:', error);
+      console.error('❌ Erro ao selecionar imagem:', error);
       Alert.alert('Erro', 'Não foi possível selecionar a imagem.');
     }
   };
@@ -155,12 +178,19 @@ export default function EditarPerfilScreen() {
         <View style={styles.photoSection}>
           <Text style={styles.sectionTitle}>Foto de Perfil</Text>
           <View style={styles.photoContainer}>
-            <Image
-              source={{
-                uri: profileImage || "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png",
-              }}
-              style={styles.profilePhoto}
-            />
+            <View style={styles.photoWrapper}>
+              <Image
+                source={{
+                  uri: profileImage || "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png",
+                }}
+                style={styles.profilePhoto}
+              />
+              {profileImage && profileImage !== user?.profilePhotoUrl && (
+                <View style={styles.newPhotoBadge}>
+                  <Ionicons name="checkmark-circle" size={24} color="#fff" />
+                </View>
+              )}
+            </View>
             <TouchableOpacity
               style={styles.changePhotoButton}
               onPress={pickImage}
@@ -168,9 +198,12 @@ export default function EditarPerfilScreen() {
             >
               <Ionicons name="camera" size={20} color="#fff" />
               <Text style={styles.changePhotoText}>
-                {uploading ? "Enviando..." : "Alterar Foto"}
+                {uploading ? "Enviando..." : "Escolher e Ajustar Foto"}
               </Text>
             </TouchableOpacity>
+            <Text style={styles.photoHint}>
+              Você poderá ajustar a posição e zoom da foto
+            </Text>
           </View>
         </View>
 
@@ -294,6 +327,10 @@ const styles = StyleSheet.create({
   photoContainer: {
     alignItems: "center",
   },
+  photoWrapper: {
+    position: "relative",
+    marginBottom: 15,
+  },
   profilePhoto: {
     width: 120,
     height: 120,
@@ -301,6 +338,19 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderWidth: 3,
     borderColor: "#2E7D32",
+  },
+  newPhotoBadge: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#2E7D32",
+    borderRadius: 20,
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
   },
   changePhotoButton: {
     flexDirection: "row",
@@ -315,6 +365,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginLeft: 8,
+  },
+  photoHint: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 10,
+    fontStyle: "italic",
   },
 
   inputGroup: {
