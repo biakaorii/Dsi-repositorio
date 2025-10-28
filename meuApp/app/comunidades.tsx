@@ -38,23 +38,41 @@ export default function ComunidadesScreen() {
     }
   }, [searchQuery, comunidades]);
 
-  const renderComunidade = ({ item }: { item: Comunidade }) => (
-    <TouchableOpacity style={styles.comunidadeCard}>
-      <View style={styles.comunidadeContent}>
-        <Text style={styles.comunidadeNome}>{item.nome}</Text>
-        <Text style={styles.comunidadeDono}>De: {item.ownerName}</Text>
-        <Text style={styles.comunidadeDescricao} numberOfLines={1}>
-          {item.descricao}
-        </Text>
-        <View style={styles.comunidadeFooter}>
-          <Ionicons name="people" size={16} color="#666" />
-          <Text style={styles.membrosCount}>
-            {item.membros?.length || 1} {item.membros?.length === 1 ? "membro" : "membros"}
+  const renderComunidade = ({ item }: { item: Comunidade }) => {
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    };
+
+    return (
+      <TouchableOpacity style={styles.comunidadeCard}>
+        <View style={styles.comunidadeContent}>
+          <Text style={styles.comunidadeNome}>{item.nome}</Text>
+          <Text style={styles.comunidadeDono}>De: {item.ownerName}</Text>
+          <Text style={styles.comunidadeDescricao} numberOfLines={1}>
+            {item.descricao}
           </Text>
+          <View style={styles.comunidadeFooter}>
+            <View style={styles.footerRow}>
+              <Ionicons name="people" size={16} color="#666" />
+              <Text style={styles.membrosCount}>
+                {item.membros?.length || 1} {item.membros?.length === 1 ? "membro" : "membros"}
+              </Text>
+            </View>
+            <View style={styles.footerRow}>
+              <Ionicons name="calendar-outline" size={16} color="#666" />
+              <Text style={styles.dataCount}>
+                Criada em {formatDate(item.createdAt)}
+              </Text>
+            </View>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -215,10 +233,19 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   comunidadeFooter: {
+    flexDirection: "column",
+    gap: 6,
+  },
+  footerRow: {
     flexDirection: "row",
     alignItems: "center",
   },
   membrosCount: {
+    fontSize: 13,
+    color: "#666",
+    marginLeft: 6,
+  },
+  dataCount: {
     fontSize: 13,
     color: "#666",
     marginLeft: 6,
