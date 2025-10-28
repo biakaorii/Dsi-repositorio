@@ -13,16 +13,17 @@ export default function EditarPerfilScreen() {
   const { user, loading: authLoading, updateUser } = useAuth();
 
   const [nome, setNome] = useState("");
+  const [idade, setIdade] = useState("");
   const [bio, setBio] = useState("");
   const [generosFavoritos, setGenerosFavoritos] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imageKey, setImageKey] = useState(0); // Para forçar reload da imagem
 
-  // Preencher os campos quando o usuário for carregado
   useEffect(() => {
     if (user) {
       setNome(user.name || "");
+      setIdade(user.age || "");
       setBio(user.bio || "");
       setGenerosFavoritos(user.genres?.join(", ") || "");
       setProfileImage(user.profilePhotoUrl || null);
@@ -139,6 +140,7 @@ export default function EditarPerfilScreen() {
 
       await updateUser({
         name: nome,
+        age: idade,
         bio: bio,
         genres: genresArray,
         profilePhotoUrl: photoUrl,
@@ -246,6 +248,20 @@ export default function EditarPerfilScreen() {
             onChangeText={setNome}
             placeholder="Digite seu nome"
             placeholderTextColor="#999"
+          />
+        </View>
+
+        {/* Campo Idade */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Idade</Text>
+          <TextInput
+            style={styles.input}
+            value={idade}
+            onChangeText={setIdade}
+            placeholder="Digite sua idade"
+            placeholderTextColor="#999"
+            keyboardType="numeric"
+            maxLength={3}
           />
         </View>
 

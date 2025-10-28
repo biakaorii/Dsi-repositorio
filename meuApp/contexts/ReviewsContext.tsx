@@ -23,6 +23,7 @@ export interface Review {
   id: string;
   userId: string;
   userName: string;
+  userProfilePhotoUrl?: string;
   bookId: string;
   bookTitle: string;
   bookAuthor?: string;
@@ -88,6 +89,7 @@ export function ReviewsProvider({ children }: { children: ReactNode }) {
             id: doc.id,
             userId: data.userId,
             userName: data.userName,
+            userProfilePhotoUrl: data.userProfilePhotoUrl,
             bookId: data.bookId,
             bookTitle: data.bookTitle,
             bookAuthor: data.bookAuthor,
@@ -138,6 +140,7 @@ export function ReviewsProvider({ children }: { children: ReactNode }) {
       const reviewData = {
         userId: user.uid,
         userName: user.name,
+        userProfilePhotoUrl: user.profilePhotoUrl || '',
         bookId,
         bookTitle,
         bookAuthor,
