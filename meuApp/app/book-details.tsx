@@ -16,6 +16,8 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useReviews, Review } from "../contexts/ReviewsContext";
 import Toast from 'react-native-toast-message';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../config/firebaseConfig';
 
 export default function BookDetailsScreen() {
   const router = useRouter();
@@ -48,10 +50,15 @@ export default function BookDetailsScreen() {
 
   const [bookReviews, setBookReviews] = useState<Review[]>([]);
   const [userReview, setUserReview] = useState<Review | undefined>(undefined);
+  const [userPhotos, setUserPhotos] = useState<{ [userId: string]: string }>({});
 
   useEffect(() => {
     loadReviews();
   }, [reviews, bookId, user]);
+
+  useEffect(() => {
+    loadUserPhotos();
+  }, [bookReviews]);
 
   function loadReviews() {
     const filteredReviews = getReviewsByBook(bookId);
@@ -68,6 +75,29 @@ export default function BookDetailsScreen() {
         setEditingReviewId(myReview.id);
       }
     }
+  }
+
+  async function loadUserPhotos() {
+    const photos: { [userId: string]: string } = {};
+    
+    // Buscar foto de perfil atual de cada usuário
+    for (const review of bookReviews) {
+      try {
+        const userDocRef = doc(db, 'users', review.userId);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.profilePhotoUrl) {
+            photos[review.userId] = userData.profilePhotoUrl;
+          }
+        }
+      } catch (error) {
+        console.error(`Erro ao buscar foto do usuário ${review.userId}:`, error);
+      }
+    }
+    
+    setUserPhotos(photos);
   }
 
   const handleSubmitReview = async () => {
@@ -350,46 +380,63 @@ export default function BookDetailsScreen() {
               </Text>
             </View>
           ) : (
-            bookReviews.map((review) => (
-              <View key={review.id} style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <View>
-                    <Text style={styles.reviewerName}>{review.userName}</Text>
-                    {renderStars(review.rating, undefined, 16)}
+            bookReviews.map((review) => {
+              // Usar foto atual do usuário, se disponível
+              const currentUserPhoto = userPhotos[review.userId];
+              
+              return (
+                <View key={review.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <View style={styles.reviewHeaderLeft}>
+                      {currentUserPhoto ? (
+                        <Image
+                          source={{ uri: `${currentUserPhoto}?t=${Date.now()}` }}
+                          style={styles.profilePhoto}
+                        />
+                      ) : (
+                        <View style={styles.profilePhotoPlaceholder}>
+                          <Ionicons name="person" size={24} color="#999" />
+                        </View>
+                      )}
+                      <View style={styles.reviewerInfo}>
+                        <Text style={styles.reviewerName}>{review.userName}</Text>
+                        {renderStars(review.rating, undefined, 16)}
+                      </View>
+                    </View>
+                    <Text style={styles.reviewDate}>
+                      {review.createdAt.toLocaleDateString("pt-BR")}
+                    </Text>
                   </View>
-                  <Text style={styles.reviewDate}>
-                    {review.createdAt.toLocaleDateString("pt-BR")}
-                  </Text>
+
+                  <Text style={styles.reviewComment}>{review.comment}</Text>
+
+                  {review.updatedAt.getTime() !== review.createdAt.getTime() && (
+                    <Text style={styles.editedLabel}>(editado)</Text>
+                  )}
+
+                  {/* Botão de Like */}
+                  <TouchableOpacity
+                    style={styles.likeButton}
+                    onPress={() => handleLike(review.id)}
+                  >
+                    <Ionicons
+                      name={
+                        user && review.likedBy.includes(user.uid)
+                          ? "heart"
+                          : "heart-outline"
+                      }
+                      size={20}
+                      color={
+                        user && review.likedBy.includes(user.uid)
+                          ? "#E63946"
+                          : "#666"
+                      }
+                    />
+                    <Text style={styles.likeCount}>{review.likes}</Text>
+                  </TouchableOpacity>
                 </View>
-
-                <Text style={styles.reviewComment}>{review.comment}</Text>
-
-                {review.updatedAt.getTime() !== review.createdAt.getTime() && (
-                  <Text style={styles.editedLabel}>(editado)</Text>
-                )}
-
-                {/* Botão de Like */}
-                <TouchableOpacity
-                  style={styles.likeButton}
-                  onPress={() => handleLike(review.id)}
-                >
-                  <Ionicons
-                    name={
-                      user && review.likedBy.includes(user.uid)
-                        ? "heart"
-                        : "heart-outline"
-                    }
-                    size={20}
-                    color={
-                      user && review.likedBy.includes(user.uid)
-                        ? "#E63946"
-                        : "#666"
-                    }
-                  />
-                  <Text style={styles.likeCount}>{review.likes}</Text>
-                </TouchableOpacity>
-              </View>
-            ))
+              );
+            })
           )}
         </View>
 
@@ -575,6 +622,29 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 10,
+  },
+  reviewHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    flex: 1,
+  },
+  profilePhoto: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: "#E9ECEF",
+  },
+  profilePhotoPlaceholder: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: "#E9ECEF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  reviewerInfo: {
+    flex: 1,
   },
   reviewerName: {
     fontSize: 16,
