@@ -48,7 +48,16 @@ export default function ComunidadesScreen() {
     };
 
     return (
-      <TouchableOpacity style={styles.comunidadeCard}>
+      <TouchableOpacity 
+        style={styles.comunidadeCard}
+        onPress={() => router.push({
+          pathname: "/chat-comunidade",
+          params: { 
+            id: item.id,
+            nome: item.nome 
+          }
+        })}
+      >
         <View style={styles.comunidadeContent}>
           <Text style={styles.comunidadeNome}>{item.nome}</Text>
           <Text style={styles.comunidadeDono}>De: {item.ownerName}</Text>
