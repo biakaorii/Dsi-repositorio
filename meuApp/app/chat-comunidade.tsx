@@ -19,6 +19,7 @@ export default function ChatComunidadeScreen() {
 
   // Pegando o nome da comunidade dos parâmetros
   const comunidadeNome = params.nome as string || "Comunidade";
+  const comunidadeId = params.id as string;
 
   const renderMessage = ({ item }: { item: any }) => (
     <View
@@ -44,12 +45,24 @@ export default function ChatComunidadeScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.headerInfo}>
+        <TouchableOpacity 
+          style={styles.headerInfo}
+          onPress={() => router.push({
+            pathname: "/detalhes-comunidade",
+            params: { id: comunidadeId }
+          })}
+        >
           <Text style={styles.headerTitle} numberOfLines={1}>
             {comunidadeNome}
           </Text>
-        </View>
-        <TouchableOpacity style={styles.moreButton}>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.moreButton}
+          onPress={() => router.push({
+            pathname: "/detalhes-comunidade",
+            params: { id: comunidadeId }
+          })}
+        >
           <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
