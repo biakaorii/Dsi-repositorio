@@ -11,15 +11,18 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useComunidades } from "../contexts/ComunidadesContext";
 
 export default function ChatComunidadeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { comunidades } = useComunidades();
   const [message, setMessage] = useState("");
 
-  // Pegando o nome da comunidade dos parâmetros
-  const comunidadeNome = params.nome as string || "Comunidade";
+  // Pegando o ID dos parâmetros e buscando os dados atualizados do contexto
   const comunidadeId = params.id as string;
+  const comunidade = comunidades.find((c) => c.id === comunidadeId);
+  const comunidadeNome = comunidade?.nome || "Comunidade";
 
   const renderMessage = ({ item }: { item: any }) => (
     <View
