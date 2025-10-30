@@ -7,6 +7,9 @@ import {
   orderBy,
   onSnapshot,
   Timestamp,
+  doc,
+  updateDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import { useAuth } from './AuthContext';
@@ -27,6 +30,14 @@ interface ComunidadesContextData {
   createComunidade: (
     nome: string,
     descricao: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  updateComunidade: (
+    comunidadeId: string,
+    nome: string,
+    descricao: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  deleteComunidade: (
+    comunidadeId: string
   ) => Promise<{ success: boolean; error?: string }>;
   getComunidadesByUser: (userId: string) => Comunidade[];
   isMember: (comunidadeId: string, userId: string) => boolean;
@@ -112,6 +123,71 @@ export function ComunidadesProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // Atualizar comunidade
+  async function updateComunidade(comunidadeId: string, nome: string, descricao: string) {
+    try {
+      if (!user) {
+        return { success: false, error: 'Usuário não autenticado' };
+      }
+
+      // Verificar se o usuário é o dono
+      const comunidade = comunidades.find((c) => c.id === comunidadeId);
+      if (!comunidade) {
+        return { success: false, error: 'Comunidade não encontrada' };
+      }
+
+      if (comunidade.ownerId !== user.uid) {
+        return { success: false, error: 'Apenas o administrador pode editar a comunidade' };
+      }
+
+      if (!nome.trim()) {
+        return { success: false, error: 'O nome da comunidade é obrigatório' };
+      }
+
+      if (!descricao.trim()) {
+        return { success: false, error: 'A descrição da comunidade é obrigatória' };
+      }
+
+      const comunidadeRef = doc(db, 'comunidades', comunidadeId);
+      await updateDoc(comunidadeRef, {
+        nome: nome.trim(),
+        descricao: descricao.trim(),
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao atualizar comunidade:', error);
+      return { success: false, error: 'Erro ao atualizar comunidade' };
+    }
+  }
+
+  // Deletar comunidade
+  async function deleteComunidade(comunidadeId: string) {
+    try {
+      if (!user) {
+        return { success: false, error: 'Usuário não autenticado' };
+      }
+
+      // Verificar se o usuário é o dono
+      const comunidade = comunidades.find((c) => c.id === comunidadeId);
+      if (!comunidade) {
+        return { success: false, error: 'Comunidade não encontrada' };
+      }
+
+      if (comunidade.ownerId !== user.uid) {
+        return { success: false, error: 'Apenas o administrador pode deletar a comunidade' };
+      }
+
+      const comunidadeRef = doc(db, 'comunidades', comunidadeId);
+      await deleteDoc(comunidadeRef);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao deletar comunidade:', error);
+      return { success: false, error: 'Erro ao deletar comunidade' };
+    }
+  }
+
   // Buscar comunidades por usuário (onde ele é membro)
   function getComunidadesByUser(userId: string): Comunidade[] {
     return comunidades
@@ -137,6 +213,8 @@ export function ComunidadesProvider({ children }: { children: ReactNode }) {
         comunidades,
         loading,
         createComunidade,
+        updateComunidade,
+        deleteComunidade,
         getComunidadesByUser,
         isMember,
         isOwner,

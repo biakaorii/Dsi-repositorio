@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ export default function DetalhesComunidadeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuth();
-  const { comunidades, isOwner } = useComunidades();
+  const { comunidades, isOwner, updateComunidade, deleteComunidade } = useComunidades();
 
   // Buscar comunidade pelos parâmetros
   const comunidadeId = params.id as string;
@@ -29,6 +29,14 @@ export default function DetalhesComunidadeScreen() {
   const [nome, setNome] = useState(comunidade?.nome || "");
   const [descricao, setDescricao] = useState(comunidade?.descricao || "");
   const [loading, setLoading] = useState(false);
+
+  // Atualizar os campos quando a comunidade for atualizada
+  useEffect(() => {
+    if (comunidade) {
+      setNome(comunidade.nome);
+      setDescricao(comunidade.descricao);
+    }
+  }, [comunidade]);
 
   if (!comunidade || !user) {
     return (
@@ -41,16 +49,42 @@ export default function DetalhesComunidadeScreen() {
   const isAdmin = isOwner(comunidadeId, user.uid);
 
   const handleSaveChanges = async () => {
-    // Implementar quando adicionar UPDATE no contexto
-    Toast.show({
-      type: "info",
-      text1: "Em breve",
-      text2: "Funcionalidade de edição será implementada em breve",
-      visibilityTime: 3000,
-      autoHide: true,
-      topOffset: 50,
-    });
-    setEditMode(false);
+    if (!nome.trim() || !descricao.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Campos obrigatórios",
+        text2: "Preencha todos os campos",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+      return;
+    }
+
+    setLoading(true);
+    const result = await updateComunidade(comunidadeId, nome, descricao);
+    setLoading(false);
+
+    if (result.success) {
+      Toast.show({
+        type: "success",
+        text1: "Sucesso",
+        text2: "Comunidade atualizada com sucesso",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+      setEditMode(false);
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: result.error || "Erro ao atualizar comunidade",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
   };
 
   const handleLeaveCommunity = () => {
@@ -86,15 +120,33 @@ export default function DetalhesComunidadeScreen() {
         {
           text: "Deletar",
           style: "destructive",
-          onPress: () => {
-            Toast.show({
-              type: "info",
-              text1: "Em breve",
-              text2: "Funcionalidade de deletar será implementada em breve",
-              visibilityTime: 3000,
-              autoHide: true,
-              topOffset: 50,
-            });
+          onPress: async () => {
+            setLoading(true);
+            const result = await deleteComunidade(comunidadeId);
+            setLoading(false);
+
+            if (result.success) {
+              Toast.show({
+                type: "success",
+                text1: "Sucesso",
+                text2: "Comunidade deletada com sucesso",
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
+              // Voltar para a tela de comunidades após deletar
+              router.back();
+              router.back();
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "Erro",
+                text2: result.error || "Erro ao deletar comunidade",
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
+            }
           },
         },
       ]
@@ -172,14 +224,20 @@ export default function DetalhesComunidadeScreen() {
                     setDescricao(comunidade.descricao);
                     setEditMode(false);
                   }}
+                  disabled={loading}
                 >
                   <Text style={styles.cancelButtonText}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.button, styles.saveButton]}
                   onPress={handleSaveChanges}
+                  disabled={loading}
                 >
-                  <Text style={styles.saveButtonText}>Salvar</Text>
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.saveButtonText}>Salvar</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </>
