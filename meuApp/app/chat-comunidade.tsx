@@ -12,17 +12,57 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useComunidades } from "../contexts/ComunidadesContext";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function ChatComunidadeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { comunidades } = useComunidades();
+  const { comunidades, isMember } = useComunidades();
+  const { user } = useAuth();
   const [message, setMessage] = useState("");
 
   // Pegando o ID dos parâmetros e buscando os dados atualizados do contexto
   const comunidadeId = params.id as string;
   const comunidade = comunidades.find((c) => c.id === comunidadeId);
   const comunidadeNome = comunidade?.nome || "Comunidade";
+
+  // Verificar se o usuário é membro
+  if (!comunidade || !user) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color="#E63946" />
+          <Text style={styles.errorText}>Comunidade não encontrada</Text>
+          <TouchableOpacity
+            style={styles.backButton2}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (!isMember(comunidadeId, user.uid)) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="lock-closed-outline" size={64} color="#E63946" />
+          <Text style={styles.errorText}>Acesso Negado</Text>
+          <Text style={styles.errorSubtext}>
+            Você precisa ser membro desta comunidade para acessar o chat
+          </Text>
+          <TouchableOpacity
+            style={styles.backButton2}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   const renderMessage = ({ item }: { item: any }) => (
     <View
@@ -228,5 +268,37 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  errorText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#E63946",
+    marginTop: 20,
+    textAlign: "center",
+  },
+  errorSubtext: {
+    fontSize: 15,
+    color: "#666",
+    marginTop: 12,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  backButton2: {
+    marginTop: 30,
+    backgroundColor: "#2E7D32",
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  backButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

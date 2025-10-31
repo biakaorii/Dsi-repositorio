@@ -14,12 +14,19 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { useComunidades } from "../contexts/ComunidadesContext";
 import { useAuth } from "../contexts/AuthContext";
 import Toast from "react-native-toast-message";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../config/firebaseConfig";
+
+interface MemberData {
+  id: string;
+  name: string;
+}
 
 export default function DetalhesComunidadeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuth();
-  const { comunidades, isOwner, updateComunidade, deleteComunidade } = useComunidades();
+  const { comunidades, isOwner, updateComunidade, deleteComunidade, leaveComunidade, removeMember } = useComunidades();
 
   // Buscar comunidade pelos parâmetros
   const comunidadeId = params.id as string;
@@ -29,6 +36,8 @@ export default function DetalhesComunidadeScreen() {
   const [nome, setNome] = useState(comunidade?.nome || "");
   const [descricao, setDescricao] = useState(comunidade?.descricao || "");
   const [loading, setLoading] = useState(false);
+  const [membersData, setMembersData] = useState<MemberData[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(true);
 
   // Atualizar os campos quando a comunidade for atualizada
   useEffect(() => {
@@ -36,6 +45,45 @@ export default function DetalhesComunidadeScreen() {
       setNome(comunidade.nome);
       setDescricao(comunidade.descricao);
     }
+  }, [comunidade]);
+
+  // Buscar dados dos membros
+  useEffect(() => {
+    async function fetchMembersData() {
+      if (!comunidade) return;
+
+      setLoadingMembers(true);
+      const membersInfo: MemberData[] = [];
+
+      for (const membroId of comunidade.membros) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", membroId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            membersInfo.push({
+              id: membroId,
+              name: userData.name || "Usuário",
+            });
+          } else {
+            membersInfo.push({
+              id: membroId,
+              name: "Usuário desconhecido",
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao buscar dados do membro:", error);
+          membersInfo.push({
+            id: membroId,
+            name: "Erro ao carregar",
+          });
+        }
+      }
+
+      setMembersData(membersInfo);
+      setLoadingMembers(false);
+    }
+
+    fetchMembersData();
   }, [comunidade]);
 
   if (!comunidade || !user) {
@@ -96,15 +144,33 @@ export default function DetalhesComunidadeScreen() {
         {
           text: "Sair",
           style: "destructive",
-          onPress: () => {
-            Toast.show({
-              type: "info",
-              text1: "Em breve",
-              text2: "Funcionalidade de sair será implementada em breve",
-              visibilityTime: 3000,
-              autoHide: true,
-              topOffset: 50,
-            });
+          onPress: async () => {
+            setLoading(true);
+            const result = await leaveComunidade(comunidadeId);
+            setLoading(false);
+
+            if (result.success) {
+              Toast.show({
+                type: "success",
+                text1: "Sucesso",
+                text2: "Você saiu da comunidade",
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
+              // Voltar para a tela de comunidades após sair
+              router.back();
+              router.back();
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "Erro",
+                text2: result.error || "Erro ao sair da comunidade",
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
+            }
           },
         },
       ]
@@ -162,15 +228,30 @@ export default function DetalhesComunidadeScreen() {
         {
           text: "Remover",
           style: "destructive",
-          onPress: () => {
-            Toast.show({
-              type: "info",
-              text1: "Em breve",
-              text2: "Funcionalidade de remover membros será implementada em breve",
-              visibilityTime: 3000,
-              autoHide: true,
-              topOffset: 50,
-            });
+          onPress: async () => {
+            setLoading(true);
+            const result = await removeMember(comunidadeId, memberId);
+            setLoading(false);
+
+            if (result.success) {
+              Toast.show({
+                type: "success",
+                text1: "Sucesso",
+                text2: `${memberName} foi removido da comunidade`,
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "Erro",
+                text2: result.error || "Erro ao remover membro",
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
+            }
           },
         },
       ]
@@ -288,39 +369,41 @@ export default function DetalhesComunidadeScreen() {
             Membros ({comunidade.membros.length})
           </Text>
 
-          {comunidade.membros.map((membroId, index) => {
-            const isCurrentUser = membroId === user.uid;
-            const isCommunityOwner = membroId === comunidade.ownerId;
-            const memberName = isCommunityOwner
-              ? comunidade.ownerName
-              : isCurrentUser
-              ? user.name
-              : `Membro ${index + 1}`;
+          {loadingMembers ? (
+            <View style={styles.loadingMembersContainer}>
+              <ActivityIndicator size="small" color="#2E7D32" />
+              <Text style={styles.loadingMembersText}>Carregando membros...</Text>
+            </View>
+          ) : (
+            membersData.map((member) => {
+              const isCurrentUser = member.id === user.uid;
+              const isCommunityOwner = member.id === comunidade.ownerId;
 
-            return (
-              <View key={membroId} style={styles.memberItem}>
-                <View style={styles.memberInfo}>
-                  <Ionicons name="person-circle" size={40} color="#2E7D32" />
-                  <View style={styles.memberDetails}>
-                    <Text style={styles.memberName}>{memberName}</Text>
-                    {isCommunityOwner && (
-                      <Text style={styles.adminBadge}>Administrador</Text>
-                    )}
-                    {isCurrentUser && !isCommunityOwner && (
-                      <Text style={styles.youBadge}>Você</Text>
-                    )}
+              return (
+                <View key={member.id} style={styles.memberItem}>
+                  <View style={styles.memberInfo}>
+                    <Ionicons name="person-circle" size={40} color="#2E7D32" />
+                    <View style={styles.memberDetails}>
+                      <Text style={styles.memberName}>{member.name}</Text>
+                      {isCommunityOwner && (
+                        <Text style={styles.adminBadge}>Administrador</Text>
+                      )}
+                      {isCurrentUser && !isCommunityOwner && (
+                        <Text style={styles.youBadge}>Você</Text>
+                      )}
+                    </View>
                   </View>
+                  {isAdmin && !isCommunityOwner && (
+                    <TouchableOpacity
+                      onPress={() => handleRemoveMember(member.id, member.name)}
+                    >
+                      <Ionicons name="close-circle" size={24} color="#E63946" />
+                    </TouchableOpacity>
+                  )}
                 </View>
-                {isAdmin && !isCommunityOwner && (
-                  <TouchableOpacity
-                    onPress={() => handleRemoveMember(membroId, memberName)}
-                  >
-                    <Ionicons name="close-circle" size={24} color="#E63946" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            );
-          })}
+              );
+            })
+          )}
         </View>
 
         {/* Ações */}
@@ -485,6 +568,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#2E7D32",
+  },
+  loadingMembersContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+    gap: 12,
+  },
+  loadingMembersText: {
+    fontSize: 14,
+    color: "#666",
   },
   memberItem: {
     flexDirection: "row",
