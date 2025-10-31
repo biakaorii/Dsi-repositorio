@@ -10,6 +10,8 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import { useAuth } from './AuthContext';
@@ -38,6 +40,16 @@ interface ComunidadesContextData {
   ) => Promise<{ success: boolean; error?: string }>;
   deleteComunidade: (
     comunidadeId: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  joinComunidade: (
+    comunidadeId: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  leaveComunidade: (
+    comunidadeId: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  removeMember: (
+    comunidadeId: string,
+    memberId: string
   ) => Promise<{ success: boolean; error?: string }>;
   getComunidadesByUser: (userId: string) => Comunidade[];
   isMember: (comunidadeId: string, userId: string) => boolean;
@@ -188,6 +200,111 @@ export function ComunidadesProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // Entrar na comunidade
+  async function joinComunidade(comunidadeId: string) {
+    try {
+      if (!user) {
+        return { success: false, error: 'Usuário não autenticado' };
+      }
+
+      // Verificar se a comunidade existe
+      const comunidade = comunidades.find((c) => c.id === comunidadeId);
+      if (!comunidade) {
+        return { success: false, error: 'Comunidade não encontrada' };
+      }
+
+      // Verificar se já é membro
+      if (comunidade.membros.includes(user.uid)) {
+        return { success: false, error: 'Você já é membro desta comunidade' };
+      }
+
+      const comunidadeRef = doc(db, 'comunidades', comunidadeId);
+      await updateDoc(comunidadeRef, {
+        membros: arrayUnion(user.uid),
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao entrar na comunidade:', error);
+      return { success: false, error: 'Erro ao entrar na comunidade' };
+    }
+  }
+
+  // Sair da comunidade
+  async function leaveComunidade(comunidadeId: string) {
+    try {
+      if (!user) {
+        return { success: false, error: 'Usuário não autenticado' };
+      }
+
+      // Verificar se a comunidade existe
+      const comunidade = comunidades.find((c) => c.id === comunidadeId);
+      if (!comunidade) {
+        return { success: false, error: 'Comunidade não encontrada' };
+      }
+
+      // Verificar se é o dono
+      if (comunidade.ownerId === user.uid) {
+        return { success: false, error: 'O administrador não pode sair da comunidade. Delete a comunidade se desejar.' };
+      }
+
+      // Verificar se é membro
+      if (!comunidade.membros.includes(user.uid)) {
+        return { success: false, error: 'Você não é membro desta comunidade' };
+      }
+
+      const comunidadeRef = doc(db, 'comunidades', comunidadeId);
+      await updateDoc(comunidadeRef, {
+        membros: arrayRemove(user.uid),
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao sair da comunidade:', error);
+      return { success: false, error: 'Erro ao sair da comunidade' };
+    }
+  }
+
+  // Remover membro da comunidade (apenas admin)
+  async function removeMember(comunidadeId: string, memberId: string) {
+    try {
+      if (!user) {
+        return { success: false, error: 'Usuário não autenticado' };
+      }
+
+      // Verificar se a comunidade existe
+      const comunidade = comunidades.find((c) => c.id === comunidadeId);
+      if (!comunidade) {
+        return { success: false, error: 'Comunidade não encontrada' };
+      }
+
+      // Verificar se o usuário é o dono
+      if (comunidade.ownerId !== user.uid) {
+        return { success: false, error: 'Apenas o administrador pode remover membros' };
+      }
+
+      // Verificar se está tentando remover a si mesmo
+      if (memberId === user.uid) {
+        return { success: false, error: 'O administrador não pode se remover. Delete a comunidade se desejar.' };
+      }
+
+      // Verificar se o membro existe na comunidade
+      if (!comunidade.membros.includes(memberId)) {
+        return { success: false, error: 'Usuário não é membro desta comunidade' };
+      }
+
+      const comunidadeRef = doc(db, 'comunidades', comunidadeId);
+      await updateDoc(comunidadeRef, {
+        membros: arrayRemove(memberId),
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao remover membro:', error);
+      return { success: false, error: 'Erro ao remover membro' };
+    }
+  }
+
   // Buscar comunidades por usuário (onde ele é membro)
   function getComunidadesByUser(userId: string): Comunidade[] {
     return comunidades
@@ -215,6 +332,9 @@ export function ComunidadesProvider({ children }: { children: ReactNode }) {
         createComunidade,
         updateComunidade,
         deleteComunidade,
+        joinComunidade,
+        leaveComunidade,
+        removeMember,
         getComunidadesByUser,
         isMember,
         isOwner,
