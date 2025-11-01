@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -47,6 +48,7 @@ export default function BookDetailsScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [bookReviews, setBookReviews] = useState<Review[]>([]);
   const [userReview, setUserReview] = useState<Review | undefined>(undefined);
@@ -73,6 +75,12 @@ export default function BookDetailsScreen() {
         setComment(myReview.comment);
         setIsEditing(true);
         setEditingReviewId(myReview.id);
+      } else {
+        // Resetar estados quando não há review do usuário
+        setRating(0);
+        setComment("");
+        setIsEditing(false);
+        setEditingReviewId(null);
       }
     }
   }
@@ -173,44 +181,51 @@ export default function BookDetailsScreen() {
     }
   };
 
-  const handleDeleteReview = (reviewId: string) => {
-    Alert.alert(
-      "Confirmar exclusão",
-      "Deseja realmente excluir este review?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Excluir",
-          style: "destructive",
-          onPress: async () => {
-            const result = await deleteReview(reviewId);
-            if (result.success) {
-              Toast.show({
-                type: 'success',
-                text1: 'Sucesso',
-                text2: 'Review excluído!',
-                visibilityTime: 2500,
-                autoHide: true,
-                topOffset: 50,
-              });
-              setRating(0);
-              setComment("");
-              setIsEditing(false);
-              setEditingReviewId(null);
-            } else {
-              Toast.show({
-                type: 'error',
-                text1: 'Erro',
-                text2: result.error || 'Erro ao excluir',
-                visibilityTime: 3000,
-                autoHide: true,
-                topOffset: 50,
-              });
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteReview = async () => {
+    if (!editingReviewId) {
+      Alert.alert('Erro', 'Review não encontrado');
+      return;
+    }
+
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    setShowDeleteModal(false);
+    
+    if (!editingReviewId) return;
+
+    setSubmitting(true);
+    
+    const result = await deleteReview(editingReviewId);
+    
+    setSubmitting(false);
+    
+    if (result.success) {
+      Toast.show({
+        type: 'success',
+        text1: 'Sucesso',
+        text2: 'Review excluído com sucesso!',
+        visibilityTime: 2500,
+        autoHide: true,
+        topOffset: 50,
+      });
+      
+      // Limpar formulário
+      setRating(0);
+      setComment("");
+      setIsEditing(false);
+      setEditingReviewId(null);
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: result.error || 'Não foi possível excluir a review',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
   };
 
   const handleLike = async (reviewId: string) => {
@@ -338,10 +353,10 @@ export default function BookDetailsScreen() {
                 )}
               </TouchableOpacity>
 
-              {isEditing && (
+              {isEditing && editingReviewId && (
                 <TouchableOpacity
                   style={[styles.deleteButton, submitting && styles.buttonDisabled]}
-                  onPress={() => handleDeleteReview(editingReviewId!)}
+                  onPress={handleDeleteReview}
                   disabled={submitting}
                 >
                   <Ionicons name="trash-outline" size={20} color="#fff" />
@@ -442,6 +457,43 @@ export default function BookDetailsScreen() {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showDeleteModal}
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Ionicons name="warning" size={50} color="#E63946" />
+            </View>
+            
+            <Text style={styles.modalTitle}>Excluir Review</Text>
+            <Text style={styles.modalMessage}>
+              Tem certeza que deseja excluir sua avaliação? Esta ação não pode ser desfeita.
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={styles.modalButtonTextCancel}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonDelete]}
+                onPress={confirmDelete}
+              >
+                <Text style={styles.modalButtonTextDelete}>Excluir</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Toast />
     </View>
@@ -679,5 +731,75 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 30,
+  },
+  // Estilos do Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 25,
+    width: "85%",
+    maxWidth: 400,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalHeader: {
+    marginBottom: 15,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 15,
+    width: "100%",
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalButtonCancel: {
+    backgroundColor: "#F0F0F0",
+    borderWidth: 1,
+    borderColor: "#DDD",
+  },
+  modalButtonDelete: {
+    backgroundColor: "#E63946",
+  },
+  modalButtonTextCancel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  modalButtonTextDelete: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFF",
   },
 });

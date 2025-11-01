@@ -5,6 +5,7 @@ import { useRouter, Link } from "expo-router";
 import BottomNavBar from "../components/BottomNavBar";
 
 type Book = {
+  id: string;
   title: string;
   author: string;
   coverUrl: string;
@@ -14,6 +15,7 @@ type Book = {
 
 const books: Book[] = [
   {
+    id: "percy-jackson-ladrao-raios",
     title: "Percy Jackson e o Ladrão de Raios",
     author: "Rick Riordan",
     coverUrl: "https://covers.openlibrary.org/b/isbn/142313494X-L.jpg",
@@ -22,6 +24,7 @@ const books: Book[] = [
       "Percy descobre ser um semideus e parte em uma missão para recuperar o raio-mestre de Zeus e evitar uma guerra entre os deuses.",
   },
   {
+    id: "senhor-aneis-sociedade",
     title: "O Senhor dos Anéis: A Sociedade do Anel",
     author: "J.R.R. Tolkien",
     coverUrl: "https://covers.openlibrary.org/b/id/8231856-L.jpg",
@@ -30,6 +33,7 @@ const books: Book[] = [
       "Frodo inicia a jornada para destruir o Um Anel, acompanhado por uma sociedade de heróis.",
   },
   {
+    id: "dom-quixote",
     title: "Dom Quixote",
     author: "Miguel de Cervantes",
     coverUrl: "https://covers.openlibrary.org/b/id/554615-L.jpg",
@@ -38,6 +42,7 @@ const books: Book[] = [
       "Um fidalgo idealista decide tornar-se cavaleiro andante e vive aventuras ao lado de Sancho Pança.",
   },
   {
+    id: "pequeno-principe",
     title: "O Pequeno Príncipe",
     author: "Antoine de Saint-Exupéry",
     coverUrl: "https://covers.openlibrary.org/b/id/240726-L.jpg",
@@ -46,6 +51,7 @@ const books: Book[] = [
       "Um pequeno príncipe viaja por planetas e reflete sobre amizade, amor e a essência das coisas.",
   },
   {
+    id: "arte-da-guerra",
     title: "A Arte da Guerra",
     author: "Sun Tzu",
     coverUrl: "https://covers.openlibrary.org/b/id/11153267-L.jpg",
@@ -54,6 +60,7 @@ const books: Book[] = [
       "Tratado clássico sobre estratégia e táticas aplicáveis à guerra e à vida.",
   },
   {
+    id: "1984",
     title: "1984",
     author: "George Orwell",
     coverUrl: "https://covers.openlibrary.org/b/id/9281731-L.jpg",
@@ -62,6 +69,7 @@ const books: Book[] = [
       "Winston Smith luta contra um regime totalitário que controla pensamentos e reescreve a história.",
   },
   {
+    id: "o-hobbit",
     title: "O Hobbit",
     author: "J.R.R. Tolkien",
     coverUrl: "https://covers.openlibrary.org/b/id/8221256-L.jpg",
@@ -70,6 +78,7 @@ const books: Book[] = [
       "Bilbo Bolseiro embarca em uma aventura com anões para recuperar um tesouro guardado por um dragão.",
   },
   {
+    id: "harry-potter-pedra-filosofal",
     title: "Harry Potter e a Pedra Filosofal",
     author: "J.K. Rowling",
     coverUrl: "https://covers.openlibrary.org/b/id/10521215-L.jpg",
@@ -86,11 +95,10 @@ export default function HomeScreen() {
     router.push({
       pathname: "/book-details",
       params: {
+        id: book.id,
         title: book.title,
         author: book.author,
-        coverUrl: book.coverUrl,
-        genre: book.genre,
-        synopsis: book.synopsis,
+        image: book.coverUrl,
       },
     });
   };
