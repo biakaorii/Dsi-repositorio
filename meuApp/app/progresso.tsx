@@ -360,11 +360,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#E8F5E9",
     borderRadius: 12,
   },
-  summaryTitle: { fontSize: 18, fontWeight: "bold", color: "#2E7D32", marginBottom: 15 },
+  summaryTitle: { fontSize: 16, fontWeight: "bold", color: "#333", marginBottom: 15 },
   summaryStats: { flexDirection: "row", justifyContent: "space-around" },
   summaryCard: { alignItems: "center" },
-  summaryNumber: { fontSize: 20, fontWeight: "bold", color: "#2E7D32" },
-  summaryLabel: { fontSize: 11, color: "#666", textAlign: "center" },
+  summaryNumber: { fontSize: 16, fontWeight: "bold", color: "#333" },
+  summaryLabel: { fontSize: 13, color: "#666", textAlign: "center" },
 
   section: { margin: 20 },
   sectionTitle: { fontSize: 16, fontWeight: "bold", color: "#333", marginBottom: 15 },
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   completedBook: {
     backgroundColor: "#E8F5E9",
     borderLeftWidth: 4,
-    borderLeftColor: "#4CAF50",
+    borderLeftColor: "#2E7D32",
   },
   wishlistBook: {
     backgroundColor: "#FFF8E1",
@@ -429,13 +429,14 @@ const styles = StyleSheet.create({
   wishlistStatus: {
     fontSize: 11,
     fontStyle: "italic",
+    color: "#666",
   },
   completedReadingBook: {
     backgroundColor: "#E8F5E9",
     borderLeftWidth: 4,
-    borderLeftColor: "#4CAF50",
+    borderLeftColor: "#2E7D32",
     borderWidth: 2,
-    borderColor: "#4CAF50",
+    borderColor: "#2E7D32",
   },
   progressInfo: {
     gap: 8,
@@ -443,7 +444,7 @@ const styles = StyleSheet.create({
   moveToReadButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#2E7D32",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -499,12 +500,10 @@ const styles = StyleSheet.create({
   progressText: { fontSize: 12, color: "#666" },
 
   progressControls: {
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#F1F8E9",
     borderRadius: 12,
     padding: 15,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
   },
   
   pageInputContainer: {
