@@ -145,7 +145,46 @@ export default function DetalhesComunidadeScreen() {
     }
   };
 
-  const handleLeaveCommunity = () => {
+  const handleLeaveCommunity = async () => {
+    try {
+      setLoading(true);
+      const result = await leaveComunidade(comunidadeId);
+      setLoading(false);
+      if (result.success) {
+        Toast.show({
+          type: "success",
+          text1: "Pronto",
+          text2: "Você saiu da comunidade.",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        });
+        setMembersData((prev) => prev.filter((m) => m.id !== user.uid));
+        setTimeout(() => {
+          try { router.replace("/comunidades"); } catch {}
+        }, 700);
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Erro ao sair",
+          text2: result.error || "Não foi possível sair da comunidade.",
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 50,
+        });
+      }
+    } catch (e) {
+      setLoading(false);
+      Toast.show({
+        type: "error",
+        text1: "Erro inesperado",
+        text2: "Tente novamente mais tarde.",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
+    return;
     // Feedback imediato para confirmar clique
     try {
       Toast.show({
