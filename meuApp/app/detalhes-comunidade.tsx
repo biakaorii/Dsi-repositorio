@@ -169,8 +169,10 @@ export default function DetalhesComunidadeScreen() {
                 topOffset: 50,
               });
               // Voltar para a tela de comunidades após sair
-              router.back();
-              router.back();
+              setMembersData((prev) => prev.filter((m) => m.id !== user.uid));
+              setTimeout(() => {
+                try { router.replace("/comunidades"); } catch {}
+              }, 600);
             } else {
               Toast.show({
                 type: "error",
@@ -450,6 +452,7 @@ export default function DetalhesComunidadeScreen() {
             <TouchableOpacity
               style={styles.actionButton}
               onPress={handleLeaveCommunity}
+              disabled={loading}
             >
               <Ionicons name="exit-outline" size={24} color="#E63946" />
               <Text style={[styles.actionText, { color: "#E63946" }]}>
@@ -462,6 +465,7 @@ export default function DetalhesComunidadeScreen() {
             <TouchableOpacity
               style={styles.actionButton}
               onPress={handleJoinCommunity}
+              disabled={loading}
             >
               <Ionicons name="log-in-outline" size={24} color="#2E7D32" />
               <Text style={[styles.actionText, { color: "#2E7D32" }]}>Entrar na comunidade</Text>
