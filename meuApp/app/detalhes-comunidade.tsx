@@ -146,6 +146,17 @@ export default function DetalhesComunidadeScreen() {
   };
 
   const handleLeaveCommunity = () => {
+    // Feedback imediato para confirmar clique
+    try {
+      Toast.show({
+        type: "info",
+        text1: "Sair da comunidade",
+        text2: "Abrindo confirmação...",
+        visibilityTime: 1200,
+        autoHide: true,
+        topOffset: 50,
+      });
+    } catch {}
     Alert.alert(
       "Sair da comunidade",
       "Tem certeza que deseja sair desta comunidade?",
@@ -452,7 +463,6 @@ export default function DetalhesComunidadeScreen() {
             <TouchableOpacity
               style={styles.actionButton}
               onPress={handleLeaveCommunity}
-              disabled={loading}
             >
               <Ionicons name="exit-outline" size={24} color="#E63946" />
               <Text style={[styles.actionText, { color: "#E63946" }]}>
