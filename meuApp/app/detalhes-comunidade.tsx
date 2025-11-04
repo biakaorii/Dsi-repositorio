@@ -26,7 +26,16 @@ export default function DetalhesComunidadeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuth();
-  const { comunidades, isOwner, updateComunidade, deleteComunidade, leaveComunidade, removeMember } = useComunidades();
+  const {
+    comunidades,
+    isOwner,
+    isMember,
+    updateComunidade,
+    deleteComunidade,
+    joinComunidade,
+    leaveComunidade,
+    removeMember,
+  } = useComunidades();
 
   // Buscar comunidade pelos parâmetros
   const comunidadeId = params.id as string;
@@ -95,6 +104,7 @@ export default function DetalhesComunidadeScreen() {
   }
 
   const isAdmin = isOwner(comunidadeId, user.uid);
+  const userIsMember = isMember(comunidadeId, user.uid);
 
   const handleSaveChanges = async () => {
     if (!nome.trim() || !descricao.trim()) {
@@ -217,6 +227,32 @@ export default function DetalhesComunidadeScreen() {
         },
       ]
     );
+  };
+
+  const handleJoinCommunity = async () => {
+    setLoading(true);
+    const result = await joinComunidade(comunidadeId);
+    setLoading(false);
+
+    if (result.success) {
+      Toast.show({
+        type: "success",
+        text1: "Sucesso",
+        text2: "Você entrou na comunidade",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: result.error || "Erro ao entrar na comunidade",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
   };
 
   const handleRemoveMember = (memberId: string, memberName: string) => {
@@ -410,7 +446,7 @@ export default function DetalhesComunidadeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Ações</Text>
 
-          {!isAdmin && (
+          {!isAdmin && userIsMember && (
             <TouchableOpacity
               style={styles.actionButton}
               onPress={handleLeaveCommunity}
@@ -419,6 +455,16 @@ export default function DetalhesComunidadeScreen() {
               <Text style={[styles.actionText, { color: "#E63946" }]}>
                 Sair da comunidade
               </Text>
+            </TouchableOpacity>
+          )}
+
+          {!isAdmin && !userIsMember && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleJoinCommunity}
+            >
+              <Ionicons name="log-in-outline" size={24} color="#2E7D32" />
+              <Text style={[styles.actionText, { color: "#2E7D32" }]}>Entrar na comunidade</Text>
             </TouchableOpacity>
           )}
 
