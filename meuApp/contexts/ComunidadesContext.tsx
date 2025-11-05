@@ -25,6 +25,7 @@ export interface Comunidade {
   createdAt: Date;
   membros: string[];
   moderadores: string[]; // Array de IDs dos moderadores
+  photoURL?: string; // URL da foto da comunidade
 }
 
 interface ComunidadesContextData {
@@ -32,12 +33,14 @@ interface ComunidadesContextData {
   loading: boolean;
   createComunidade: (
     nome: string,
-    descricao: string
+    descricao: string,
+    photoURL?: string
   ) => Promise<{ success: boolean; error?: string }>;
   updateComunidade: (
     comunidadeId: string,
     nome: string,
-    descricao: string
+    descricao: string,
+    photoURL?: string
   ) => Promise<{ success: boolean; error?: string }>;
   deleteComunidade: (
     comunidadeId: string
@@ -101,6 +104,7 @@ export function ComunidadesProvider({ children }: { children: ReactNode }) {
             createdAt: data.createdAt?.toDate() || new Date(),
             membros: data.membros || [],
             moderadores: data.moderadores || [],
+            photoURL: data.photoURL || undefined,
           });
         });
         setComunidades(comunidadesData);
@@ -116,7 +120,7 @@ export function ComunidadesProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   // Criar comunidade
-  async function createComunidade(nome: string, descricao: string) {
+  async function createComunidade(nome: string, descricao: string, photoURL?: string) {
     try {
       if (!user) {
         return { success: false, error: 'Usuário não autenticado' };
@@ -138,6 +142,7 @@ export function ComunidadesProvider({ children }: { children: ReactNode }) {
         createdAt: Timestamp.now(),
         membros: [user.uid], // O criador é o primeiro membro
         moderadores: [], // Inicialmente sem moderadores
+        photoURL: photoURL || null,
       };
 
       await addDoc(collection(db, 'comunidades'), comunidadeData);
@@ -149,7 +154,7 @@ export function ComunidadesProvider({ children }: { children: ReactNode }) {
   }
 
   // Atualizar comunidade (admin ou moderador)
-  async function updateComunidade(comunidadeId: string, nome: string, descricao: string) {
+  async function updateComunidade(comunidadeId: string, nome: string, descricao: string, photoURL?: string) {
     try {
       if (!user) {
         return { success: false, error: 'Usuário não autenticado' };
@@ -175,10 +180,17 @@ export function ComunidadesProvider({ children }: { children: ReactNode }) {
       }
 
       const comunidadeRef = doc(db, 'comunidades', comunidadeId);
-      await updateDoc(comunidadeRef, {
+      const updateData: any = {
         nome: nome.trim(),
         descricao: descricao.trim(),
-      });
+      };
+
+      // Só atualiza photoURL se foi fornecida
+      if (photoURL !== undefined) {
+        updateData.photoURL = photoURL;
+      }
+
+      await updateDoc(comunidadeRef, updateData);
 
       return { success: true };
     } catch (error: any) {

@@ -8,6 +8,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -95,6 +96,16 @@ export default function ChatComunidadeScreen() {
             params: { id: comunidadeId }
           })}
         >
+          {comunidade.photoURL ? (
+            <Image 
+              source={{ uri: comunidade.photoURL }} 
+              style={styles.communityAvatar}
+            />
+          ) : (
+            <View style={styles.communityAvatarPlaceholder}>
+              <Ionicons name="people" size={20} color="#fff" />
+            </View>
+          )}
           <Text style={styles.headerTitle} numberOfLines={1}>
             {comunidadeNome}
           </Text>
@@ -165,11 +176,32 @@ const styles = StyleSheet.create({
   },
   headerInfo: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  communityAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  communityAvatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#fff",
+    flex: 1,
   },
   headerSubtitle: {
     fontSize: 13,

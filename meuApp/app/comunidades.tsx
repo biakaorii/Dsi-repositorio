@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   Modal,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -125,31 +126,45 @@ export default function ComunidadesScreen() {
         style={styles.comunidadeCard}
         onPress={() => handleComunidadeClick(item)}
       >
-        <View style={styles.comunidadeContent}>
-          <View style={styles.headerRow}>
-            <Text style={styles.comunidadeNome}>{item.nome}</Text>
-            {user && isMember(item.id, user.uid) && (
-              <View style={styles.memberBadge}>
-                <Text style={styles.memberBadgeText}>Membro</Text>
-              </View>
-            )}
-          </View>
-          <Text style={styles.comunidadeDono}>De: {item.ownerName}</Text>
-          <Text style={styles.comunidadeDescricao} numberOfLines={1}>
-            {item.descricao}
-          </Text>
-          <View style={styles.comunidadeFooter}>
-            <View style={styles.footerRow}>
-              <Ionicons name="people" size={16} color="#666" />
-              <Text style={styles.membrosCount}>
-                {item.membros?.length || 1} {item.membros?.length === 1 ? "membro" : "membros"}
-              </Text>
+        <View style={styles.comunidadeCardHeader}>
+          {/* Ícone circular da Comunidade */}
+          {item.photoURL ? (
+            <Image 
+              source={{ uri: item.photoURL }} 
+              style={styles.comunidadeIcon}
+            />
+          ) : (
+            <View style={styles.comunidadeIconPlaceholder}>
+              <Ionicons name="people" size={24} color="#2E7D32" />
             </View>
-            <View style={styles.footerRow}>
-              <Ionicons name="calendar-outline" size={16} color="#666" />
-              <Text style={styles.dataCount}>
-                Criada em {formatDate(item.createdAt)}
-              </Text>
+          )}
+
+          <View style={styles.comunidadeContent}>
+            <View style={styles.headerRow}>
+              <Text style={styles.comunidadeNome}>{item.nome}</Text>
+              {user && isMember(item.id, user.uid) && (
+                <View style={styles.memberBadge}>
+                  <Text style={styles.memberBadgeText}>Membro</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.comunidadeDono}>De: {item.ownerName}</Text>
+            <Text style={styles.comunidadeDescricao} numberOfLines={1}>
+              {item.descricao}
+            </Text>
+            <View style={styles.comunidadeFooter}>
+              <View style={styles.footerRow}>
+                <Ionicons name="people" size={16} color="#666" />
+                <Text style={styles.membrosCount}>
+                  {item.membros?.length || 1} {item.membros?.length === 1 ? "membro" : "membros"}
+                </Text>
+              </View>
+              <View style={styles.footerRow}>
+                <Ionicons name="calendar-outline" size={16} color="#666" />
+                <Text style={styles.dataCount}>
+                  Criada em {formatDate(item.createdAt)}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -410,7 +425,31 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F8E9",
     borderRadius: 12,
     marginBottom: 15,
+    overflow: "hidden",
+  },
+  comunidadeCardHeader: {
+    flexDirection: "row",
     padding: 16,
+    gap: 12,
+    alignItems: "flex-start",
+  },
+  comunidadeIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#2E7D32",
+    backgroundColor: "#E8F5E9",
+  },
+  comunidadeIconPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#2E7D32",
+    backgroundColor: "#E8F5E9",
+    justifyContent: "center",
+    alignItems: "center",
   },
   comunidadeContent: {
     flex: 1,
