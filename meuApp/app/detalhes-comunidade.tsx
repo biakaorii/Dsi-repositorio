@@ -17,6 +17,8 @@ import { useAuth } from "../contexts/AuthContext";
 import Toast from "react-native-toast-message";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
+import * as ImagePicker from 'expo-image-picker';
+import { uploadCommunityPhoto, deleteCommunityPhoto } from '@/utils/uploadCommunityPhoto';
 
 interface MemberData {
   id: string;
@@ -50,6 +52,7 @@ export default function DetalhesComunidadeScreen() {
   const [editMode, setEditMode] = useState(false);
   const [nome, setNome] = useState(comunidade?.nome || "");
   const [descricao, setDescricao] = useState(comunidade?.descricao || "");
+  const [communityImage, setCommunityImage] = useState<string | null>(comunidade?.photoURL || null);
   const [loading, setLoading] = useState(false);
   const [membersData, setMembersData] = useState<MemberData[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
@@ -59,6 +62,7 @@ export default function DetalhesComunidadeScreen() {
     if (comunidade) {
       setNome(comunidade.nome);
       setDescricao(comunidade.descricao);
+      setCommunityImage(comunidade.photoURL || null);
     }
   }, [comunidade]);
 
@@ -115,6 +119,47 @@ export default function DetalhesComunidadeScreen() {
   const userIsModerator = isModerator(comunidadeId, user.uid);
   const userCanModerate = canModerate(comunidadeId, user.uid);
 
+  // Solicitar permissões para a galeria
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão Negada', 'É necessário permitir o acesso à galeria para alterar a foto.');
+      return false;
+    }
+    return true;
+  };
+
+  // Selecionar imagem da galeria
+  const pickImage = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1], // Formato circular
+        quality: 0.8,
+        allowsMultipleSelection: false,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setCommunityImage(result.assets[0].uri);
+        Toast.show({
+          type: 'success',
+          text1: 'Foto Selecionada! ✓',
+          text2: 'Clique em "Salvar" para confirmar',
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar imagem:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem.');
+    }
+  };
+
   const handleSaveChanges = async () => {
     if (!nome.trim() || !descricao.trim()) {
       Toast.show({
@@ -129,7 +174,37 @@ export default function DetalhesComunidadeScreen() {
     }
 
     setLoading(true);
-    const result = await updateComunidade(comunidadeId, nome, descricao);
+
+    let photoURL: string | undefined = undefined;
+
+    // Se há uma nova imagem, fazer upload
+    if (communityImage && communityImage !== comunidade.photoURL) {
+      // Deletar foto antiga se existir
+      if (comunidade.photoURL) {
+        await deleteCommunityPhoto(comunidadeId);
+      }
+
+      // Upload da nova foto
+      const uploadedUrl = await uploadCommunityPhoto(communityImage, comunidadeId);
+      if (uploadedUrl) {
+        photoURL = `${uploadedUrl}?t=${Date.now()}`;
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Erro',
+          text2: 'Não foi possível fazer upload da foto',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 50,
+        });
+        setLoading(false);
+        return;
+      }
+    } else {
+      photoURL = comunidade.photoURL;
+    }
+
+    const result = await updateComunidade(comunidadeId, nome, descricao, photoURL);
     setLoading(false);
 
     if (result.success) {
@@ -423,6 +498,29 @@ export default function DetalhesComunidadeScreen() {
       </View>
 
       <ScrollView style={styles.content}>
+        {/* Ícone da Comunidade - Sempre visível */}
+        <View style={styles.iconSection}>
+          {communityImage ? (
+            <Image 
+              source={{ uri: `${communityImage}?t=${Date.now()}` }} 
+              style={styles.communityIconLarge}
+            />
+          ) : (
+            <View style={styles.communityIconLargePlaceholder}>
+              <Ionicons name="people" size={60} color="#2E7D32" />
+            </View>
+          )}
+          {userCanModerate && editMode && (
+            <TouchableOpacity
+              style={styles.changeIconButton}
+              onPress={pickImage}
+              disabled={loading}
+            >
+              <Ionicons name="camera" size={16} color="#fff" />
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Informações da Comunidade */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informações</Text>
@@ -688,6 +786,44 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  iconSection: {
+    alignItems: "center",
+    paddingVertical: 30,
+    backgroundColor: "#FFF",
+    position: "relative",
+  },
+  communityIconLarge: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: "#2E7D32",
+    backgroundColor: "#E8F5E9",
+  },
+  communityIconLargePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: "#E9ECEF",
+    backgroundColor: "#E8F5E9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  changeIconButton: {
+    position: "absolute",
+    bottom: 30,
+    right: "50%",
+    marginRight: -80,
+    backgroundColor: "#2E7D32",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#fff",
   },
   section: {
     padding: 20,
