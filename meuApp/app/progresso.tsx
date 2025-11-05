@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput 
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Slider from '@react-native-community/slider';
+import BottomNavBar from "../components/BottomNavBar";
 
 export default function ProgressoScreen() {
   const router = useRouter();
@@ -200,7 +201,7 @@ export default function ProgressoScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 80 }}>
       
         <View style={styles.section}>
           {categoriaAtiva === 'lendo' && (
@@ -339,6 +340,9 @@ export default function ProgressoScreen() {
 
 
       </ScrollView>
+
+      {/* Barra de navegação inferior */}
+      <BottomNavBar />
     </View>
   );
 }
