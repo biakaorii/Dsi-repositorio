@@ -35,6 +35,10 @@ export default function DetalhesComunidadeScreen() {
     joinComunidade,
     leaveComunidade,
     removeMember,
+    promoteToModerator,
+    demoteFromModerator,
+    isModerator,
+    canModerate,
   } = useComunidades();
 
   // Buscar comunidade pelos parâmetros
@@ -105,6 +109,8 @@ export default function DetalhesComunidadeScreen() {
 
   const isAdmin = isOwner(comunidadeId, user.uid);
   const userIsMember = isMember(comunidadeId, user.uid);
+  const userIsModerator = isModerator(comunidadeId, user.uid);
+  const userCanModerate = canModerate(comunidadeId, user.uid);
 
   const handleSaveChanges = async () => {
     if (!nome.trim() || !descricao.trim()) {
@@ -146,6 +152,8 @@ export default function DetalhesComunidadeScreen() {
   };
 
   const handleLeaveCommunity = async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
       const result = await leaveComunidade(comunidadeId);
@@ -219,7 +227,9 @@ export default function DetalhesComunidadeScreen() {
                 topOffset: 50,
               });
               // Voltar para a tela de comunidades após sair
-              setMembersData((prev) => prev.filter((m) => m.id !== user.uid));
+              if (user) {
+                setMembersData((prev) => prev.filter((m) => m.id !== user.uid));
+              }
               setTimeout(() => {
                 try { router.replace("/comunidades"); } catch {}
               }, 600);
@@ -346,6 +356,58 @@ export default function DetalhesComunidadeScreen() {
     );
   };
 
+  const handlePromoteToModerator = async (memberId: string, memberName: string) => {
+    setLoading(true);
+    const result = await promoteToModerator(comunidadeId, memberId);
+    setLoading(false);
+
+    if (result.success) {
+      Toast.show({
+        type: "success",
+        text1: "Sucesso",
+        text2: `${memberName} agora é moderador`,
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: result.error || "Erro ao promover membro",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
+  };
+
+  const handleDemoteFromModerator = async (memberId: string, memberName: string) => {
+    setLoading(true);
+    const result = await demoteFromModerator(comunidadeId, memberId);
+    setLoading(false);
+
+    if (result.success) {
+      Toast.show({
+        type: "success",
+        text1: "Sucesso",
+        text2: `${memberName} não é mais moderador`,
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: result.error || "Erro ao rebaixar moderador",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -362,7 +424,7 @@ export default function DetalhesComunidadeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informações</Text>
 
-          {isAdmin && editMode ? (
+          {userCanModerate && editMode ? (
             <>
               <Text style={styles.label}>Nome *</Text>
               <TextInput
@@ -447,6 +509,16 @@ export default function DetalhesComunidadeScreen() {
                   <Text style={styles.editIconText}>Editar informações</Text>
                 </TouchableOpacity>
               )}
+
+              {userIsModerator && !isAdmin && (
+                <TouchableOpacity
+                  style={styles.editIconButton}
+                  onPress={() => setEditMode(true)}
+                >
+                  <Ionicons name="create-outline" size={24} color="#2E7D32" />
+                  <Text style={styles.editIconText}>Editar informações</Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
         </View>
@@ -466,6 +538,7 @@ export default function DetalhesComunidadeScreen() {
             membersData.map((member) => {
               const isCurrentUser = member.id === user.uid;
               const isCommunityOwner = member.id === comunidade.ownerId;
+              const isCommunityModerator = comunidade.moderadores.includes(member.id);
 
               return (
                 <View key={member.id} style={styles.memberItem}>
@@ -476,12 +549,47 @@ export default function DetalhesComunidadeScreen() {
                       {isCommunityOwner && (
                         <Text style={styles.adminBadge}>Administrador</Text>
                       )}
-                      {isCurrentUser && !isCommunityOwner && (
+                      {isCommunityModerator && !isCommunityOwner && (
+                        <Text style={styles.moderatorBadge}>Moderador</Text>
+                      )}
+                      {isCurrentUser && !isCommunityOwner && !isCommunityModerator && (
                         <Text style={styles.youBadge}>Você</Text>
                       )}
                     </View>
                   </View>
+
+                  {/* Ações do Admin */}
                   {isAdmin && !isCommunityOwner && (
+                    <View style={styles.memberActions}>
+                      {/* Botão de Promover/Rebaixar */}
+                      {isCommunityModerator ? (
+                        <TouchableOpacity
+                          onPress={() => handleDemoteFromModerator(member.id, member.name)}
+                          style={styles.actionIconButton}
+                        >
+                          <Ionicons name="arrow-down-circle" size={24} color="#F59E0B" />
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          onPress={() => handlePromoteToModerator(member.id, member.name)}
+                          style={styles.actionIconButton}
+                        >
+                          <Ionicons name="arrow-up-circle" size={24} color="#3B82F6" />
+                        </TouchableOpacity>
+                      )}
+                      
+                      {/* Botão de Remover */}
+                      <TouchableOpacity
+                        onPress={() => handleRemoveMember(member.id, member.name)}
+                        style={styles.actionIconButton}
+                      >
+                        <Ionicons name="close-circle" size={24} color="#E63946" />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* Ações do Moderador (não pode remover outros mods ou admin) */}
+                  {userIsModerator && !isAdmin && !isCommunityOwner && !isCommunityModerator && (
                     <TouchableOpacity
                       onPress={() => handleRemoveMember(member.id, member.name)}
                     >
@@ -707,10 +815,24 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 2,
   },
+  moderatorBadge: {
+    fontSize: 12,
+    color: "#3B82F6",
+    fontWeight: "600",
+    marginTop: 2,
+  },
   youBadge: {
     fontSize: 12,
     color: "#666",
     marginTop: 2,
+  },
+  memberActions: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  actionIconButton: {
+    padding: 4,
   },
   actionButton: {
     flexDirection: "row",
