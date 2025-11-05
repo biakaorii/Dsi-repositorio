@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -20,6 +21,7 @@ import { db } from "../config/firebaseConfig";
 interface MemberData {
   id: string;
   name: string;
+  photoURL?: string;
 }
 
 export default function DetalhesComunidadeScreen() {
@@ -76,6 +78,7 @@ export default function DetalhesComunidadeScreen() {
             membersInfo.push({
               id: membroId,
               name: userData.name || "Usuário",
+              photoURL: userData.profilePhotoUrl || undefined,
             });
           } else {
             membersInfo.push({
@@ -543,7 +546,17 @@ export default function DetalhesComunidadeScreen() {
               return (
                 <View key={member.id} style={styles.memberItem}>
                   <View style={styles.memberInfo}>
-                    <Ionicons name="person-circle" size={40} color="#2E7D32" />
+                    {member.photoURL ? (
+                      <Image 
+                        source={{ uri: member.photoURL }} 
+                        style={styles.memberPhoto}
+                      />
+                    ) : (
+                      <Image
+                        source={{ uri: "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png" }}
+                        style={styles.memberPhoto}
+                      />
+                    )}
                     <View style={styles.memberDetails}>
                       <Text style={styles.memberName}>{member.name}</Text>
                       {isCommunityOwner && (
@@ -800,6 +813,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     gap: 12,
+  },
+  memberPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#2E7D32",
+    backgroundColor: "#E8F5E9",
   },
   memberDetails: {
     flex: 1,
