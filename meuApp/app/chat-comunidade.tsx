@@ -139,9 +139,6 @@ export default function ChatComunidadeScreen() {
 
       {/* Input de mensagem */}
       <View style={styles.inputContainer}>
-        <TouchableOpacity style={styles.attachButton}>
-          <Ionicons name="add-circle" size={28} color="#2E7D32" />
-        </TouchableOpacity>
         <TextInput
           style={styles.input}
           placeholder="Digite uma mensagem..."
@@ -277,10 +274,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#E9ECEF",
   },
-  attachButton: {
-    marginRight: 8,
-    marginBottom: 8,
-  },
+  
   input: {
     flex: 1,
     backgroundColor: "#F8F9FA",
