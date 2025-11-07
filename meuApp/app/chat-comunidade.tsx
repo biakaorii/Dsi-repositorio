@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,35 +9,101 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useComunidades } from "../contexts/ComunidadesContext";
 import { useAuth } from "../contexts/AuthContext";
+import Toast from "react-native-toast-message";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  Timestamp,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+import { db } from "../config/firebaseConfig";
+
+interface ChatMessage {
+  id: string;
+  message: string;
+  userId: string;
+  userName: string;
+  createdAt: Date;
+  isOwn: boolean;
+}
 
 export default function ChatComunidadeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { comunidades, isMember } = useComunidades();
+  const { comunidades, isMember, isOwner } = useComunidades();
   const { user } = useAuth();
   const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sending, setSending] = useState(false);
+  const listRef = useRef<FlatList>(null);
 
-  // Pegando o ID dos parâmetros e buscando os dados atualizados do contexto
+  // Contexto da comunidade
   const comunidadeId = params.id as string;
   const comunidade = comunidades.find((c) => c.id === comunidadeId);
   const comunidadeNome = comunidade?.nome || "Comunidade";
+  const photoURL = (comunidade as any)?.photoURL as string | undefined;
+  const userIsMember = user ? isMember(comunidadeId, user.uid) : false;
+  const isAdmin = user && comunidade ? isOwner(comunidadeId, user.uid) : false;
 
-  // Verificar se o usuário é membro
+  // Listener em tempo real (sempre declarar hooks antes de returns)
+  useEffect(() => {
+    if (!comunidadeId) return;
+    let unsubscribe: undefined | (() => void);
+    if (userIsMember) {
+      const ref = collection(db, "comunidades", comunidadeId, "mensagens");
+      const q = query(ref, orderBy("createdAt", "asc"));
+      unsubscribe = onSnapshot(
+        q,
+        (snap) => {
+          const list: ChatMessage[] = [];
+          snap.forEach((d) => {
+            const data = d.data() as any;
+            const createdAt: Date = data.createdAt?.toDate?.() || new Date();
+            list.push({
+              id: d.id,
+              message: data.message || "",
+              userId: data.userId || "",
+              userName: data.userName || "Usuário",
+              createdAt,
+              isOwn: user ? data.userId === user.uid : false,
+            });
+          });
+          setMessages(list);
+        },
+        (err) => {
+          console.error("Erro ao carregar mensagens:", err);
+        }
+      );
+    } else {
+      setMessages([]);
+    }
+    return () => { if (unsubscribe) unsubscribe(); };
+  }, [comunidadeId, userIsMember, user?.uid]);
+
+  // Auto-scroll ao final quando mensagens mudam
+  useEffect(() => {
+    if (!listRef.current) return;
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+  }, [messages.length]);
+
+  // Guards após hooks para manter ordem estável
   if (!comunidade || !user) {
     return (
       <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color="#E63946" />
           <Text style={styles.errorText}>Comunidade não encontrada</Text>
-          <TouchableOpacity
-            style={styles.backButton2}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton2} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Voltar</Text>
           </TouchableOpacity>
         </View>
@@ -45,24 +111,61 @@ export default function ChatComunidadeScreen() {
     );
   }
 
-  if (!isMember(comunidadeId, user.uid)) {
+  if (!userIsMember) {
     return (
       <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Ionicons name="lock-closed-outline" size={64} color="#E63946" />
           <Text style={styles.errorText}>Acesso Negado</Text>
-          <Text style={styles.errorSubtext}>
-            Você precisa ser membro desta comunidade para acessar o chat
-          </Text>
-          <TouchableOpacity
-            style={styles.backButton2}
-            onPress={() => router.back()}
-          >
+          <Text style={styles.errorSubtext}>Você precisa ser membro desta comunidade para acessar o chat</Text>
+          <TouchableOpacity style={styles.backButton2} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Voltar</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
+  }
+
+  async function handleSend() {
+    const text = message.trim();
+    if (!text) return;
+    if (!user) return;
+    try {
+      setSending(true);
+      const ref = collection(db, "comunidades", comunidadeId, "mensagens");
+      await addDoc(ref, {
+        message: text,
+        userId: user.uid,
+        userName: (user as any)?.name || "Usuário",
+        createdAt: Timestamp.now(),
+      });
+      setMessage("");
+    } catch (e) {
+      console.error("Erro ao enviar mensagem:", e);
+      Toast.show({ type: "error", text1: "Erro ao enviar", text2: "Tente novamente", visibilityTime: 2500, topOffset: 50 });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleDelete(messageId: string, authorId: string) {
+    if (!user) return;
+    const canDelete = isAdmin || authorId === user.uid;
+    if (!canDelete) return;
+    if (Platform.OS === "web") {
+      const ok = (globalThis as any)?.confirm?.("Excluir esta mensagem?") ?? true;
+      if (!ok) return;
+      try { await deleteDoc(doc(db, "comunidades", comunidadeId, "mensagens", messageId)); }
+      catch { Toast.show({ type: "error", text1: "Erro ao excluir", visibilityTime: 2000, topOffset: 50 }); }
+      return;
+    }
+    Alert.alert("Excluir mensagem", "Deseja excluir esta mensagem?", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Excluir", style: "destructive", onPress: async () => {
+        try { await deleteDoc(doc(db, "comunidades", comunidadeId, "mensagens", messageId)); }
+        catch { Toast.show({ type: "error", text1: "Erro ao excluir", visibilityTime: 2000, topOffset: 50 }); }
+      }}
+    ]);
   }
 
   const renderMessage = ({ item }: { item: any }) => (
@@ -74,7 +177,16 @@ export default function ChatComunidadeScreen() {
     >
       {!item.isOwn && <Text style={styles.userName}>{item.userName}</Text>}
       <Text style={styles.messageText}>{item.message}</Text>
-      <Text style={styles.timestamp}>{item.timestamp}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+        <Text style={styles.timestamp}>
+          {new Date(item.createdAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+        </Text>
+        {(item.isOwn || isAdmin) && (
+          <TouchableOpacity onPress={() => handleDelete(item.id, item.userId)}>
+            <Ionicons name="trash-outline" size={18} color="#E63946" />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 
@@ -89,18 +201,12 @@ export default function ChatComunidadeScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.headerInfo}
-          onPress={() => router.push({
-            pathname: "/detalhes-comunidade",
-            params: { id: comunidadeId }
-          })}
+          onPress={() => router.push({ pathname: "/detalhes-comunidade", params: { id: comunidadeId } })}
         >
-          {comunidade.photoURL ? (
-            <Image 
-              source={{ uri: comunidade.photoURL }} 
-              style={styles.communityAvatar}
-            />
+          {photoURL ? (
+            <Image source={{ uri: photoURL }} style={styles.communityAvatar} />
           ) : (
             <View style={styles.communityAvatarPlaceholder}>
               <Ionicons name="people" size={20} color="#fff" />
@@ -110,12 +216,9 @@ export default function ChatComunidadeScreen() {
             {comunidadeNome}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.moreButton}
-          onPress={() => router.push({
-            pathname: "/detalhes-comunidade",
-            params: { id: comunidadeId }
-          })}
+          onPress={() => router.push({ pathname: "/detalhes-comunidade", params: { id: comunidadeId } })}
         >
           <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
         </TouchableOpacity>
@@ -123,7 +226,8 @@ export default function ChatComunidadeScreen() {
 
       {/* Área de mensagens */}
       <FlatList
-        data={[]}
+        ref={listRef}
+        data={messages}
         renderItem={renderMessage}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.messagesContainer}
@@ -135,6 +239,7 @@ export default function ChatComunidadeScreen() {
             <Text style={styles.emptySubtext}>Seja o primeiro a enviar uma mensagem!</Text>
           </View>
         }
+        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
       />
 
       {/* Input de mensagem */}
@@ -146,8 +251,18 @@ export default function ChatComunidadeScreen() {
           onChangeText={setMessage}
           multiline
           maxLength={500}
+          onKeyPress={(e) => {
+            if (Platform.OS === 'web' && (e as any).nativeEvent.key === 'Enter' && !((e as any).shiftKey)) {
+              e.preventDefault?.();
+              handleSend();
+            }
+          }}
         />
-        <TouchableOpacity style={styles.sendButton}>
+        <TouchableOpacity
+          style={[styles.sendButton, (!message.trim() || sending) && { opacity: 0.5 }]}
+          onPress={handleSend}
+          disabled={!message.trim() || sending}
+        >
           <Ionicons name="send" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -263,7 +378,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#666",
     alignSelf: "flex-end",
-    marginTop: 4,
   },
   inputContainer: {
     flexDirection: "row",
@@ -274,7 +388,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#E9ECEF",
   },
-  
   input: {
     flex: 1,
     backgroundColor: "#F8F9FA",
@@ -328,3 +441,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
