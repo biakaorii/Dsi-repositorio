@@ -27,7 +27,6 @@ export default function Layout() {
             <Stack.Screen name="editarPerfil"/>
             <Stack.Screen name="progresso"/>
             <Stack.Screen name="book-details"/>
-            <Stack.Screen name="detalhe_livro"/>
             <Stack.Screen name="comunidades"/>
             <Stack.Screen name="criar-comunidade"/>
             <Stack.Screen name="chat-comunidade"/>
