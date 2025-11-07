@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, Link } from "expo-router";
 import BottomNavBar from "../components/BottomNavBar";
+import { useReviews } from "../contexts/ReviewsContext";
 
 type Book = {
   id: string;
@@ -11,6 +12,11 @@ type Book = {
   coverUrl: string;
   genre: string;
   synopsis: string;
+};
+
+type BookWithRating = Book & {
+  avgRating: number;
+  reviewCount: number;
 };
 
 const books: Book[] = [
@@ -90,6 +96,31 @@ const books: Book[] = [
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { reviews } = useReviews();
+  const [topRatedBooks, setTopRatedBooks] = useState<BookWithRating[]>([]);
+
+  // Calcular livros mais bem avaliados
+  useEffect(() => {
+    const bookRatings = books.map(book => {
+      const bookReviews = reviews.filter(r => r.bookId === book.id);
+      const avgRating = bookReviews.length > 0
+        ? bookReviews.reduce((sum, r) => sum + r.rating, 0) / bookReviews.length
+        : 0;
+      return { 
+        ...book, 
+        avgRating, 
+        reviewCount: bookReviews.length 
+      };
+    });
+    
+    // Ordenar por avaliação e pegar apenas os que têm reviews
+    const sorted = bookRatings
+      .filter(b => b.reviewCount > 0)
+      .sort((a, b) => b.avgRating - a.avgRating)
+      .slice(0, 8);
+      
+    setTopRatedBooks(sorted);
+  }, [reviews]);
 
   const openDetails = (book: Book) => {
     router.push({
@@ -129,6 +160,28 @@ export default function HomeScreen() {
             ))}
           </ScrollView>
         </View>
+
+        {/* Livros Mais Bem Avaliados */}
+        {topRatedBooks.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}> Mais Bem Avaliados</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {topRatedBooks.map((book) => (
+                <TouchableOpacity key={book.id} style={styles.ratedCard} onPress={() => openDetails(book)}>
+                  <Image source={{ uri: book.coverUrl }} style={styles.bookImage} />
+                  <View style={styles.ratingBadge}>
+                    <Ionicons name="star" size={12} color="#FFB800" />
+                    <Text style={styles.ratingText}>{book.avgRating.toFixed(1)}</Text>
+                  </View>
+                  <Text numberOfLines={2} style={styles.bookTitle}>{book.title}</Text>
+                  <Text style={styles.reviewCount}>{book.reviewCount} {book.reviewCount === 1 ? 'avaliação' : 'avaliações'}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Continuar Lendo */}
         <View style={styles.section}>
@@ -200,6 +253,8 @@ const styles = StyleSheet.create({
 
   section: { marginBottom: 20, paddingHorizontal: 20 },
   sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 10, color: "#333" },
+  sectionHeader: { marginBottom: 10 },
+  sectionSubtitle: { fontSize: 12, color: "#666", marginTop: -5, marginBottom: 10 },
 
   card: {
     backgroundColor: "#F1F8E9",
@@ -209,8 +264,43 @@ const styles = StyleSheet.create({
     width: 140,
     alignItems: "center",
   },
+  ratedCard: {
+    backgroundColor: "#F1F8E9",
+    padding: 10,
+    borderRadius: 12,
+    marginRight: 10,
+    width: 140,
+    alignItems: "center",
+    position: "relative",
+  },
   bookImage: { width: 90, height: 120, borderRadius: 8, marginBottom: 8 },
   bookTitle: { fontSize: 12, fontWeight: "600", textAlign: "center", color: "#2E7D32" },
+  
+  ratingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+    marginBottom: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  ratingText: { 
+    fontSize: 12, 
+    fontWeight: "bold", 
+    color: "#FFB800" 
+  },
+  reviewCount: { 
+    fontSize: 10, 
+    color: "#666", 
+    marginTop: 2 
+  },
 
   readingCard: {
     flexDirection: "row",
