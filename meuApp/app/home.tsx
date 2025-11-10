@@ -134,12 +134,25 @@ export default function HomeScreen() {
     });
   };
 
+  const openNearbyBookstores = () => {
+    router.push("/livrarias-mapa" as any);
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Início</Text>
-        <Ionicons name="notifications-outline" size={24} color="#2E7D32" />
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={styles.mapButton}
+            onPress={openNearbyBookstores}
+          >
+            <Ionicons name="map" size={20} color="#2E7D32" />
+            <Text style={styles.mapButtonText}>Livrarias</Text>
+          </TouchableOpacity>
+          <Ionicons name="notifications-outline" size={24} color="#2E7D32" />
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -241,6 +254,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: { fontSize: 20, fontWeight: "bold", color: "#2E7D32" },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  mapButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F1F8E9",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#2E7D32",
+    gap: 6,
+  },
+  mapButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#2E7D32",
+  },
 
   banner: {
     backgroundColor: "#E8F5E9",
