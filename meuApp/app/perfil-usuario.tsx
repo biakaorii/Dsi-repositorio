@@ -11,9 +11,10 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
 import { useReviews } from "../contexts/ReviewsContext";
+import { useComunidades } from "../contexts/ComunidadesContext";
 
 interface UserProfile {
   uid: string;
@@ -30,12 +31,15 @@ export default function PerfilUsuarioScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { getReviewsByUser } = useReviews();
+  const { getComunidadesByUser } = useComunidades();
   
   const userId = params.userId as string;
   
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [userReviews, setUserReviews] = useState<any[]>([]);
+  const [userComunidades, setUserComunidades] = useState<any[]>([]);
+  const [userFavorites, setUserFavorites] = useState<any[]>([]);
 
   useEffect(() => {
     loadUserProfile();
@@ -56,6 +60,29 @@ export default function PerfilUsuarioScreen() {
         // Buscar reviews do usuário
         const reviews = getReviewsByUser(userId);
         setUserReviews(reviews);
+        
+        // Buscar comunidades do usuário
+        const comunidades = getComunidadesByUser(userId);
+        setUserComunidades(comunidades);
+        
+        // Buscar favoritos do usuário
+        const favoritesRef = collection(db, "favorites");
+        const q = query(favoritesRef, where("userId", "==", userId));
+        const favoritesSnapshot = await getDocs(q);
+        
+        const favoritesData: any[] = [];
+        favoritesSnapshot.forEach((doc) => {
+          const data = doc.data();
+          favoritesData.push({
+            id: doc.id,
+            bookId: data.bookId,
+            bookTitle: data.bookTitle,
+            bookAuthor: data.bookAuthor,
+            bookImage: data.bookImage,
+            createdAt: data.createdAt?.toDate() || new Date(),
+          });
+        });
+        setUserFavorites(favoritesData);
       }
     } catch (error) {
       console.error("Erro ao carregar perfil do usuário:", error);
@@ -160,13 +187,84 @@ export default function PerfilUsuarioScreen() {
           </View>
           
           <View style={styles.statCard}>
-            <Ionicons name="calendar" size={24} color="#2E7D32" />
-            <Text style={styles.statNumber}>
-              {new Date(userProfile.createdAt).getFullYear()}
+            <Ionicons name="heart" size={24} color="#E63946" />
+            <Text style={styles.statNumber}>{userFavorites.length}</Text>
+            <Text style={styles.statLabel}>
+              {userFavorites.length === 1 ? "Favorito" : "Favoritos"}
             </Text>
-            <Text style={styles.statLabel}>Membro desde</Text>
+          </View>
+          
+          <View style={styles.statCard}>
+            <Ionicons name="people" size={24} color="#2E7D32" />
+            <Text style={styles.statNumber}>{userComunidades.length}</Text>
+            <Text style={styles.statLabel}>
+              {userComunidades.length === 1 ? "Comunidade" : "Comunidades"}
+            </Text>
           </View>
         </View>
+
+        {/* Livros Favoritos do Usuário */}
+        {userFavorites.length > 0 && (
+          <View style={styles.favoritesSection}>
+            <Text style={styles.sectionTitle}>Livros Favoritos</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.favoritesScrollContainer}
+            >
+              {userFavorites.map((favorite) => (
+                <TouchableOpacity
+                  key={favorite.id}
+                  style={styles.favoriteBookCard}
+                  onPress={() => {
+                    router.push({
+                      pathname: "/book-details",
+                      params: {
+                        id: favorite.bookId,
+                        title: favorite.bookTitle,
+                        author: favorite.bookAuthor,
+                        image: favorite.bookImage,
+                      },
+                    });
+                  }}
+                >
+                  <Image
+                    source={{ uri: favorite.bookImage }}
+                    style={styles.favoriteBookCover}
+                  />
+                  <Text style={styles.favoriteBookTitle} numberOfLines={2}>
+                    {favorite.bookTitle}
+                  </Text>
+                  <Text style={styles.favoriteBookAuthor} numberOfLines={1}>
+                    {favorite.bookAuthor}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Comunidades do Usuário */}
+        {userComunidades.length > 0 && (
+          <View style={styles.comunidadesSection}>
+            <Text style={styles.sectionTitle}>Comunidades</Text>
+            <View style={styles.comunidadesContainer}>
+              {userComunidades.map((comunidade) => (
+                <View key={comunidade.id} style={styles.comunidadeCard}>
+                  <Ionicons name="people-circle" size={20} color="#2E7D32" />
+                  <View style={styles.comunidadeInfo}>
+                    <Text style={styles.comunidadeName} numberOfLines={1}>
+                      {comunidade.nome}
+                    </Text>
+                    <Text style={styles.comunidadeMembers}>
+                      {comunidade.membros.length} {comunidade.membros.length === 1 ? "membro" : "membros"}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Reviews do Usuário */}
         <View style={styles.reviewsSection}>
@@ -368,6 +466,64 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 4,
     textAlign: "center",
+  },
+  comunidadesSection: {
+    padding: 20,
+    paddingTop: 0,
+  },
+  comunidadesContainer: {
+    gap: 12,
+  },
+  comunidadeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+    gap: 12,
+  },
+  comunidadeInfo: {
+    flex: 1,
+  },
+  comunidadeName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 2,
+  },
+  comunidadeMembers: {
+    fontSize: 12,
+    color: "#666",
+  },
+  favoritesSection: {
+    padding: 20,
+    paddingTop: 0,
+  },
+  favoritesScrollContainer: {
+    paddingRight: 20,
+  },
+  favoriteBookCard: {
+    width: 120,
+    marginRight: 12,
+  },
+  favoriteBookCover: {
+    width: 120,
+    height: 180,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  favoriteBookTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
+    lineHeight: 18,
+  },
+  favoriteBookAuthor: {
+    fontSize: 12,
+    color: "#666",
   },
   reviewsSection: {
     padding: 20,

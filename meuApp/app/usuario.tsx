@@ -134,6 +134,13 @@ export default function PerfilScreen() {
             <Ionicons name="create-outline" size={20} color="#333" />
             <Text style={styles.optionText}>Editar Perfil</Text>
           </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.optionButton}
+            onPress={() => router.push("/favoritos" as any)}
+          >
+            <Ionicons name="heart-outline" size={20} color="#333" />
+            <Text style={styles.optionText}>Meus Favoritos</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.optionButton}>
             <Ionicons name="book-outline" size={20} color="#333" />
             <Text style={styles.optionText}>Meus Reviews</Text>
