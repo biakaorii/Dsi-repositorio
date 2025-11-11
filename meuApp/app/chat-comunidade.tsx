@@ -25,6 +25,7 @@ import {
   Timestamp,
   deleteDoc,
   doc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
 
@@ -35,6 +36,7 @@ interface ChatMessage {
   userName: string;
   createdAt: Date;
   isOwn: boolean;
+  edited?: boolean;
 }
 
 export default function ChatComunidadeScreen() {
@@ -45,6 +47,7 @@ export default function ChatComunidadeScreen() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const listRef = useRef<FlatList>(null);
 
   // Contexto da comunidade
@@ -76,6 +79,7 @@ export default function ChatComunidadeScreen() {
               userName: data.userName || "Usuário",
               createdAt,
               isOwn: user ? data.userId === user.uid : false,
+              edited: !!data.edited,
             });
           });
           setMessages(list);
@@ -132,6 +136,21 @@ export default function ChatComunidadeScreen() {
     if (!user) return;
     try {
       setSending(true);
+      if (editingMessageId) {
+        const msg = messages.find((m) => m.id === editingMessageId);
+        if (!msg || msg.userId !== (user?.uid || "")) {
+          return;
+        }
+        const refDoc = doc(db, "comunidades", comunidadeId, "mensagens", editingMessageId);
+        await updateDoc(refDoc, {
+          message: text,
+          edited: true,
+          updatedAt: Timestamp.now(),
+        } as any);
+        setEditingMessageId(null);
+        setMessage("");
+        return;
+      }
       const ref = collection(db, "comunidades", comunidadeId, "mensagens");
       await addDoc(ref, {
         message: text,
@@ -180,12 +199,20 @@ export default function ChatComunidadeScreen() {
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
         <Text style={styles.timestamp}>
           {new Date(item.createdAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+          {item.edited ? " • editada" : ""}
         </Text>
-        {(item.isOwn || isAdmin) && (
-          <TouchableOpacity onPress={() => handleDelete(item.id, item.userId)}>
-            <Ionicons name="trash-outline" size={18} color="#E63946" />
-          </TouchableOpacity>
-        )}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          {item.isOwn && (
+            <TouchableOpacity onPress={() => { setEditingMessageId(item.id); setMessage(item.message); }} style={{ marginRight: 12 }}>
+              <Ionicons name="create-outline" size={18} color="#2E7D32" />
+            </TouchableOpacity>
+          )}
+          {(item.isOwn || isAdmin) && (
+            <TouchableOpacity onPress={() => handleDelete(item.id, item.userId)}>
+              <Ionicons name="trash-outline" size={18} color="#E63946" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -246,7 +273,7 @@ export default function ChatComunidadeScreen() {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Digite uma mensagem..."
+          placeholder={editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem..."}
           value={message}
           onChangeText={setMessage}
           multiline
@@ -258,12 +285,21 @@ export default function ChatComunidadeScreen() {
             }
           }}
         />
+        {editingMessageId && (
+          <TouchableOpacity
+            style={[styles.sendButton, { backgroundColor: '#A5A5A5' }]}
+            onPress={() => { setEditingMessageId(null); setMessage(""); }}
+            disabled={sending}
+          >
+            <Ionicons name="close-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={[styles.sendButton, (!message.trim() || sending) && { opacity: 0.5 }]}
           onPress={handleSend}
           disabled={!message.trim() || sending}
         >
-          <Ionicons name="send" size={24} color="#fff" />
+          <Ionicons name={editingMessageId ? "checkmark" : "send"} size={24} color="#fff" />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
