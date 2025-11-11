@@ -58,6 +58,9 @@ export default function PerfilScreen() {
     ? `${user.profilePhotoUrl}?t=${Date.now()}` 
     : "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png";
 
+  // Verificar se é empreendedor
+  const isEntrepreneur = user.profileType === 'empreendedor';
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -123,6 +126,50 @@ export default function PerfilScreen() {
             )}
           </View>
         </View>
+
+        {/* Informações do Negócio - Apenas para Empreendedores */}
+        {isEntrepreneur && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Informações do Negócio</Text>
+            <View style={styles.businessInfoContainer}>
+              {user.businessName && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="business" size={20} color="#2E7D32" />
+                  <View style={styles.infoTextContainer}>
+                    <Text style={styles.infoLabel}>Nome do Negócio</Text>
+                    <Text style={styles.infoValue}>{user.businessName}</Text>
+                  </View>
+                </View>
+              )}
+              
+              {user.cnpj && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="document-text" size={20} color="#2E7D32" />
+                  <View style={styles.infoTextContainer}>
+                    <Text style={styles.infoLabel}>CNPJ</Text>
+                    <Text style={styles.infoValue}>{user.cnpj}</Text>
+                  </View>
+                </View>
+              )}
+              
+              {user.address && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="location" size={20} color="#2E7D32" />
+                  <View style={styles.infoTextContainer}>
+                    <Text style={styles.infoLabel}>Endereço</Text>
+                    <Text style={styles.infoValue}>{user.address}</Text>
+                  </View>
+                </View>
+              )}
+
+              {!user.businessName && !user.cnpj && !user.address && (
+                <Text style={{ color: "#666", fontStyle: "italic", textAlign: "center" }}>
+                  Complete as informações do seu negócio em "Editar Perfil"
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Ações */}
         <View style={styles.section}>
@@ -228,4 +275,31 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   optionText: { marginLeft: 10, fontSize: 15, color: "#333" },
+
+  businessInfoContainer: {
+    gap: 16,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    backgroundColor: "#F8F9FA",
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+  },
+  infoTextContainer: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: 15,
+    color: "#333",
+    fontWeight: "500",
+  },
 });

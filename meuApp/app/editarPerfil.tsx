@@ -19,6 +19,11 @@ export default function EditarPerfilScreen() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imageKey, setImageKey] = useState(0); // Para forçar reload da imagem
+  
+  // Estados para empreendedor
+  const [businessName, setBusinessName] = useState("");
+  const [cnpj, setCnpj] = useState("");
+  const [address, setAddress] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -27,6 +32,13 @@ export default function EditarPerfilScreen() {
       setBio(user.bio || "");
       setGenerosFavoritos(user.genres?.join(", ") || "");
       setProfileImage(user.profilePhotoUrl || null);
+      
+      // Carregar dados do empreendedor se aplicável
+      if (user.profileType === 'empreendedor') {
+        setBusinessName(user.businessName || "");
+        setCnpj(user.cnpj || "");
+        setAddress(user.address || "");
+      }
     }
   }, [user]);
 
@@ -144,6 +156,12 @@ export default function EditarPerfilScreen() {
         bio: bio,
         genres: genresArray,
         profilePhotoUrl: photoUrl,
+        // Incluir dados do empreendedor se for o caso
+        ...(user.profileType === 'empreendedor' && {
+          businessName: businessName,
+          cnpj: cnpj,
+          address: address,
+        }),
       });
 
       // Forçar atualização da imagem no estado local
@@ -304,6 +322,61 @@ export default function EditarPerfilScreen() {
           <Text style={styles.hint}>Separe os gêneros por vírgula</Text>
         </View>
 
+        {/* Campos específicos para Empreendedores */}
+        {user.profileType === 'empreendedor' && (
+          <>
+            <View style={styles.divider}>
+              <Text style={styles.dividerText}>Informações do Negócio</Text>
+            </View>
+
+            {/* Campo Nome do Negócio */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="business" size={16} color="#2E7D32" /> Nome do Negócio
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={businessName}
+                onChangeText={setBusinessName}
+                placeholder="Ex: Livraria Central"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            {/* Campo CNPJ */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="document-text" size={16} color="#2E7D32" /> CNPJ
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={cnpj}
+                onChangeText={setCnpj}
+                placeholder="00.000.000/0000-00"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
+
+            {/* Campo Endereço */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="location" size={16} color="#2E7D32" /> Endereço
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Rua, número, bairro, cidade"
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+          </>
+        )}
+
         {/* Botão Salvar Principal */}
         <TouchableOpacity 
           style={[styles.saveButtonMain, uploading && styles.saveButtonMainDisabled]} 
@@ -448,6 +521,21 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 4,
     fontStyle: "italic",
+  },
+
+  divider: {
+    marginVertical: 24,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#E9ECEF",
+    backgroundColor: "#F1F8E9",
+    alignItems: "center",
+  },
+  dividerText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2E7D32",
   },
 
   section: {

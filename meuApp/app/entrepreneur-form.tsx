@@ -7,17 +7,21 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { useAuth } from '../contexts/AuthContext';
 
 
 const EntrepreneurFormScreen = () => {
-    const router = useRouter();
+  const router = useRouter();
+  const { updateUser } = useAuth();
   const [businessName, setBusinessName] = useState('');
   const [cnpj, setCnpj] = useState('');
   const [address, setAddress] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!businessName || !cnpj || !address) {
       Toast.show({
         type: 'error',
@@ -30,25 +34,41 @@ const EntrepreneurFormScreen = () => {
       return;
     }
 
-    console.log({
+    setLoading(true);
+
+    // Salvar as informações do negócio no perfil do usuário
+    const result = await updateUser({
       businessName,
       cnpj,
       address,
       profileType: 'empreendedor',
     });
 
-    Toast.show({
-      type: 'success',
-      text1: 'Sucesso!',
-      text2: 'Cadastro finalizado com sucesso!',
-      visibilityTime: 2500,
-      autoHide: true,
-      topOffset: 50,
-    });
-    
-    setTimeout(() => {
-      router.replace('/home');
-    }, 1000);
+    setLoading(false);
+
+    if (result.success) {
+      Toast.show({
+        type: 'success',
+        text1: 'Sucesso!',
+        text2: 'Informações do negócio salvas!',
+        visibilityTime: 2500,
+        autoHide: true,
+        topOffset: 50,
+      });
+      
+      setTimeout(() => {
+        router.replace('/home');
+      }, 1000);
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: result.error || 'Não foi possível salvar',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
   };
 
   return (
@@ -76,8 +96,16 @@ const EntrepreneurFormScreen = () => {
         onChangeText={setAddress}
       />
 
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.submitButtonText}>Continuar</Text>
+      <TouchableOpacity 
+        style={[styles.submitButton, loading && styles.submitButtonDisabled]} 
+        onPress={handleSubmit}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.submitButtonText}>Continuar</Text>
+        )}
       </TouchableOpacity>
 
       <Toast />
@@ -120,6 +148,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 30,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#A5D6A7',
   },
   submitButtonText: {
     color: '#fff',
