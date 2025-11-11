@@ -209,7 +209,7 @@ export default function ChatComunidadeScreen() {
           )}
           {(item.isOwn || isAdmin) && (
             <TouchableOpacity onPress={() => handleDelete(item.id, item.userId)}>
-              <Ionicons name="trash-outline" size={18} color="#E63946" />
+              <Ionicons name="trash-outline" size={18} color="#2E7D32" />
             </TouchableOpacity>
           )}
         </View>
