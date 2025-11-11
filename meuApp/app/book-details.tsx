@@ -403,16 +403,26 @@ export default function BookDetailsScreen() {
                 <View key={review.id} style={styles.reviewCard}>
                   <View style={styles.reviewHeader}>
                     <View style={styles.reviewHeaderLeft}>
-                      {currentUserPhoto ? (
-                        <Image
-                          source={{ uri: `${currentUserPhoto}?t=${Date.now()}` }}
-                          style={styles.profilePhoto}
-                        />
-                      ) : (
-                        <View style={styles.profilePhotoPlaceholder}>
-                          <Ionicons name="person" size={24} color="#999" />
-                        </View>
-                      )}
+                      <TouchableOpacity
+                        onPress={() => {
+                          // Navegar para o perfil do usuário
+                          router.push({
+                            pathname: "/perfil-usuario" as any,
+                            params: { userId: review.userId }
+                          });
+                        }}
+                      >
+                        {currentUserPhoto ? (
+                          <Image
+                            source={{ uri: `${currentUserPhoto}?t=${Date.now()}` }}
+                            style={styles.profilePhoto}
+                          />
+                        ) : (
+                          <View style={styles.profilePhotoPlaceholder}>
+                            <Ionicons name="person" size={24} color="#999" />
+                          </View>
+                        )}
+                      </TouchableOpacity>
                       <View style={styles.reviewerInfo}>
                         <Text style={styles.reviewerName}>{review.userName}</Text>
                         {renderStars(review.rating, undefined, 16)}
