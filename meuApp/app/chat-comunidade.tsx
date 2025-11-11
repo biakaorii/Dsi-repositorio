@@ -147,12 +147,6 @@ export default function ChatComunidadeScreen() {
           edited: true,
           updatedAt: Timestamp.now(),
         } as any);
-        Toast.show({
-          type: "success",
-          text1: "Mensagem editada com sucesso",
-          visibilityTime: 2000,
-          topOffset: 50,
-        });
         setEditingMessageId(null);
         setMessage("");
         return;
