@@ -7,6 +7,7 @@ import { useRouter, Link, usePathname } from "expo-router";
 const navItems = [
   { route: "/home", icon: "home", activeIcon: "home" },
   { route: "/search", icon: "search-outline", activeIcon: "search" },
+  { route: "/cadastroLivro", icon: "add-circle-outline", activeIcon: "add-circle" },
   { route: "/comunidades", icon: "megaphone-outline", activeIcon: "megaphone" },
   { route: "/progresso", icon: "book-outline", activeIcon: "book" },
   { route: "/usuario", icon: "person-outline", activeIcon: "person" },
