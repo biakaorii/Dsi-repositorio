@@ -129,46 +129,193 @@ export default function PerfilScreen() {
 
         {/* Informações do Negócio - Apenas para Empreendedores */}
         {isEntrepreneur && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Informações do Negócio</Text>
-            <View style={styles.businessInfoContainer}>
-              {user.businessName && (
-                <View style={styles.infoRow}>
-                  <Ionicons name="business" size={20} color="#2E7D32" />
-                  <View style={styles.infoTextContainer}>
-                    <Text style={styles.infoLabel}>Nome do Negócio</Text>
-                    <Text style={styles.infoValue}>{user.businessName}</Text>
+          <>
+            {/* Sobre o Negócio */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>📚 Sobre a Livraria</Text>
+              <View style={styles.businessInfoContainer}>
+                {user.businessName && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="business" size={22} color="#4CAF50" />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>Nome</Text>
+                      <Text style={styles.infoValue}>{user.businessName}</Text>
+                    </View>
                   </View>
-                </View>
-              )}
-              
-              {user.cnpj && (
-                <View style={styles.infoRow}>
-                  <Ionicons name="document-text" size={20} color="#2E7D32" />
-                  <View style={styles.infoTextContainer}>
-                    <Text style={styles.infoLabel}>CNPJ</Text>
-                    <Text style={styles.infoValue}>{user.cnpj}</Text>
-                  </View>
-                </View>
-              )}
-              
-              {user.address && (
-                <View style={styles.infoRow}>
-                  <Ionicons name="location" size={20} color="#2E7D32" />
-                  <View style={styles.infoTextContainer}>
-                    <Text style={styles.infoLabel}>Endereço</Text>
-                    <Text style={styles.infoValue}>{user.address}</Text>
-                  </View>
-                </View>
-              )}
+                )}
 
-              {!user.businessName && !user.cnpj && !user.address && (
-                <Text style={{ color: "#666", fontStyle: "italic", textAlign: "center" }}>
-                  Complete as informações do seu negócio em "Editar Perfil"
-                </Text>
-              )}
+                {user.businessDescription && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="information-circle" size={22} color="#4CAF50" />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>Descrição</Text>
+                      <Text style={styles.infoValue}>{user.businessDescription}</Text>
+                    </View>
+                  </View>
+                )}
+
+                {user.mission && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="flag" size={22} color="#4CAF50" />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>Missão</Text>
+                      <Text style={styles.infoValue}>{user.mission}</Text>
+                    </View>
+                  </View>
+                )}
+
+                {user.foundedYear && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="calendar" size={22} color="#4CAF50" />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>Desde</Text>
+                      <Text style={styles.infoValue}>{user.foundedYear}</Text>
+                    </View>
+                  </View>
+                )}
+
+                {user.businessType && (
+                  <View style={styles.infoRow}>
+                    <Ionicons 
+                      name={user.businessType === 'fisica' ? 'storefront' : user.businessType === 'online' ? 'globe' : 'layers'} 
+                      size={22} 
+                      color="#4CAF50" 
+                    />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>Tipo</Text>
+                      <Text style={styles.infoValue}>
+                        {user.businessType === 'fisica' ? 'Física' : user.businessType === 'online' ? 'Online' : 'Híbrida'}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </View>
             </View>
-          </View>
+
+            {/* Localização e Horário */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>📍 Localização e Horário</Text>
+              <View style={styles.businessInfoContainer}>
+                {user.address && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="location" size={22} color="#4CAF50" />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>Endereço</Text>
+                      <Text style={styles.infoValue}>
+                        {user.address}
+                        {user.city && user.state && `, ${user.city}/${user.state}`}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {user.workingHours && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="time" size={22} color="#4CAF50" />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>Horário</Text>
+                      <Text style={styles.infoValue}>{user.workingHours}</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* História */}
+            {user.bio && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>📖 Nossa História</Text>
+                <View style={styles.bioContainer}>
+                  <Text style={styles.bioText}>{user.bio}</Text>
+                </View>
+              </View>
+            )}
+
+            {/* Contatos */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>📞 Contatos</Text>
+              <View style={styles.businessInfoContainer}>
+                {user.phoneWhatsApp && (
+                  <TouchableOpacity 
+                    style={styles.contactRow}
+                    onPress={() => {/* TODO: Abrir WhatsApp */}}
+                  >
+                    <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>WhatsApp</Text>
+                      <Text style={styles.contactValue}>{user.phoneWhatsApp}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#999" />
+                  </TouchableOpacity>
+                )}
+
+                {user.website && (
+                  <TouchableOpacity 
+                    style={styles.contactRow}
+                    onPress={() => {/* TODO: Abrir website */}}
+                  >
+                    <Ionicons name="globe-outline" size={22} color="#4CAF50" />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>Website</Text>
+                      <Text style={styles.contactValue}>{user.website}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#999" />
+                  </TouchableOpacity>
+                )}
+
+                {user.instagram && (
+                  <TouchableOpacity 
+                    style={styles.contactRow}
+                    onPress={() => {/* TODO: Abrir Instagram */}}
+                  >
+                    <Ionicons name="logo-instagram" size={22} color="#E4405F" />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>Instagram</Text>
+                      <Text style={styles.contactValue}>{user.instagram}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#999" />
+                  </TouchableOpacity>
+                )}
+
+                {user.cnpj && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="document-text" size={22} color="#4CAF50" />
+                    <View style={styles.infoTextContainer}>
+                      <Text style={styles.infoLabel}>CNPJ</Text>
+                      <Text style={styles.infoValue}>{user.cnpj}</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* Diferenciais e Serviços */}
+            {user.services && user.services.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>⭐ Diferenciais e Serviços</Text>
+                <View style={styles.servicesContainer}>
+                  {user.services.map((service, index) => (
+                    <View key={index} style={styles.serviceItem}>
+                      <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                      <Text style={styles.serviceText}>{service}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Aviso se não tiver info completa */}
+            {!user.businessName && (
+              <View style={styles.section}>
+                <View style={styles.emptyBusinessInfo}>
+                  <Ionicons name="information-circle-outline" size={40} color="#999" />
+                  <Text style={styles.emptyText}>
+                    Complete as informações do seu negócio em "Editar Perfil"
+                  </Text>
+                </View>
+              </View>
+            )}
+          </>
         )}
 
         {/* Ações */}
@@ -301,5 +448,64 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#333",
     fontWeight: "500",
+  },
+
+  bioContainer: {
+    backgroundColor: "#F8F9FA",
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: "#4CAF50",
+  },
+  bioText: {
+    fontSize: 15,
+    color: "#333",
+    lineHeight: 22,
+  },
+
+  contactRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#F8F9FA",
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+    marginBottom: 10,
+  },
+  contactValue: {
+    fontSize: 15,
+    color: "#4CAF50",
+    fontWeight: "600",
+  },
+
+  servicesContainer: {
+    gap: 10,
+  },
+  serviceItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#F1F8E9",
+    padding: 12,
+    borderRadius: 10,
+  },
+  serviceText: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
+  },
+
+  emptyBusinessInfo: {
+    alignItems: "center",
+    padding: 30,
+    gap: 10,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
+    fontStyle: "italic",
   },
 });

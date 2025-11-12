@@ -24,6 +24,8 @@ export interface Review {
   userId: string;
   userName: string;
   userProfilePhotoUrl?: string;
+  userProfileType?: 'leitor' | 'empreendedor' | 'critico';
+  businessName?: string;
   bookId: string;
   bookTitle: string;
   bookAuthor?: string;
@@ -90,6 +92,8 @@ export function ReviewsProvider({ children }: { children: ReactNode }) {
             userId: data.userId,
             userName: data.userName,
             userProfilePhotoUrl: data.userProfilePhotoUrl,
+            userProfileType: data.userProfileType,
+            businessName: data.businessName,
             bookId: data.bookId,
             bookTitle: data.bookTitle,
             bookAuthor: data.bookAuthor,
@@ -141,6 +145,8 @@ export function ReviewsProvider({ children }: { children: ReactNode }) {
         userId: user.uid,
         userName: user.name,
         userProfilePhotoUrl: user.profilePhotoUrl || '',
+        userProfileType: user.profileType,
+        businessName: user.businessName || '',
         bookId,
         bookTitle,
         bookAuthor,

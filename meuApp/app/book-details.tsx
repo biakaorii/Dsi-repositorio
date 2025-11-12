@@ -484,9 +484,20 @@ export default function BookDetailsScreen() {
                           }}
                           activeOpacity={0.6}
                         >
-                          <Text style={styles.reviewerName}>
-                            {review.userName}
-                          </Text>
+                          <View style={styles.reviewerNameContainer}>
+                            {review.userProfileType === 'empreendedor' && review.businessName ? (
+                              <>
+                                <Ionicons name="storefront" size={16} color="#4CAF50" style={styles.storeIcon} />
+                                <Text style={[styles.reviewerName, styles.businessName]}>
+                                  {review.businessName}
+                                </Text>
+                              </>
+                            ) : (
+                              <Text style={styles.reviewerName}>
+                                {review.userName}
+                              </Text>
+                            )}
+                          </View>
                         </TouchableOpacity>
                         {renderStars(review.rating, undefined, 16)}
                       </View>
@@ -771,12 +782,23 @@ const styles = StyleSheet.create({
   reviewerInfo: {
     flex: 1,
   },
+  reviewerNameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  storeIcon: {
+    marginRight: 6,
+  },
   reviewerName: {
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
-    marginBottom: 5,
     textDecorationLine: "underline",
+  },
+  businessName: {
+    color: "#4CAF50",
+    fontWeight: "700",
   },
   reviewDate: {
     fontSize: 12,

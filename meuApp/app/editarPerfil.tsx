@@ -24,6 +24,17 @@ export default function EditarPerfilScreen() {
   const [businessName, setBusinessName] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [businessDescription, setBusinessDescription] = useState("");
+  const [mission, setMission] = useState("");
+  const [foundedYear, setFoundedYear] = useState("");
+  const [businessType, setBusinessType] = useState<'fisica' | 'online' | 'hibrida'>('fisica');
+  const [workingHours, setWorkingHours] = useState("");
+  const [phoneWhatsApp, setPhoneWhatsApp] = useState("");
+  const [website, setWebsite] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [servicesText, setServicesText] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -38,6 +49,17 @@ export default function EditarPerfilScreen() {
         setBusinessName(user.businessName || "");
         setCnpj(user.cnpj || "");
         setAddress(user.address || "");
+        setCity(user.city || "");
+        setState(user.state || "");
+        setBusinessDescription(user.businessDescription || "");
+        setMission(user.mission || "");
+        setFoundedYear(user.foundedYear || "");
+        setBusinessType(user.businessType || 'fisica');
+        setWorkingHours(user.workingHours || "");
+        setPhoneWhatsApp(user.phoneWhatsApp || "");
+        setWebsite(user.website || "");
+        setInstagram(user.instagram || "");
+        setServicesText(user.services?.join("\n") || "");
       }
     }
   }, [user]);
@@ -161,6 +183,20 @@ export default function EditarPerfilScreen() {
           businessName: businessName,
           cnpj: cnpj,
           address: address,
+          city: city,
+          state: state,
+          businessDescription: businessDescription || undefined,
+          mission: mission || undefined,
+          foundedYear: foundedYear || undefined,
+          businessType: businessType,
+          workingHours: workingHours || undefined,
+          phoneWhatsApp: phoneWhatsApp || undefined,
+          website: website || undefined,
+          instagram: instagram || undefined,
+          services: servicesText
+            .split('\n')
+            .map(s => s.trim())
+            .filter(s => s.length > 0),
         }),
       });
 
@@ -329,10 +365,10 @@ export default function EditarPerfilScreen() {
               <Text style={styles.dividerText}>Informações do Negócio</Text>
             </View>
 
-            {/* Campo Nome do Negócio */}
+            {/* Informações Básicas */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>
-                <Ionicons name="business" size={16} color="#2E7D32" /> Nome do Negócio
+                <Ionicons name="business" size={16} color="#2E7D32" /> Nome da Livraria *
               </Text>
               <TextInput
                 style={styles.input}
@@ -343,7 +379,6 @@ export default function EditarPerfilScreen() {
               />
             </View>
 
-            {/* Campo CNPJ */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>
                 <Ionicons name="document-text" size={16} color="#2E7D32" /> CNPJ
@@ -358,19 +393,250 @@ export default function EditarPerfilScreen() {
               />
             </View>
 
-            {/* Campo Endereço */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>
-                <Ionicons name="location" size={16} color="#2E7D32" /> Endereço
+                <Ionicons name="location" size={16} color="#2E7D32" /> Endereço Completo
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Rua, número, bairro"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.row}>
+              <View style={[styles.inputGroup, { flex: 2 }]}>
+                <Text style={styles.label}>Cidade</Text>
+                <TextInput
+                  style={styles.input}
+                  value={city}
+                  onChangeText={setCity}
+                  placeholder="Cidade"
+                  placeholderTextColor="#999"
+                />
+              </View>
+              <View style={[styles.inputGroup, { flex: 1, marginLeft: 10 }]}>
+                <Text style={styles.label}>UF</Text>
+                <TextInput
+                  style={styles.input}
+                  value={state}
+                  onChangeText={setState}
+                  placeholder="SP"
+                  placeholderTextColor="#999"
+                  maxLength={2}
+                  autoCapitalize="characters"
+                />
+              </View>
+            </View>
+
+            {/* Sobre o Negócio */}
+            <View style={styles.divider}>
+              <Text style={styles.dividerText}>Sobre o Negócio</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="information-circle" size={16} color="#2E7D32" /> Descrição Curta
               </Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                value={address}
-                onChangeText={setAddress}
-                placeholder="Rua, número, bairro, cidade"
+                value={businessDescription}
+                onChangeText={setBusinessDescription}
+                placeholder="Ex: Livraria independente especializada em literatura contemporânea"
                 placeholderTextColor="#999"
                 multiline
                 numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="flag" size={16} color="#2E7D32" /> Missão
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={mission}
+                onChangeText={setMission}
+                placeholder="Ex: Promover o acesso à leitura e incentivar autores nacionais"
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View style={styles.row}>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={styles.label}>
+                  <Ionicons name="calendar" size={16} color="#2E7D32" /> Ano de Fundação
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={foundedYear}
+                  onChangeText={setFoundedYear}
+                  placeholder="2019"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  maxLength={4}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Tipo de Negócio</Text>
+              <View style={styles.typeSelector}>
+                <TouchableOpacity
+                  style={[styles.typeButton, businessType === 'fisica' && styles.typeButtonActive]}
+                  onPress={() => setBusinessType('fisica')}
+                >
+                  <Ionicons 
+                    name="storefront" 
+                    size={18} 
+                    color={businessType === 'fisica' ? '#fff' : '#4CAF50'} 
+                  />
+                  <Text style={[styles.typeButtonText, businessType === 'fisica' && styles.typeButtonTextActive]}>
+                    Física
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.typeButton, businessType === 'online' && styles.typeButtonActive]}
+                  onPress={() => setBusinessType('online')}
+                >
+                  <Ionicons 
+                    name="globe" 
+                    size={18} 
+                    color={businessType === 'online' ? '#fff' : '#4CAF50'} 
+                  />
+                  <Text style={[styles.typeButtonText, businessType === 'online' && styles.typeButtonTextActive]}>
+                    Online
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.typeButton, businessType === 'hibrida' && styles.typeButtonActive]}
+                  onPress={() => setBusinessType('hibrida')}
+                >
+                  <Ionicons 
+                    name="layers" 
+                    size={18} 
+                    color={businessType === 'hibrida' ? '#fff' : '#4CAF50'} 
+                  />
+                  <Text style={[styles.typeButtonText, businessType === 'hibrida' && styles.typeButtonTextActive]}>
+                    Híbrida
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="time" size={16} color="#2E7D32" /> Horário de Funcionamento
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={workingHours}
+                onChangeText={setWorkingHours}
+                placeholder="Ex: Seg-Sex 9h-18h, Sáb 9h-13h"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            {/* História */}
+            <View style={styles.divider}>
+              <Text style={styles.dividerText}>Sua História</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="book" size={16} color="#2E7D32" /> Conte sua história
+              </Text>
+              <Text style={styles.hint}>
+                Compartilhe sua paixão por livros e a história do seu negócio
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea, { height: 120 }]}
+                value={bio}
+                onChangeText={setBio}
+                placeholder="Conte a história do seu negócio..."
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={6}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Contatos */}
+            <View style={styles.divider}>
+              <Text style={styles.dividerText}>Contatos</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="logo-whatsapp" size={16} color="#25D366" /> WhatsApp
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={phoneWhatsApp}
+                onChangeText={setPhoneWhatsApp}
+                placeholder="(11) 98765-4321"
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="globe-outline" size={16} color="#2E7D32" /> Website
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={website}
+                onChangeText={setWebsite}
+                placeholder="www.minhaliv raria.com"
+                placeholderTextColor="#999"
+                keyboardType="url"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="logo-instagram" size={16} color="#E4405F" /> Instagram
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={instagram}
+                onChangeText={setInstagram}
+                placeholder="@minhalivraria"
+                placeholderTextColor="#999"
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* Diferenciais/Serviços */}
+            <View style={styles.divider}>
+              <Text style={styles.dividerText}>Diferenciais e Serviços</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="star" size={16} color="#2E7D32" /> Serviços Oferecidos
+              </Text>
+              <Text style={styles.hint}>
+                Digite um diferencial por linha
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea, { height: 120 }]}
+                value={servicesText}
+                onChangeText={setServicesText}
+                placeholder={"Clube do livro mensal\nVenda de livros usados\nEnvio para todo Brasil"}
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={6}
                 textAlignVertical="top"
               />
             </View>
@@ -587,6 +853,41 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginLeft: 8,
+  },
+
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+
+  typeSelector: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 5,
+  },
+  typeButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#4CAF50",
+    backgroundColor: "#fff",
+  },
+  typeButtonActive: {
+    backgroundColor: "#4CAF50",
+    borderColor: "#4CAF50",
+  },
+  typeButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#4CAF50",
+  },
+  typeButtonTextActive: {
+    color: "#fff",
   },
 
   bottomSpacing: {
