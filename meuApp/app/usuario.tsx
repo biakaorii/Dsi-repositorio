@@ -138,6 +138,13 @@ export default function PerfilScreen() {
             <Ionicons name="book-outline" size={20} color="#333" />
             <Text style={styles.optionText}>Meus Reviews</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.optionButton}
+            onPress={() => router.push("/cadastrar-livro")}
+          >
+            <Ionicons name="add-circle-outline" size={20} color="#2E7D32" />
+            <Text style={[styles.optionText, { color: "#2E7D32" }]}>Cadastrar Livro</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.optionButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#E63946" />
             <Text style={[styles.optionText, { color: "#E63946" }]}>Sair</Text>
