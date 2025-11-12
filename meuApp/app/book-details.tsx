@@ -485,13 +485,11 @@ export default function BookDetailsScreen() {
                           activeOpacity={0.6}
                         >
                           {review.userProfileType === 'empreendedor' && review.businessName ? (
-                            <View style={styles.businessReviewerContainer}>
-                              <View style={styles.reviewerNameContainer}>
-                                <Ionicons name="storefront" size={18} color="#4CAF50" style={styles.storeIcon} />
-                                <Text style={[styles.reviewerName, styles.businessName]}>
-                                  {review.businessName}
-                                </Text>
-                              </View>
+                            <View style={styles.reviewerNameContainer}>
+                              <Ionicons name="storefront" size={18} color="#4CAF50" style={styles.storeIcon} />
+                              <Text style={[styles.reviewerName, styles.businessName]}>
+                                {review.businessName}
+                              </Text>
                               <View style={styles.businessBadge}>
                                 <Text style={styles.businessBadgeText}>LIVRARIA</Text>
                               </View>
@@ -792,9 +790,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 5,
+    gap: 6,
   },
   storeIcon: {
-    marginRight: 6,
+    marginRight: 0,
   },
   reviewerName: {
     fontSize: 16,
@@ -808,15 +807,14 @@ const styles = StyleSheet.create({
   },
   businessBadge: {
     backgroundColor: "#4CAF50",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: "flex-start",
-    marginLeft: 24, // Alinha com o nome da loja (ícone 18px + margem 6px)
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginLeft: 4,
   },
   businessBadgeText: {
     color: "#FFFFFF",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
     letterSpacing: 0.5,
   },

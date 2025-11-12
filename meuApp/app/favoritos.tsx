@@ -1,5 +1,5 @@
 // app/favoritos.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -12,10 +12,24 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useFavorites } from "../contexts/FavoritesContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function FavoritosScreen() {
   const router = useRouter();
   const { favorites, loading, removeFavorite } = useFavorites();
+  const { user } = useAuth();
+
+  // Redirecionar empreendedores para a tela de perfil
+  useEffect(() => {
+    if (user?.profileType === 'empreendedor') {
+      router.replace('/usuario');
+    }
+  }, [user]);
+
+  // Se for empreendedor, não renderiza nada (vai redirecionar)
+  if (user?.profileType === 'empreendedor') {
+    return null;
+  }
 
   const handleRemoveFavorite = async (bookId: string) => {
     await removeFavorite(bookId);

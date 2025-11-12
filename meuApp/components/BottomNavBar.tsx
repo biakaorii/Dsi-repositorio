@@ -3,30 +3,36 @@ import React from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, Link, usePathname } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
-  { route: "/home", icon: "home", activeIcon: "home" },
-  { route: "/search", icon: "search-outline", activeIcon: "search" },
-  { route: "/comunidades", icon: "megaphone-outline", activeIcon: "megaphone" },
-  { route: "/progresso", icon: "book-outline", activeIcon: "book" },
-  { route: "/usuario", icon: "person-outline", activeIcon: "person" },
+  { route: "/home", icon: "home", activeIcon: "home", hideForEntrepreneur: false },
+  { route: "/search", icon: "search-outline", activeIcon: "search", hideForEntrepreneur: false },
+  { route: "/comunidades", icon: "megaphone-outline", activeIcon: "megaphone", hideForEntrepreneur: false },
+  { route: "/progresso", icon: "book-outline", activeIcon: "book", hideForEntrepreneur: true },
+  { route: "/usuario", icon: "person-outline", activeIcon: "person", hideForEntrepreneur: false },
 ] as const;
 
 export default function BottomNavBar() {
   const router = useRouter();
   const currentRoute = usePathname();
+  const { user } = useAuth();
+  
+  const isEntrepreneur = user?.profileType === 'empreendedor';
 
-  const getIconColor = (route: (typeof navItems)[number]["route"]) => {
+  const getIconColor = (route: string) => {
     return currentRoute === route ? "#2E7D32" : "#777";
   };
 
-  const getIconName = (item: (typeof navItems)[number]) => {
+  const getIconName = (item: typeof navItems[number]) => {
     return currentRoute === item.route ? item.activeIcon : item.icon;
   };
 
   return (
     <View style={styles.navbar}>
-      {navItems.map((item) => {
+      {navItems
+        .filter(item => !(item.hideForEntrepreneur && isEntrepreneur))
+        .map((item) => {
         if (item.route === "/search") {
           // Usa Link para /search (como no original)
           return (

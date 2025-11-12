@@ -1,12 +1,12 @@
 // app/usuario.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   Image,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -70,7 +70,6 @@ export default function PerfilScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Perfil</Text>
-        <Ionicons name="settings-outline" size={24} color="#2E7D32" />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -85,31 +84,35 @@ export default function PerfilScreen() {
           <Text style={styles.profileName}>{displayName}</Text>
           <Text style={styles.profileSubtitle}>{bio}</Text>
 
-          {/* Botão Acompanhar Progresso */}
-          <TouchableOpacity
-            style={styles.progressButton}
-            onPress={() => router.push("/progresso")}
-          >
-            <Ionicons name="trending-up-outline" size={18} color="#fff" />
-            <Text style={styles.progressButtonText}>Acompanhar Progresso</Text>
-          </TouchableOpacity>
+          {/* Botão Acompanhar Progresso - Apenas para Leitores/Críticos */}
+          {!isEntrepreneur && (
+            <TouchableOpacity
+              style={styles.progressButton}
+              onPress={() => router.push("/progresso")}
+            >
+              <Ionicons name="trending-up-outline" size={18} color="#fff" />
+              <Text style={styles.progressButtonText}>Acompanhar Progresso</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Estatísticas */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>12</Text>
-            <Text style={styles.statLabel}>Lidos</Text>
+        {/* Estatísticas - Apenas para Leitores/Críticos */}
+        {!isEntrepreneur && (
+          <View style={styles.statsContainer}>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statLabel}>Lidos</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>5</Text>
+              <Text style={styles.statLabel}>Lendo</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>20</Text>
+              <Text style={styles.statLabel}>Salvos</Text>
+            </View>
           </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>5</Text>
-            <Text style={styles.statLabel}>Lendo</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>20</Text>
-            <Text style={styles.statLabel}>Salvos</Text>
-          </View>
-        </View>
+        )}
 
         {/* Preferências: Gêneros Favoritos - Apenas para Leitores/Críticos */}
         {!isEntrepreneur && (
@@ -242,45 +245,33 @@ export default function PerfilScreen() {
               <Text style={styles.sectionTitle}>📞 Contatos</Text>
               <View style={styles.businessInfoContainer}>
                 {user.phoneWhatsApp && (
-                  <TouchableOpacity 
-                    style={styles.contactRow}
-                    onPress={() => {/* TODO: Abrir WhatsApp */}}
-                  >
+                  <View style={styles.contactRow}>
                     <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
                     <View style={styles.infoTextContainer}>
                       <Text style={styles.infoLabel}>WhatsApp</Text>
                       <Text style={styles.contactValue}>{user.phoneWhatsApp}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#999" />
-                  </TouchableOpacity>
+                  </View>
                 )}
 
                 {user.website && (
-                  <TouchableOpacity 
-                    style={styles.contactRow}
-                    onPress={() => {/* TODO: Abrir website */}}
-                  >
+                  <View style={styles.contactRow}>
                     <Ionicons name="globe-outline" size={22} color="#4CAF50" />
                     <View style={styles.infoTextContainer}>
                       <Text style={styles.infoLabel}>Website</Text>
                       <Text style={styles.contactValue}>{user.website}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#999" />
-                  </TouchableOpacity>
+                  </View>
                 )}
 
                 {user.instagram && (
-                  <TouchableOpacity 
-                    style={styles.contactRow}
-                    onPress={() => {/* TODO: Abrir Instagram */}}
-                  >
+                  <View style={styles.contactRow}>
                     <Ionicons name="logo-instagram" size={22} color="#E4405F" />
                     <View style={styles.infoTextContainer}>
                       <Text style={styles.infoLabel}>Instagram</Text>
-                      <Text style={styles.contactValue}>{user.instagram}</Text>
+                      <Text style={styles.contactValue}>@{user.instagram.replace('@', '')}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#999" />
-                  </TouchableOpacity>
+                  </View>
                 )}
 
                 {user.cnpj && (
@@ -334,17 +325,26 @@ export default function PerfilScreen() {
             <Ionicons name="create-outline" size={20} color="#333" />
             <Text style={styles.optionText}>Editar Perfil</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.optionButton}
-            onPress={() => router.push("/favoritos" as any)}
-          >
-            <Ionicons name="heart-outline" size={20} color="#333" />
-            <Text style={styles.optionText}>Meus Favoritos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.optionButton}>
-            <Ionicons name="book-outline" size={20} color="#333" />
-            <Text style={styles.optionText}>Meus Reviews</Text>
-          </TouchableOpacity>
+          
+          {/* Meus Favoritos - Apenas para Leitores/Críticos */}
+          {!isEntrepreneur && (
+            <TouchableOpacity 
+              style={styles.optionButton}
+              onPress={() => router.push("/favoritos" as any)}
+            >
+              <Ionicons name="heart-outline" size={20} color="#333" />
+              <Text style={styles.optionText}>Meus Favoritos</Text>
+            </TouchableOpacity>
+          )}
+          
+          {/* Meus Reviews - Apenas para Leitores/Críticos */}
+          {!isEntrepreneur && (
+            <TouchableOpacity style={styles.optionButton}>
+              <Ionicons name="book-outline" size={20} color="#333" />
+              <Text style={styles.optionText}>Meus Reviews</Text>
+            </TouchableOpacity>
+          )}
+          
           <TouchableOpacity style={styles.optionButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#E63946" />
             <Text style={[styles.optionText, { color: "#E63946" }]}>Sair</Text>
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     padding: 20,
     paddingTop: 50,
     alignItems: "center",

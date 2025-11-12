@@ -1,14 +1,14 @@
 // app/perfil-usuario.tsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   Image,
+  TouchableOpacity,
   ActivityIndicator,
-} from "react-native";
+} from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
@@ -277,24 +277,24 @@ export default function PerfilUsuarioScreen() {
                 {(userProfile.phoneWhatsApp || userProfile.website || userProfile.instagram) && (
                   <View style={styles.contactsContainer}>
                     {userProfile.phoneWhatsApp && (
-                      <TouchableOpacity style={styles.contactButton}>
+                      <View style={styles.contactButton}>
                         <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
-                        <Text style={styles.contactButtonText}>WhatsApp</Text>
-                      </TouchableOpacity>
+                        <Text style={styles.contactButtonText}>WhatsApp: {userProfile.phoneWhatsApp}</Text>
+                      </View>
                     )}
                     
                     {userProfile.website && (
-                      <TouchableOpacity style={styles.contactButton}>
+                      <View style={styles.contactButton}>
                         <Ionicons name="globe-outline" size={20} color="#4CAF50" />
-                        <Text style={styles.contactButtonText}>Site</Text>
-                      </TouchableOpacity>
+                        <Text style={styles.contactButtonText}>Site: {userProfile.website}</Text>
+                      </View>
                     )}
                     
                     {userProfile.instagram && (
-                      <TouchableOpacity style={styles.contactButton}>
+                      <View style={styles.contactButton}>
                         <Ionicons name="logo-instagram" size={20} color="#E4405F" />
-                        <Text style={styles.contactButtonText}>Instagram</Text>
-                      </TouchableOpacity>
+                        <Text style={styles.contactButtonText}>Instagram: @{userProfile.instagram.replace('@', '')}</Text>
+                      </View>
                     )}
                   </View>
                 )}
