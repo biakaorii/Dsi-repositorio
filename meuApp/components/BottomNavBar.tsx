@@ -9,6 +9,7 @@ const navItems = [
   { route: "/search", icon: "search-outline", activeIcon: "search" },
   { route: "/comunidades", icon: "megaphone-outline", activeIcon: "megaphone" },
   { route: "/progresso", icon: "book-outline", activeIcon: "book" },
+  { route: "/cadastrar-livro", icon: "add-circle-outline", activeIcon: "add-circle" },
   { route: "/usuario", icon: "person-outline", activeIcon: "person" },
 ] as const;
 
