@@ -231,6 +231,15 @@ export default function HomeScreen() {
 
       {/* Barra de navega√ß√£o inferior */}
       <BottomNavBar />
+
+      {/* Bot„o flutuante de acesso r·pido */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push('/cadastrar-livro')}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="add" size={26} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -336,5 +345,21 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ddd",
     backgroundColor: "#E8F5E9",
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 80,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#2E7D32',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
   },
 });
