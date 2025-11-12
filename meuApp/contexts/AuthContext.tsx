@@ -10,7 +10,7 @@ import {
   User as FirebaseUser,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseConfig';
 
 interface UserData {
@@ -221,6 +221,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await updateDoc(userDocRef, sanitizedData);
 
       console.log('✅ Firestore atualizado com sucesso');
+      
+      // Se o nome do negócio foi atualizado, atualizar também nas reviews
+      if (sanitizedData.businessName && user.profileType === 'empreendedor') {
+        console.log('🔵 Atualizando nome do negócio nas reviews...');
+        try {
+          const reviewsRef = collection(db, 'reviews');
+          const q = query(reviewsRef, where('userId', '==', user.uid));
+          const reviewsSnapshot = await getDocs(q);
+          
+          const updatePromises = reviewsSnapshot.docs.map(reviewDoc => 
+            updateDoc(doc(db, 'reviews', reviewDoc.id), {
+              businessName: sanitizedData.businessName
+            })
+          );
+          
+          await Promise.all(updatePromises);
+          console.log(`✅ ${reviewsSnapshot.size} reviews atualizadas com novo nome do negócio`);
+        } catch (reviewError) {
+          console.error('⚠️ Erro ao atualizar reviews:', reviewError);
+          // Não falha a operação principal se houver erro nas reviews
+        }
+      }
       
       // Atualizar estado local
       const updatedUser = { ...user, ...sanitizedData };
