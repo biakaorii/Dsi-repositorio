@@ -20,11 +20,27 @@ interface UserProfile {
   uid: string;
   name: string;
   email: string;
+  profileType?: 'leitor' | 'empreendedor' | 'critico';
   bio?: string;
   genres?: string[];
   profilePhotoUrl?: string;
   age?: string;
   createdAt: string;
+  // Campos do negócio (empreendedores)
+  businessName?: string;
+  cnpj?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  businessDescription?: string;
+  mission?: string;
+  foundedYear?: string;
+  businessType?: 'fisica' | 'online' | 'hibrida';
+  workingHours?: string;
+  phoneWhatsApp?: string;
+  website?: string;
+  instagram?: string;
+  services?: string[];
 }
 
 export default function PerfilUsuarioScreen() {
@@ -175,6 +191,118 @@ export default function PerfilUsuarioScreen() {
             </View>
           )}
         </View>
+
+        {/* Informações do Negócio - Apenas para Empreendedores */}
+        {userProfile.profileType === 'empreendedor' && userProfile.businessName && (
+          <>
+            {/* Sobre o Negócio */}
+            <View style={styles.businessSection}>
+              <View style={styles.businessHeader}>
+                <Ionicons name="storefront" size={24} color="#4CAF50" />
+                <Text style={styles.businessHeaderTitle}>Livraria</Text>
+              </View>
+              
+              <View style={styles.businessInfoCard}>
+                <Text style={styles.businessName}>{userProfile.businessName}</Text>
+                
+                {userProfile.businessDescription && (
+                  <Text style={styles.businessDescription}>
+                    {userProfile.businessDescription}
+                  </Text>
+                )}
+
+                {userProfile.mission && (
+                  <View style={styles.missionContainer}>
+                    <Ionicons name="flag" size={18} color="#4CAF50" />
+                    <Text style={styles.missionText}>{userProfile.mission}</Text>
+                  </View>
+                )}
+
+                <View style={styles.businessDetailsRow}>
+                  {userProfile.foundedYear && (
+                    <View style={styles.businessDetailItem}>
+                      <Ionicons name="calendar-outline" size={16} color="#666" />
+                      <Text style={styles.businessDetailText}>Desde {userProfile.foundedYear}</Text>
+                    </View>
+                  )}
+                  
+                  {userProfile.businessType && (
+                    <View style={styles.businessDetailItem}>
+                      <Ionicons 
+                        name={userProfile.businessType === 'fisica' ? 'storefront-outline' : 
+                              userProfile.businessType === 'online' ? 'globe-outline' : 'layers-outline'} 
+                        size={16} 
+                        color="#666" 
+                      />
+                      <Text style={styles.businessDetailText}>
+                        {userProfile.businessType === 'fisica' ? 'Física' : 
+                         userProfile.businessType === 'online' ? 'Online' : 'Híbrida'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Localização */}
+                {userProfile.address && (
+                  <View style={styles.locationContainer}>
+                    <Ionicons name="location" size={20} color="#4CAF50" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.locationText}>
+                        {userProfile.address}
+                        {userProfile.city && userProfile.state && `, ${userProfile.city}/${userProfile.state}`}
+                      </Text>
+                      {userProfile.workingHours && (
+                        <View style={styles.hoursContainer}>
+                          <Ionicons name="time-outline" size={14} color="#666" />
+                          <Text style={styles.hoursText}>{userProfile.workingHours}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
+
+                {/* Contatos */}
+                {(userProfile.phoneWhatsApp || userProfile.website || userProfile.instagram) && (
+                  <View style={styles.contactsContainer}>
+                    {userProfile.phoneWhatsApp && (
+                      <TouchableOpacity style={styles.contactButton}>
+                        <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
+                        <Text style={styles.contactButtonText}>WhatsApp</Text>
+                      </TouchableOpacity>
+                    )}
+                    
+                    {userProfile.website && (
+                      <TouchableOpacity style={styles.contactButton}>
+                        <Ionicons name="globe-outline" size={20} color="#4CAF50" />
+                        <Text style={styles.contactButtonText}>Site</Text>
+                      </TouchableOpacity>
+                    )}
+                    
+                    {userProfile.instagram && (
+                      <TouchableOpacity style={styles.contactButton}>
+                        <Ionicons name="logo-instagram" size={20} color="#E4405F" />
+                        <Text style={styles.contactButtonText}>Instagram</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Serviços */}
+                {userProfile.services && userProfile.services.length > 0 && (
+                  <View style={styles.servicesBox}>
+                    <Text style={styles.servicesTitle}>⭐ Diferenciais e Serviços</Text>
+                    {userProfile.services.map((service, index) => (
+                      <View key={index} style={styles.serviceRow}>
+                        <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                        <Text style={styles.serviceRowText}>{service}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </View>
+          </>
+        )}
 
         {/* Estatísticas */}
         <View style={styles.statsSection}>
@@ -586,5 +714,137 @@ const styles = StyleSheet.create({
   likesText: {
     fontSize: 12,
     color: "#666",
+  },
+
+  // Estilos para informações do negócio
+  businessSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: "#F8FFF9",
+  },
+  businessHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 16,
+  },
+  businessHeaderTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#4CAF50",
+  },
+  businessInfoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: "#4CAF50",
+    gap: 16,
+  },
+  businessName: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#2E7D32",
+    marginBottom: 4,
+  },
+  businessDescription: {
+    fontSize: 15,
+    color: "#555",
+    lineHeight: 22,
+    fontStyle: "italic",
+  },
+  missionContainer: {
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: "#F1F8E9",
+    padding: 12,
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: "#4CAF50",
+  },
+  missionText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#333",
+    lineHeight: 20,
+  },
+  businessDetailsRow: {
+    flexDirection: "row",
+    gap: 16,
+    flexWrap: "wrap",
+  },
+  businessDetailItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  businessDetailText: {
+    fontSize: 13,
+    color: "#666",
+  },
+  locationContainer: {
+    flexDirection: "row",
+    gap: 10,
+    backgroundColor: "#F8F9FA",
+    padding: 14,
+    borderRadius: 12,
+  },
+  locationText: {
+    fontSize: 14,
+    color: "#333",
+    lineHeight: 20,
+  },
+  hoursContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 6,
+  },
+  hoursText: {
+    fontSize: 12,
+    color: "#666",
+  },
+  contactsContainer: {
+    flexDirection: "row",
+    gap: 10,
+    flexWrap: "wrap",
+  },
+  contactButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#F8F9FA",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+  },
+  contactButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#333",
+  },
+  servicesBox: {
+    backgroundColor: "#F1F8E9",
+    padding: 16,
+    borderRadius: 12,
+    gap: 10,
+  },
+  servicesTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2E7D32",
+    marginBottom: 4,
+  },
+  serviceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  serviceRowText: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
   },
 });

@@ -21,10 +21,23 @@ interface UserData {
   age?: string;
   genres?: string[];
   readingGoal?: string;
+  // Campos do negócio (empreendedores)
   businessName?: string;
   cnpj?: string;
   address?: string;
-  bio?: string;
+  city?: string;
+  state?: string;
+  bio?: string; // História do empreendedor ou bio do leitor
+  businessDescription?: string; // Descrição curta do negócio
+  mission?: string; // Missão da livraria
+  foundedYear?: string; // Ano de fundação
+  businessType?: 'fisica' | 'online' | 'hibrida'; // Tipo de negócio
+  workingHours?: string; // Horário de funcionamento
+  phoneWhatsApp?: string; // WhatsApp comercial
+  website?: string; // Site
+  instagram?: string; // Instagram
+  services?: string[]; // Diferenciais/Serviços oferecidos
+  photos?: string[]; // URLs das fotos da galeria
   profilePhotoUrl?: string;
   createdAt: string;
 }
