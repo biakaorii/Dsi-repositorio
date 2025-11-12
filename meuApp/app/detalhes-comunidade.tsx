@@ -8,18 +8,42 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useComunidades } from "../contexts/ComunidadesContext";
 import { useAuth } from "../contexts/AuthContext";
 import Toast from "react-native-toast-message";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../config/firebaseConfig";
+import * as ImagePicker from 'expo-image-picker';
+import { uploadCommunityPhoto, deleteCommunityPhoto } from '@/utils/uploadCommunityPhoto';
+
+interface MemberData {
+  id: string;
+  name: string;
+  photoURL?: string;
+}
 
 export default function DetalhesComunidadeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuth();
-  const { comunidades, isOwner, updateComunidade, deleteComunidade } = useComunidades();
+  const {
+    comunidades,
+    isOwner,
+    isMember,
+    updateComunidade,
+    deleteComunidade,
+    joinComunidade,
+    leaveComunidade,
+    removeMember,
+    promoteToModerator,
+    demoteFromModerator,
+    isModerator,
+    canModerate,
+  } = useComunidades();
 
   // Buscar comunidade pelos parâmetros
   const comunidadeId = params.id as string;
@@ -28,14 +52,58 @@ export default function DetalhesComunidadeScreen() {
   const [editMode, setEditMode] = useState(false);
   const [nome, setNome] = useState(comunidade?.nome || "");
   const [descricao, setDescricao] = useState(comunidade?.descricao || "");
+  const [communityImage, setCommunityImage] = useState<string | null>(comunidade?.photoURL || null);
   const [loading, setLoading] = useState(false);
+  const [membersData, setMembersData] = useState<MemberData[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(true);
 
   // Atualizar os campos quando a comunidade for atualizada
   useEffect(() => {
     if (comunidade) {
       setNome(comunidade.nome);
       setDescricao(comunidade.descricao);
+      setCommunityImage(comunidade.photoURL || null);
     }
+  }, [comunidade]);
+
+  // Buscar dados dos membros
+  useEffect(() => {
+    async function fetchMembersData() {
+      if (!comunidade) return;
+
+      setLoadingMembers(true);
+      const membersInfo: MemberData[] = [];
+
+      for (const membroId of comunidade.membros) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", membroId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            membersInfo.push({
+              id: membroId,
+              name: userData.name || "Usuário",
+              photoURL: userData.profilePhotoUrl || undefined,
+            });
+          } else {
+            membersInfo.push({
+              id: membroId,
+              name: "Usuário desconhecido",
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao buscar dados do membro:", error);
+          membersInfo.push({
+            id: membroId,
+            name: "Erro ao carregar",
+          });
+        }
+      }
+
+      setMembersData(membersInfo);
+      setLoadingMembers(false);
+    }
+
+    fetchMembersData();
   }, [comunidade]);
 
   if (!comunidade || !user) {
@@ -47,6 +115,50 @@ export default function DetalhesComunidadeScreen() {
   }
 
   const isAdmin = isOwner(comunidadeId, user.uid);
+  const userIsMember = isMember(comunidadeId, user.uid);
+  const userIsModerator = isModerator(comunidadeId, user.uid);
+  const userCanModerate = canModerate(comunidadeId, user.uid);
+
+  // Solicitar permissões para a galeria
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão Negada', 'É necessário permitir o acesso à galeria para alterar a foto.');
+      return false;
+    }
+    return true;
+  };
+
+  // Selecionar imagem da galeria
+  const pickImage = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1], // Formato circular
+        quality: 0.8,
+        allowsMultipleSelection: false,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setCommunityImage(result.assets[0].uri);
+        Toast.show({
+          type: 'success',
+          text1: 'Foto Selecionada! ✓',
+          text2: 'Clique em "Salvar" para confirmar',
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar imagem:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem.');
+    }
+  };
 
   const handleSaveChanges = async () => {
     if (!nome.trim() || !descricao.trim()) {
@@ -62,7 +174,37 @@ export default function DetalhesComunidadeScreen() {
     }
 
     setLoading(true);
-    const result = await updateComunidade(comunidadeId, nome, descricao);
+
+    let photoURL: string | undefined = undefined;
+
+    // Se há uma nova imagem, fazer upload
+    if (communityImage && communityImage !== comunidade.photoURL) {
+      // Deletar foto antiga se existir
+      if (comunidade.photoURL) {
+        await deleteCommunityPhoto(comunidadeId);
+      }
+
+      // Upload da nova foto
+      const uploadedUrl = await uploadCommunityPhoto(communityImage, comunidadeId);
+      if (uploadedUrl) {
+        photoURL = `${uploadedUrl}?t=${Date.now()}`;
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Erro',
+          text2: 'Não foi possível fazer upload da foto',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 50,
+        });
+        setLoading(false);
+        return;
+      }
+    } else {
+      photoURL = comunidade.photoURL;
+    }
+
+    const result = await updateComunidade(comunidadeId, nome, descricao, photoURL);
     setLoading(false);
 
     if (result.success) {
@@ -87,7 +229,59 @@ export default function DetalhesComunidadeScreen() {
     }
   };
 
-  const handleLeaveCommunity = () => {
+  const handleLeaveCommunity = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const result = await leaveComunidade(comunidadeId);
+      setLoading(false);
+      if (result.success) {
+        Toast.show({
+          type: "success",
+          text1: "Pronto",
+          text2: "Você saiu da comunidade.",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        });
+        setMembersData((prev) => prev.filter((m) => m.id !== user.uid));
+        setTimeout(() => {
+          try { router.replace("/comunidades"); } catch {}
+        }, 700);
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Erro ao sair",
+          text2: result.error || "Não foi possível sair da comunidade.",
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 50,
+        });
+      }
+    } catch (e) {
+      setLoading(false);
+      Toast.show({
+        type: "error",
+        text1: "Erro inesperado",
+        text2: "Tente novamente mais tarde.",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
+    return;
+    // Feedback imediato para confirmar clique
+    try {
+      Toast.show({
+        type: "info",
+        text1: "Sair da comunidade",
+        text2: "Abrindo confirmação...",
+        visibilityTime: 1200,
+        autoHide: true,
+        topOffset: 50,
+      });
+    } catch {}
     Alert.alert(
       "Sair da comunidade",
       "Tem certeza que deseja sair desta comunidade?",
@@ -96,15 +290,37 @@ export default function DetalhesComunidadeScreen() {
         {
           text: "Sair",
           style: "destructive",
-          onPress: () => {
-            Toast.show({
-              type: "info",
-              text1: "Em breve",
-              text2: "Funcionalidade de sair será implementada em breve",
-              visibilityTime: 3000,
-              autoHide: true,
-              topOffset: 50,
-            });
+          onPress: async () => {
+            setLoading(true);
+            const result = await leaveComunidade(comunidadeId);
+            setLoading(false);
+
+            if (result.success) {
+              Toast.show({
+                type: "success",
+                text1: "Sucesso",
+                text2: "Você saiu da comunidade",
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
+              // Voltar para a tela de comunidades após sair
+              if (user) {
+                setMembersData((prev) => prev.filter((m) => m.id !== user.uid));
+              }
+              setTimeout(() => {
+                try { router.replace("/comunidades"); } catch {}
+              }, 600);
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "Erro",
+                text2: result.error || "Erro ao sair da comunidade",
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
+            }
           },
         },
       ]
@@ -153,6 +369,32 @@ export default function DetalhesComunidadeScreen() {
     );
   };
 
+  const handleJoinCommunity = async () => {
+    setLoading(true);
+    const result = await joinComunidade(comunidadeId);
+    setLoading(false);
+
+    if (result.success) {
+      Toast.show({
+        type: "success",
+        text1: "Sucesso",
+        text2: "Você entrou na comunidade",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: result.error || "Erro ao entrar na comunidade",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
+  };
+
   const handleRemoveMember = (memberId: string, memberName: string) => {
     Alert.alert(
       "Remover membro",
@@ -162,19 +404,86 @@ export default function DetalhesComunidadeScreen() {
         {
           text: "Remover",
           style: "destructive",
-          onPress: () => {
-            Toast.show({
-              type: "info",
-              text1: "Em breve",
-              text2: "Funcionalidade de remover membros será implementada em breve",
-              visibilityTime: 3000,
-              autoHide: true,
-              topOffset: 50,
-            });
+          onPress: async () => {
+            setLoading(true);
+            const result = await removeMember(comunidadeId, memberId);
+            setLoading(false);
+
+            if (result.success) {
+              Toast.show({
+                type: "success",
+                text1: "Sucesso",
+                text2: `${memberName} foi removido da comunidade`,
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "Erro",
+                text2: result.error || "Erro ao remover membro",
+                visibilityTime: 3000,
+                autoHide: true,
+                topOffset: 50,
+              });
+            }
           },
         },
       ]
     );
+  };
+
+  const handlePromoteToModerator = async (memberId: string, memberName: string) => {
+    setLoading(true);
+    const result = await promoteToModerator(comunidadeId, memberId);
+    setLoading(false);
+
+    if (result.success) {
+      Toast.show({
+        type: "success",
+        text1: "Sucesso",
+        text2: `${memberName} agora é moderador`,
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: result.error || "Erro ao promover membro",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
+  };
+
+  const handleDemoteFromModerator = async (memberId: string, memberName: string) => {
+    setLoading(true);
+    const result = await demoteFromModerator(comunidadeId, memberId);
+    setLoading(false);
+
+    if (result.success) {
+      Toast.show({
+        type: "success",
+        text1: "Sucesso",
+        text2: `${memberName} não é mais moderador`,
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: result.error || "Erro ao rebaixar moderador",
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+    }
   };
 
   return (
@@ -189,11 +498,34 @@ export default function DetalhesComunidadeScreen() {
       </View>
 
       <ScrollView style={styles.content}>
+        {/* Ícone da Comunidade - Sempre visível */}
+        <View style={styles.iconSection}>
+          {communityImage ? (
+            <Image 
+              source={{ uri: `${communityImage}?t=${Date.now()}` }} 
+              style={styles.communityIconLarge}
+            />
+          ) : (
+            <View style={styles.communityIconLargePlaceholder}>
+              <Ionicons name="people" size={60} color="#2E7D32" />
+            </View>
+          )}
+          {userCanModerate && editMode && (
+            <TouchableOpacity
+              style={styles.changeIconButton}
+              onPress={pickImage}
+              disabled={loading}
+            >
+              <Ionicons name="camera" size={16} color="#fff" />
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Informações da Comunidade */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informações</Text>
 
-          {isAdmin && editMode ? (
+          {userCanModerate && editMode ? (
             <>
               <Text style={styles.label}>Nome *</Text>
               <TextInput
@@ -278,6 +610,16 @@ export default function DetalhesComunidadeScreen() {
                   <Text style={styles.editIconText}>Editar informações</Text>
                 </TouchableOpacity>
               )}
+
+              {userIsModerator && !isAdmin && (
+                <TouchableOpacity
+                  style={styles.editIconButton}
+                  onPress={() => setEditMode(true)}
+                >
+                  <Ionicons name="create-outline" size={24} color="#2E7D32" />
+                  <Text style={styles.editIconText}>Editar informações</Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
         </View>
@@ -288,46 +630,94 @@ export default function DetalhesComunidadeScreen() {
             Membros ({comunidade.membros.length})
           </Text>
 
-          {comunidade.membros.map((membroId, index) => {
-            const isCurrentUser = membroId === user.uid;
-            const isCommunityOwner = membroId === comunidade.ownerId;
-            const memberName = isCommunityOwner
-              ? comunidade.ownerName
-              : isCurrentUser
-              ? user.name
-              : `Membro ${index + 1}`;
+          {loadingMembers ? (
+            <View style={styles.loadingMembersContainer}>
+              <ActivityIndicator size="small" color="#2E7D32" />
+              <Text style={styles.loadingMembersText}>Carregando membros...</Text>
+            </View>
+          ) : (
+            membersData.map((member) => {
+              const isCurrentUser = member.id === user.uid;
+              const isCommunityOwner = member.id === comunidade.ownerId;
+              const isCommunityModerator = comunidade.moderadores.includes(member.id);
 
-            return (
-              <View key={membroId} style={styles.memberItem}>
-                <View style={styles.memberInfo}>
-                  <Ionicons name="person-circle" size={40} color="#2E7D32" />
-                  <View style={styles.memberDetails}>
-                    <Text style={styles.memberName}>{memberName}</Text>
-                    {isCommunityOwner && (
-                      <Text style={styles.adminBadge}>Administrador</Text>
+              return (
+                <View key={member.id} style={styles.memberItem}>
+                  <View style={styles.memberInfo}>
+                    {member.photoURL ? (
+                      <Image 
+                        source={{ uri: member.photoURL }} 
+                        style={styles.memberPhoto}
+                      />
+                    ) : (
+                      <Image
+                        source={{ uri: "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png" }}
+                        style={styles.memberPhoto}
+                      />
                     )}
-                    {isCurrentUser && !isCommunityOwner && (
-                      <Text style={styles.youBadge}>Você</Text>
-                    )}
+                    <View style={styles.memberDetails}>
+                      <Text style={styles.memberName}>{member.name}</Text>
+                      {isCommunityOwner && (
+                        <Text style={styles.adminBadge}>Administrador</Text>
+                      )}
+                      {isCommunityModerator && !isCommunityOwner && (
+                        <Text style={styles.moderatorBadge}>Moderador</Text>
+                      )}
+                      {isCurrentUser && !isCommunityOwner && !isCommunityModerator && (
+                        <Text style={styles.youBadge}>Você</Text>
+                      )}
+                    </View>
                   </View>
+
+                  {/* Ações do Admin */}
+                  {isAdmin && !isCommunityOwner && (
+                    <View style={styles.memberActions}>
+                      {/* Botão de Promover/Rebaixar */}
+                      {isCommunityModerator ? (
+                        <TouchableOpacity
+                          onPress={() => handleDemoteFromModerator(member.id, member.name)}
+                          style={styles.actionIconButton}
+                        >
+                          <Ionicons name="arrow-down-circle" size={24} color="#F59E0B" />
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          onPress={() => handlePromoteToModerator(member.id, member.name)}
+                          style={styles.actionIconButton}
+                        >
+                          <Ionicons name="arrow-up-circle" size={24} color="#3B82F6" />
+                        </TouchableOpacity>
+                      )}
+                      
+                      {/* Botão de Remover */}
+                      <TouchableOpacity
+                        onPress={() => handleRemoveMember(member.id, member.name)}
+                        style={styles.actionIconButton}
+                      >
+                        <Ionicons name="close-circle" size={24} color="#E63946" />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* Ações do Moderador (não pode remover outros mods ou admin) */}
+                  {userIsModerator && !isAdmin && !isCommunityOwner && !isCommunityModerator && (
+                    <TouchableOpacity
+                      onPress={() => handleRemoveMember(member.id, member.name)}
+                    >
+                      <Ionicons name="close-circle" size={24} color="#E63946" />
+                    </TouchableOpacity>
+                  )}
                 </View>
-                {isAdmin && !isCommunityOwner && (
-                  <TouchableOpacity
-                    onPress={() => handleRemoveMember(membroId, memberName)}
-                  >
-                    <Ionicons name="close-circle" size={24} color="#E63946" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            );
-          })}
+              );
+            })
+          )}
         </View>
 
         {/* Ações */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Ações</Text>
 
-          {!isAdmin && (
+          {!isAdmin && userIsMember && (
             <TouchableOpacity
               style={styles.actionButton}
               onPress={handleLeaveCommunity}
@@ -336,6 +726,17 @@ export default function DetalhesComunidadeScreen() {
               <Text style={[styles.actionText, { color: "#E63946" }]}>
                 Sair da comunidade
               </Text>
+            </TouchableOpacity>
+          )}
+
+          {!isAdmin && !userIsMember && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleJoinCommunity}
+              disabled={loading}
+            >
+              <Ionicons name="log-in-outline" size={24} color="#2E7D32" />
+              <Text style={[styles.actionText, { color: "#2E7D32" }]}>Entrar na comunidade</Text>
             </TouchableOpacity>
           )}
 
@@ -385,6 +786,44 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  iconSection: {
+    alignItems: "center",
+    paddingVertical: 30,
+    backgroundColor: "#FFF",
+    position: "relative",
+  },
+  communityIconLarge: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: "#2E7D32",
+    backgroundColor: "#E8F5E9",
+  },
+  communityIconLargePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: "#E9ECEF",
+    backgroundColor: "#E8F5E9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  changeIconButton: {
+    position: "absolute",
+    bottom: 30,
+    right: "50%",
+    marginRight: -80,
+    backgroundColor: "#2E7D32",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#fff",
   },
   section: {
     padding: 20,
@@ -486,6 +925,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#2E7D32",
   },
+  loadingMembersContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+    gap: 12,
+  },
+  loadingMembersText: {
+    fontSize: 14,
+    color: "#666",
+  },
   memberItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -499,6 +949,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     gap: 12,
+  },
+  memberPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#2E7D32",
+    backgroundColor: "#E8F5E9",
   },
   memberDetails: {
     flex: 1,
@@ -514,10 +972,24 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 2,
   },
+  moderatorBadge: {
+    fontSize: 12,
+    color: "#3B82F6",
+    fontWeight: "600",
+    marginTop: 2,
+  },
   youBadge: {
     fontSize: 12,
     color: "#666",
     marginTop: 2,
+  },
+  memberActions: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  actionIconButton: {
+    padding: 4,
   },
   actionButton: {
     flexDirection: "row",
