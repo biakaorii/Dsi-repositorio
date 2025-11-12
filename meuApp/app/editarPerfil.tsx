@@ -27,6 +27,7 @@ export default function EditarPerfilScreen() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [businessDescription, setBusinessDescription] = useState("");
+  const [businessBio, setBusinessBio] = useState(""); // História do empreendedor (separada)
   const [mission, setMission] = useState("");
   const [foundedYear, setFoundedYear] = useState("");
   const [businessType, setBusinessType] = useState<'fisica' | 'online' | 'hibrida'>('fisica');
@@ -40,8 +41,6 @@ export default function EditarPerfilScreen() {
     if (user) {
       setNome(user.name || "");
       setIdade(user.age || "");
-      setBio(user.bio || "");
-      setGenerosFavoritos(user.genres?.join(", ") || "");
       setProfileImage(user.profilePhotoUrl || null);
       
       // Carregar dados do empreendedor se aplicável
@@ -52,6 +51,7 @@ export default function EditarPerfilScreen() {
         setCity(user.city || "");
         setState(user.state || "");
         setBusinessDescription(user.businessDescription || "");
+        setBusinessBio(user.bio || ""); // História do negócio
         setMission(user.mission || "");
         setFoundedYear(user.foundedYear || "");
         setBusinessType(user.businessType || 'fisica');
@@ -60,6 +60,10 @@ export default function EditarPerfilScreen() {
         setWebsite(user.website || "");
         setInstagram(user.instagram || "");
         setServicesText(user.services?.join("\n") || "");
+      } else {
+        // Para leitores/críticos
+        setBio(user.bio || "");
+        setGenerosFavoritos(user.genres?.join(", ") || "");
       }
     }
   }, [user]);
@@ -124,12 +128,6 @@ export default function EditarPerfilScreen() {
 
     setUploading(true);
 
-    // Converter gêneros de string para array
-    const genresArray = generosFavoritos
-      .split(",")
-      .map(g => g.trim())
-      .filter(g => g.length > 0);
-
     try {
       let photoUrl = user.profilePhotoUrl;
 
@@ -172,33 +170,83 @@ export default function EditarPerfilScreen() {
         }
       }
 
-      await updateUser({
-        name: nome,
-        age: idade,
-        bio: bio,
-        genres: genresArray,
-        profilePhotoUrl: photoUrl,
-        // Incluir dados do empreendedor se for o caso
-        ...(user.profileType === 'empreendedor' && {
-          businessName: businessName,
-          cnpj: cnpj,
-          address: address,
-          city: city,
-          state: state,
-          businessDescription: businessDescription || undefined,
-          mission: mission || undefined,
-          foundedYear: foundedYear || undefined,
-          businessType: businessType,
-          workingHours: workingHours || undefined,
-          phoneWhatsApp: phoneWhatsApp || undefined,
-          website: website || undefined,
-          instagram: instagram || undefined,
-          services: servicesText
-            .split('\n')
-            .map(s => s.trim())
-            .filter(s => s.length > 0),
-        }),
-      });
+      // Preparar dados base (sem undefined)
+      const updateData: any = {};
+      
+      // Adicionar foto apenas se existir
+      if (photoUrl) {
+        updateData.profilePhotoUrl = photoUrl;
+      }
+
+      // Adicionar campos específicos por tipo de usuário
+      if (user.profileType === 'empreendedor') {
+        // Validação: nome da livraria é obrigatório
+        if (!businessName || businessName.trim() === '') {
+          throw new Error('O nome da livraria é obrigatório');
+        }
+
+        // Empreendedores: apenas dados do negócio (sem valores undefined)
+        if (businessBio && businessBio.trim()) {
+          updateData.bio = businessBio.trim();
+        }
+        updateData.businessName = businessName.trim();
+        
+        if (cnpj && cnpj.trim()) updateData.cnpj = cnpj.trim();
+        if (address && address.trim()) updateData.address = address.trim();
+        if (city && city.trim()) updateData.city = city.trim();
+        if (state && state.trim()) updateData.state = state.trim();
+        if (businessDescription && businessDescription.trim()) {
+          updateData.businessDescription = businessDescription.trim();
+        }
+        if (mission && mission.trim()) updateData.mission = mission.trim();
+        if (foundedYear && foundedYear.trim()) updateData.foundedYear = foundedYear.trim();
+        
+        updateData.businessType = businessType;
+        
+        if (workingHours && workingHours.trim()) updateData.workingHours = workingHours.trim();
+        if (phoneWhatsApp && phoneWhatsApp.trim()) updateData.phoneWhatsApp = phoneWhatsApp.trim();
+        if (website && website.trim()) updateData.website = website.trim();
+        if (instagram && instagram.trim()) updateData.instagram = instagram.trim();
+        
+        const servicesArray = servicesText
+          .split('\n')
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+        if (servicesArray.length > 0) {
+          updateData.services = servicesArray;
+        }
+      } else {
+        // Leitores/Críticos: nome, idade, bio, gêneros
+        // Converter gêneros de string para array
+        const genresArray = generosFavoritos
+          .split(",")
+          .map((g: string) => g.trim())
+          .filter((g: string) => g.length > 0);
+        
+        if (nome && nome.trim()) updateData.name = nome.trim();
+        if (idade && idade.trim()) updateData.age = idade.trim();
+        if (bio && bio.trim()) updateData.bio = bio.trim();
+        if (genresArray.length > 0) updateData.genres = genresArray;
+      }
+
+      console.log('🔵 Dados a serem atualizados:', updateData);
+      console.log('🔵 Número de campos:', Object.keys(updateData).length);
+      
+      // Verificar se há dados para atualizar
+      if (Object.keys(updateData).length === 0) {
+        throw new Error('Nenhum dado para atualizar');
+      }
+      
+      const result = await updateUser(updateData);
+      
+      console.log('🔵 Resultado do updateUser:', result);
+      
+      if (!result.success) {
+        console.error('❌ Erro retornado pelo updateUser:', result.error);
+        throw new Error(result.error || 'Erro ao atualizar perfil');
+      }
+      
+      console.log('✅ Perfil atualizado com sucesso!');
 
       // Forçar atualização da imagem no estado local
       if (photoUrl) {
@@ -218,12 +266,16 @@ export default function EditarPerfilScreen() {
       setTimeout(() => {
         router.back();
       }, 1000);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ ERRO AO SALVAR PERFIL:', error);
+      console.error('❌ Mensagem do erro:', error.message);
+      console.error('❌ Stack:', error.stack);
+      
       Toast.show({
         type: 'error',
-        text1: 'Erro',
-        text2: 'Não foi possível salvar as alterações.',
-        visibilityTime: 3000,
+        text1: 'Erro ao Salvar',
+        text2: error.message || 'Não foi possível salvar as alterações.',
+        visibilityTime: 4000,
         autoHide: true,
         topOffset: 50,
       });
@@ -293,31 +345,35 @@ export default function EditarPerfilScreen() {
           </View>
         </View>
 
-        {/* Campo Nome */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome Completo</Text>
-          <TextInput
-            style={styles.input}
-            value={nome}
-            onChangeText={setNome}
-            placeholder="Digite seu nome"
-            placeholderTextColor="#999"
-          />
-        </View>
+        {/* Campo Nome - Apenas para Leitores/Críticos */}
+        {user.profileType !== 'empreendedor' && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nome Completo</Text>
+            <TextInput
+              style={styles.input}
+              value={nome}
+              onChangeText={setNome}
+              placeholder="Digite seu nome"
+              placeholderTextColor="#999"
+            />
+          </View>
+        )}
 
-        {/* Campo Idade */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Idade</Text>
-          <TextInput
-            style={styles.input}
-            value={idade}
-            onChangeText={setIdade}
-            placeholder="Digite sua idade"
-            placeholderTextColor="#999"
-            keyboardType="numeric"
-            maxLength={3}
-          />
-        </View>
+        {/* Campo Idade - Apenas para Leitores/Críticos */}
+        {user.profileType !== 'empreendedor' && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Idade</Text>
+            <TextInput
+              style={styles.input}
+              value={idade}
+              onChangeText={setIdade}
+              placeholder="Digite sua idade"
+              placeholderTextColor="#999"
+              keyboardType="numeric"
+              maxLength={3}
+            />
+          </View>
+        )}
 
         {/* Campo Email (somente leitura) */}
         <View style={styles.inputGroup}>
@@ -330,33 +386,38 @@ export default function EditarPerfilScreen() {
           />
         </View>
 
-        {/* Campo Bio */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Bio / Descrição</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={bio}
-            onChangeText={setBio}
-            placeholder="Conte um pouco sobre você..."
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-            placeholderTextColor="#999"
-          />
-        </View>
+        {/* Campos para Leitores e Críticos */}
+        {user.profileType !== 'empreendedor' && (
+          <>
+            {/* Campo Bio */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Bio / Descrição</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={bio}
+                onChangeText={setBio}
+                placeholder="Conte um pouco sobre você..."
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+                placeholderTextColor="#999"
+              />
+            </View>
 
-        {/* Campo Gêneros Favoritos */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Gêneros Favoritos</Text>
-          <TextInput
-            style={styles.input}
-            value={generosFavoritos}
-            onChangeText={setGenerosFavoritos}
-            placeholder="Ex: Fantasia, Romance"
-            placeholderTextColor="#999"
-          />
-          <Text style={styles.hint}>Separe os gêneros por vírgula</Text>
-        </View>
+            {/* Campo Gêneros Favoritos */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Gêneros Favoritos</Text>
+              <TextInput
+                style={styles.input}
+                value={generosFavoritos}
+                onChangeText={setGenerosFavoritos}
+                placeholder="Ex: Fantasia, Romance"
+                placeholderTextColor="#999"
+              />
+              <Text style={styles.hint}>Separe os gêneros por vírgula</Text>
+            </View>
+          </>
+        )}
 
         {/* Campos específicos para Empreendedores */}
         {user.profileType === 'empreendedor' && (
@@ -559,8 +620,8 @@ export default function EditarPerfilScreen() {
               </Text>
               <TextInput
                 style={[styles.input, styles.textArea, { height: 120 }]}
-                value={bio}
-                onChangeText={setBio}
+                value={businessBio}
+                onChangeText={setBusinessBio}
                 placeholder="Conte a história do seu negócio..."
                 placeholderTextColor="#999"
                 multiline

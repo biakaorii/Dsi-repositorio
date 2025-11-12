@@ -50,16 +50,20 @@ export default function PerfilScreen() {
   }
 
   // Dados do usuário
-  const name = user.name || "Usuário";
+  const isEntrepreneur = user.profileType === 'empreendedor';
+  
+  // Para empreendedores: mostra apenas o nome da loja
+  // Para leitores: mostra o nome do usuário
+  const displayName = isEntrepreneur 
+    ? (user.businessName || "Livraria") 
+    : (user.name || "Usuário");
+  
   // ✅ Prioriza readingGoal, depois bio, depois fallback
   const bio = user.readingGoal || user.bio || "Leitor ávido";
   // Adiciona timestamp para forçar reload da imagem
   const profileImageUrl = user.profilePhotoUrl 
     ? `${user.profilePhotoUrl}?t=${Date.now()}` 
     : "https://static.vecteezy.com/system/resources/thumbnails/019/879/186/small/user-icon-on-transparent-background-free-png.png";
-
-  // Verificar se é empreendedor
-  const isEntrepreneur = user.profileType === 'empreendedor';
 
   return (
     <View style={styles.container}>
@@ -78,7 +82,7 @@ export default function PerfilScreen() {
             }}
             style={styles.profileImage}
           />
-          <Text style={styles.profileName}>{name}</Text>
+          <Text style={styles.profileName}>{displayName}</Text>
           <Text style={styles.profileSubtitle}>{bio}</Text>
 
           {/* Botão Acompanhar Progresso */}
@@ -107,25 +111,27 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        {/* Preferências: Gêneros Favoritos */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Gêneros Favoritos</Text>
-          <View style={styles.tagsContainer}>
-            {user.genres && Array.isArray(user.genres) ? (
-              user.genres
-                .filter(genre => typeof genre === 'string' && genre.trim() !== '')
-                .map((genre) => (
-                  <View key={genre} style={styles.tag}>
-                    <Text style={styles.tagText}>{genre}</Text>
-                  </View>
-                ))
-            ) : (
-              <Text style={{ color: "#666", fontStyle: "italic" }}>
-                Nenhum gênero selecionado
-              </Text>
-            )}
+        {/* Preferências: Gêneros Favoritos - Apenas para Leitores/Críticos */}
+        {!isEntrepreneur && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Gêneros Favoritos</Text>
+            <View style={styles.tagsContainer}>
+              {user.genres && Array.isArray(user.genres) ? (
+                user.genres
+                  .filter(genre => typeof genre === 'string' && genre.trim() !== '')
+                  .map((genre) => (
+                    <View key={genre} style={styles.tag}>
+                      <Text style={styles.tagText}>{genre}</Text>
+                    </View>
+                  ))
+              ) : (
+                <Text style={{ color: "#666", fontStyle: "italic" }}>
+                  Nenhum gênero selecionado
+                </Text>
+              )}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Informações do Negócio - Apenas para Empreendedores */}
         {isEntrepreneur && (
