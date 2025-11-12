@@ -207,12 +207,12 @@ export default function ChatComunidadeScreen() {
               <Ionicons name="create-outline" size={18} color="#2E7D32" />
             </TouchableOpacity>
           )}
-        {(item.isOwn || isAdmin) && (
-          <TouchableOpacity onPress={() => handleDelete(item.id, item.userId)}>
-            <Ionicons name="trash-outline" size={18} color="#E63946" />
-          </TouchableOpacity>
-        )}
-      </View>
+          {(item.isOwn || isAdmin) && (
+            <TouchableOpacity onPress={() => handleDelete(item.id, item.userId)}>
+              <Ionicons name="trash-outline" size={18} color="#2E7D32" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );
