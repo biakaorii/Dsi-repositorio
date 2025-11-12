@@ -139,7 +139,12 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Início</Text>
-        <Ionicons name="notifications-outline" size={24} color="#2E7D32" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <TouchableOpacity onPress={() => router.push('/cadastrar-livro')}>
+            <Ionicons name="add-circle-outline" size={26} color="#2E7D32" />
+          </TouchableOpacity>
+          <Ionicons name="notifications-outline" size={24} color="#2E7D32" />
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
