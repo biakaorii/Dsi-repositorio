@@ -484,20 +484,23 @@ export default function BookDetailsScreen() {
                           }}
                           activeOpacity={0.6}
                         >
-                          <View style={styles.reviewerNameContainer}>
-                            {review.userProfileType === 'empreendedor' && review.businessName ? (
-                              <>
-                                <Ionicons name="storefront" size={16} color="#4CAF50" style={styles.storeIcon} />
+                          {review.userProfileType === 'empreendedor' && review.businessName ? (
+                            <View style={styles.businessReviewerContainer}>
+                              <View style={styles.reviewerNameContainer}>
+                                <Ionicons name="storefront" size={18} color="#4CAF50" style={styles.storeIcon} />
                                 <Text style={[styles.reviewerName, styles.businessName]}>
                                   {review.businessName}
                                 </Text>
-                              </>
-                            ) : (
-                              <Text style={styles.reviewerName}>
-                                {review.userName}
-                              </Text>
-                            )}
-                          </View>
+                              </View>
+                              <View style={styles.businessBadge}>
+                                <Text style={styles.businessBadgeText}>LIVRARIA</Text>
+                              </View>
+                            </View>
+                          ) : (
+                            <Text style={styles.reviewerName}>
+                              {review.userName}
+                            </Text>
+                          )}
                         </TouchableOpacity>
                         {renderStars(review.rating, undefined, 16)}
                       </View>
@@ -782,6 +785,9 @@ const styles = StyleSheet.create({
   reviewerInfo: {
     flex: 1,
   },
+  businessReviewerContainer: {
+    gap: 6,
+  },
   reviewerNameContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -799,6 +805,20 @@ const styles = StyleSheet.create({
   businessName: {
     color: "#4CAF50",
     fontWeight: "700",
+  },
+  businessBadge: {
+    backgroundColor: "#4CAF50",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+    marginLeft: 24, // Alinha com o nome da loja (ícone 18px + margem 6px)
+  },
+  businessBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   reviewDate: {
     fontSize: 12,

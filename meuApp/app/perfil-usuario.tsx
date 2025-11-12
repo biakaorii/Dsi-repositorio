@@ -168,27 +168,39 @@ export default function PerfilUsuarioScreen() {
             </View>
           )}
           
-          <Text style={styles.userName}>{userProfile.name}</Text>
+          {/* Para empreendedores: mostra apenas nome da loja */}
+          {/* Para leitores/críticos: mostra nome do usuário */}
+          <Text style={styles.userName}>
+            {userProfile.profileType === 'empreendedor' 
+              ? (userProfile.businessName || "Livraria")
+              : userProfile.name}
+          </Text>
           
-          {userProfile.age && (
+          {/* Idade - Apenas para não-empreendedores */}
+          {userProfile.profileType !== 'empreendedor' && userProfile.age && (
             <Text style={styles.userAge}>{userProfile.age} anos</Text>
           )}
           
-          {userProfile.bio && (
-            <Text style={styles.userBio}>{userProfile.bio}</Text>
-          )}
-          
-          {userProfile.genres && userProfile.genres.length > 0 && (
-            <View style={styles.genresSection}>
-              <Text style={styles.genresTitle}>Gêneros Favoritos:</Text>
-              <View style={styles.genresContainer}>
-                {userProfile.genres.map((genre, index) => (
-                  <View key={index} style={styles.genreTag}>
-                    <Text style={styles.genreText}>{genre}</Text>
+          {/* Bio e Gêneros - Apenas para Leitores/Críticos */}
+          {userProfile.profileType !== 'empreendedor' && (
+            <>
+              {userProfile.bio && (
+                <Text style={styles.userBio}>{userProfile.bio}</Text>
+              )}
+              
+              {userProfile.genres && userProfile.genres.length > 0 && (
+                <View style={styles.genresSection}>
+                  <Text style={styles.genresTitle}>Gêneros Favoritos:</Text>
+                  <View style={styles.genresContainer}>
+                    {userProfile.genres.map((genre, index) => (
+                      <View key={index} style={styles.genreTag}>
+                        <Text style={styles.genreText}>{genre}</Text>
+                      </View>
+                    ))}
                   </View>
-                ))}
-              </View>
-            </View>
+                </View>
+              )}
+            </>
           )}
         </View>
 

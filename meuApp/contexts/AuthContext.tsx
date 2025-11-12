@@ -10,7 +10,7 @@ import {
   User as FirebaseUser,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseConfig';
 
 interface UserData {
@@ -19,7 +19,7 @@ interface UserData {
   email: string;
   profileType?: 'leitor' | 'empreendedor' | 'critico';
   age?: string;
-  genres?: string[];
+  genres?: string[]; // Gêneros favoritos (APENAS para leitores)
   readingGoal?: string;
   // Campos do negócio (empreendedores)
   businessName?: string;
@@ -27,7 +27,7 @@ interface UserData {
   address?: string;
   city?: string;
   state?: string;
-  bio?: string; // História do empreendedor ou bio do leitor
+  bio?: string; // História do empreendedor OU bio do leitor
   businessDescription?: string; // Descrição curta do negócio
   mission?: string; // Missão da livraria
   foundedYear?: string; // Ano de fundação
@@ -77,10 +77,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadUserData(firebaseUser: FirebaseUser) {
     try {
       const userDocRef = doc(db, 'users', firebaseUser.uid);
+      
+      // Primeiro, carregar os dados uma vez
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
         setUser(userDoc.data() as UserData);
+        
+        // Configurar listener para atualizações em tempo real
+        onSnapshot(userDocRef, (doc) => {
+          if (doc.exists()) {
+            console.log('🔄 Dados do usuário atualizados em tempo real');
+            setUser(doc.data() as UserData);
+          }
+        });
       } else {
         // Criar documento básico se não existir
         const userData: UserData = {
@@ -181,16 +191,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Atualizar dados do usuário
   async function updateUser(data: Partial<UserData>) {
     try {
-      if (!user) return { success: false, error: 'Usuário não autenticado' };
+      if (!user) {
+        console.error('❌ Usuário não autenticado');
+        return { success: false, error: 'Usuário não autenticado' };
+      }
+
+      // Remover campos undefined, null ou vazios antes de enviar ao Firestore
+      const sanitizedData: any = {};
+      Object.keys(data).forEach(key => {
+        const value = (data as any)[key];
+        // Apenas adiciona se o valor não for undefined, null ou string vazia
+        if (value !== undefined && value !== null && value !== '') {
+          sanitizedData[key] = value;
+        }
+      });
+
+      console.log('🔵 Atualizando usuário no Firestore...');
+      console.log('🔵 ID do usuário:', user.uid);
+      console.log('🔵 Dados originais:', JSON.stringify(data, null, 2));
+      console.log('🔵 Dados sanitizados:', JSON.stringify(sanitizedData, null, 2));
+
+      // Verificar se há dados para atualizar
+      if (Object.keys(sanitizedData).length === 0) {
+        console.error('❌ Nenhum dado válido para atualizar');
+        return { success: false, error: 'Nenhum dado válido para atualizar' };
+      }
 
       const userDocRef = doc(db, 'users', user.uid);
-      await updateDoc(userDocRef, data);
+      await updateDoc(userDocRef, sanitizedData);
 
-      setUser({ ...user, ...data });
+      console.log('✅ Firestore atualizado com sucesso');
+      
+      // Atualizar estado local
+      const updatedUser = { ...user, ...sanitizedData };
+      setUser(updatedUser);
+      console.log('✅ Estado local atualizado');
+
       return { success: true };
     } catch (error: any) {
-      console.error('Erro ao atualizar usuário:', error);
-      return { success: false, error: 'Erro ao atualizar perfil' };
+      console.error('❌ ERRO CRÍTICO ao atualizar usuário:', error);
+      console.error('❌ Código do erro:', error.code);
+      console.error('❌ Mensagem do erro:', error.message);
+      console.error('❌ Stack completo:', error.stack);
+      
+      let errorMessage = 'Erro ao atualizar perfil';
+      
+      // Mensagens mais específicas baseadas no código do erro
+      if (error.code === 'permission-denied') {
+        errorMessage = 'Permissão negada. Verifique as regras do Firestore.';
+      } else if (error.code === 'not-found') {
+        errorMessage = 'Documento do usuário não encontrado.';
+      } else if (error.code === 'invalid-argument') {
+        errorMessage = 'Dados inválidos. Verifique os campos preenchidos.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage };
     }
   }
 
