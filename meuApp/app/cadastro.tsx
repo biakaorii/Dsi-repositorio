@@ -159,55 +159,22 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    justifyContent: "center", 
-    padding: 20, 
-    backgroundColor: "#fbfbf9f9" 
-  },
-  icon: {
-    width: 148,
-    height: 98,
-    alignSelf: 'center',
-    marginBottom: 50 
-  },
-  input: {
-    width: 312,
-    height: 45,
-    alignSelf: 'center',
-    backgroundColor: "#F8F9FA",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#E9ECEF",
-    fontSize: 16,
-    color: "#333",
-  },
-  button: {
-    width: 312,
-    height: 45,
-    alignSelf: 'center',
-    backgroundColor: "#2E8B57",
-    borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 20,
-    marginBottom: 20,
-  },
+  container: {flex: 1,justifyContent: "center",padding: 20,backgroundColor: "#fbfbf9f9"},
+  
+  icon: {width: 148, height: 98, alignSelf: 'center',marginBottom: 50},
+
+  input: {width: 312,height: 45,alignSelf: 'center',backgroundColor: "#F8F9FA",borderRadius: 12,
+    paddingHorizontal: 16,paddingVertical: 12,marginBottom: 10,borderWidth: 1,borderColor: "#E9ECEF",
+    fontSize: 16,color: "#333"},
+
+  button: {width: 312,height: 45,alignSelf: 'center',backgroundColor: "#2E8B57",borderRadius: 15,
+    justifyContent: "center",alignItems: "center",marginTop: 20,marginBottom: 20,},
+
   buttonDisabled: {
     backgroundColor: "#9CA3AF",
   },
-  buttonText: { 
-    color: "#fff", 
-    fontSize: 18, 
-    fontWeight: "bold",
-  },
-  link: {
-    textAlign: "center",
-    color: "#03168F",
-    textDecorationLine: "underline",
-    fontWeight: "bold",
-  },
+
+  buttonText: {color: "#fff",fontSize: 18,fontWeight: "bold",},
+
+  link: {textAlign: "center",color: "#03168F",textDecorationLine: "underline",fontWeight: "bold",},
 });

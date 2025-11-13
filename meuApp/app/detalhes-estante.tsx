@@ -7,67 +7,95 @@ import {
   ScrollView,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Importar Firebase
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/config/firebaseConfig";
 
 interface Livro {
-  id: number;
+  id: number | string;
   titulo: string;
   paginasLidas: number;
   totalPaginas: number;
   imagem: string;
+  salvo?: boolean;
 }
 
 interface Estante {
   id: string;
   nome: string;
   descricao?: string;
-  livros: number[];
+  livros: (number | string)[]; // IDs dos livros
 }
 
 export default function DetalhesEstanteScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+
   const [estante, setEstante] = useState<Estante | null>(null);
   const [livros, setLivros] = useState<Livro[]>([]);
 
   useEffect(() => {
-    carregarEstante();
-  }, []);
+    if (user?.uid && id) {
+      carregarEstante();
+    }
+  }, [user, id]);
 
   const carregarEstante = async () => {
+    if (!user?.uid || !id) return;
+
     try {
-      const estantesSalvas = await AsyncStorage.getItem("estantes");
-      if (estantesSalvas) {
-        const estantes: Estante[] = JSON.parse(estantesSalvas);
-        const estanteEncontrada = estantes.find((e) => e.id === id);
+      const docRef = doc(db, "usuarios", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        const estantes = dados.estantes || [];
+
+        const estanteEncontrada = estantes.find((e: any) => e.id === id);
         if (estanteEncontrada) {
           setEstante(estanteEncontrada);
 
-          // Simulando carregar os dados dos livros
-          const todosLivros: Livro[] = [
-            { id: 1, titulo: "O Senhor dos Anéis", paginasLidas: 240, totalPaginas: 400, imagem: "..." },
-            { id: 2, titulo: "1984", paginasLidas: 75, totalPaginas: 300, imagem: "..." },
-            { id: 4, titulo: "Harry Potter", paginasLidas: 450, totalPaginas: 450, imagem: "..." },
-            { id: 5, titulo: "O Pequeno Príncipe", paginasLidas: 120, totalPaginas: 120, imagem: "..." },
-            { id: 7, titulo: "Cem Anos de Solidão", paginasLidas: 0, totalPaginas: 350, imagem: "..." },
-            { id: 8, titulo: "O Nome do Vento", paginasLidas: 0, totalPaginas: 680, imagem: "..." },
+          // Carregar os livros reais do Firestore (lendo, lidos, queroLer)
+          const todosLivros = [
+            ...(dados.lendo || []),
+            ...(dados.lidos || []),
+            ...(dados.queroLer || []),
           ];
+
           const livrosDaEstante = todosLivros.filter(l => estanteEncontrada.livros.includes(l.id));
           setLivros(livrosDaEstante);
+        } else {
+          Alert.alert("Erro", "Estante não encontrada.");
         }
       }
     } catch (error) {
       Alert.alert("Erro", "Não foi possível carregar os dados da estante.");
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#2E7D32" />
+        <Text>Carregando estante...</Text>
+      </View>
+    );
+  }
 
   if (!estante) {
     return (
       <View style={styles.container}>
-        <Text>Carregando...</Text>
+        <Text>Estante não encontrada.</Text>
       </View>
     );
   }

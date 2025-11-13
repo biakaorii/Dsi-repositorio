@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,13 +7,18 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Importar Firebase
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/config/firebaseConfig";
 
 interface Livro {
-  id: number;
+  id: number | string;
   titulo: string;
   paginasLidas: number;
   totalPaginas: number;
@@ -25,30 +30,57 @@ interface Estante {
   id: string;
   nome: string;
   descricao?: string;
-  livros: number[];
+  livros: (number | string)[];
 }
 
 export default function CriarEstanteScreen() {
   const router = useRouter();
+  const { bookId } = useLocalSearchParams<{ bookId?: string }>(); // Novo: pega o bookId da URL
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [livrosDisponiveis, setLivrosDisponiveis] = useState<Livro[]>([]);
-  const [livrosSelecionados, setLivrosSelecionados] = useState<number[]>([]);
+  const [livrosSelecionados, setLivrosSelecionados] = useState<(number | string)[]>([]);
 
-  React.useEffect(() => {
-    // Simulando carregar livros de todas as categorias
-    const todosLivros = [
-      { id: 1, titulo: "O Senhor dos Anéis", paginasLidas: 240, totalPaginas: 400, imagem: "..." },
-      { id: 2, titulo: "1984", paginasLidas: 75, totalPaginas: 300, imagem: "..." },
-      { id: 4, titulo: "Harry Potter", paginasLidas: 450, totalPaginas: 450, imagem: "..." },
-      { id: 5, titulo: "O Pequeno Príncipe", paginasLidas: 120, totalPaginas: 120, imagem: "..." },
-      { id: 7, titulo: "Cem Anos de Solidão", paginasLidas: 0, totalPaginas: 350, imagem: "..." },
-      { id: 8, titulo: "O Nome do Vento", paginasLidas: 0, totalPaginas: 680, imagem: "..." },
-    ];
-    setLivrosDisponiveis(todosLivros);
-  }, []);
+  useEffect(() => {
+    if (user?.uid) {
+      carregarLivrosDoUsuario();
+    }
+  }, [user]);
 
-  const toggleLivro = (id: number) => {
+  const carregarLivrosDoUsuario = async () => {
+    if (!user?.uid) return;
+
+    try {
+      const docRef = doc(db, "usuarios", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        const todosLivros = [
+          ...(dados.lendo || []),
+          ...(dados.lidos || []),
+          ...(dados.queroLer || []),
+        ];
+        setLivrosDisponiveis(todosLivros);
+
+        // Se vier com bookId, pré-seleciona
+        if (bookId) {
+          setLivrosSelecionados([bookId]);
+        }
+      } else {
+        setLivrosDisponiveis([]);
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível carregar seus livros.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleLivro = (id: number | string) => {
     if (livrosSelecionados.includes(id)) {
       setLivrosSelecionados(livrosSelecionados.filter((lid) => lid !== id));
     } else {
@@ -70,10 +102,21 @@ export default function CriarEstanteScreen() {
     };
 
     try {
-      const estantesSalvas = await AsyncStorage.getItem("estantes");
-      const estantes = estantesSalvas ? JSON.parse(estantesSalvas) : [];
-      estantes.push(novaEstante);
-      await AsyncStorage.setItem("estantes", JSON.stringify(estantes));
+      const docRef = doc(db, "usuarios", user!.uid);
+      const docSnap = await getDoc(docRef);
+
+      let estantesAtuais = [];
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        estantesAtuais = dados.estantes || [];
+      }
+
+      estantesAtuais.push(novaEstante);
+
+      await updateDoc(docRef, {
+        estantes: estantesAtuais,
+      });
+
       Alert.alert("Sucesso", "Estante criada com sucesso!", [
         { text: "OK", onPress: () => router.back() },
       ]);
@@ -81,6 +124,15 @@ export default function CriarEstanteScreen() {
       Alert.alert("Erro", "Não foi possível salvar a estante.");
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2E7D32" />
+        <Text>Carregando livros...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -109,23 +161,27 @@ export default function CriarEstanteScreen() {
         />
 
         <Text style={styles.sectionTitle}>Selecione os livros:</Text>
-        {livrosDisponiveis.map((livro) => (
-          <TouchableOpacity
-            key={livro.id}
-            style={[
-              styles.livroItem,
-              livrosSelecionados.includes(livro.id) && styles.livroSelecionado,
-            ]}
-            onPress={() => toggleLivro(livro.id)}
-          >
-            <Text style={styles.livroTitulo}>{livro.titulo}</Text>
-            <Ionicons
-              name={livrosSelecionados.includes(livro.id) ? "checkbox" : "square-outline"}
-              size={24}
-              color="#2E7D32"
-            />
-          </TouchableOpacity>
-        ))}
+        {livrosDisponiveis.length === 0 ? (
+          <Text style={styles.emptyText}>Você ainda não tem livros para adicionar à estante.</Text>
+        ) : (
+          livrosDisponiveis.map((livro) => (
+            <TouchableOpacity
+              key={livro.id}
+              style={[
+                styles.livroItem,
+                livrosSelecionados.includes(livro.id) && styles.livroSelecionado,
+              ]}
+              onPress={() => toggleLivro(livro.id)}
+            >
+              <Text style={styles.livroTitulo}>{livro.titulo}</Text>
+              <Ionicons
+                name={livrosSelecionados.includes(livro.id) ? "checkbox" : "square-outline"}
+                size={24}
+                color="#2E7D32"
+              />
+            </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
 
       <TouchableOpacity style={styles.salvarButton} onPress={salvarEstante}>
@@ -137,6 +193,12 @@ export default function CriarEstanteScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -181,4 +243,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   salvarButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  emptyText: {
+    textAlign: 'center',
+    color: '#999',
+    fontStyle: 'italic',
+    marginTop: 20,
+  },
 });

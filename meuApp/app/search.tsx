@@ -38,8 +38,11 @@ export default function Search() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [shelfModalVisible, setShelfModalVisible] = useState(false);
-  const [progressModalVisible, setProgressModalVisible] = useState(false); // Novo modal
+  const [progressModalVisible, setProgressModalVisible] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [createShelfModalVisible, setCreateShelfModalVisible] = useState(false);
+  const [novaEstanteNome, setNovaEstanteNome] = useState('');
+  const [novaEstanteDescricao, setNovaEstanteDescricao] = useState('');
 
   const getBetterImageUrl = (imageUrl: string): string => {
     if (!imageUrl) return '';
@@ -145,63 +148,132 @@ export default function Search() {
   };
 
   // Função para adicionar livro à lista "Quero Ler"
-const handleAddToWishlist = async (book: Book) => {
-  if (!user?.uid) {
-    Alert.alert("Erro", "Usuário não autenticado.");
-    return;
-  }
-
-  try {
-    const docRef = doc(db, "usuarios", user.uid);
-    const docSnap = await getDoc(docRef);
-
-    let queroLerAtual = [];
-    if (docSnap.exists()) {
-      const dados = docSnap.data();
-      queroLerAtual = dados.queroLer || [];
-    }
-
-    // Verificar se o livro já está na lista
-    const jaExiste = queroLerAtual.some((l: any) => l.id === book.id);
-    if (jaExiste) {
-      Alert.alert("Atenção", `"${book.title}" já está na sua lista de desejos.`);
+  const handleAddToWishlist = async (book: Book) => {
+    if (!user?.uid) {
+      Alert.alert("Erro", "Usuário não autenticado.");
       return;
     }
 
-    // Adicionar novo livro
-    const novoLivro = {
-      id: Date.now(), // ID local para distinguir
-      titulo: book.title,
-      paginasLidas: 0,
-      totalPaginas: 200, // Valor padrão
-      imagem: book.img,
-      salvo: true, // Padrão
-    };
+    try {
+      const docRef = doc(db, "usuarios", user.uid);
+      const docSnap = await getDoc(docRef);
 
-    await updateDoc(docRef, {
-      queroLer: [...queroLerAtual, novoLivro]
-    });
+      let queroLerAtual = [];
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        queroLerAtual = dados.queroLer || [];
+      }
 
-    Alert.alert("Sucesso", `"${book.title}" foi adicionado à sua lista de desejos ("Quero Ler").`);
-  } catch (error) {
-    Alert.alert("Erro", "Não foi possível adicionar o livro.");
-  }
-};
+      // Verificar se o livro já está na lista
+      const jaExiste = queroLerAtual.some((l: any) => l.id === book.id);
+      if (jaExiste) {
+        Alert.alert("Atenção", `"${book.title}" já está na sua lista de desejos.`);
+        return;
+      }
 
-// ... (resto do código até o modal de progresso)
+      // Adicionar novo livro
+      const novoLivro = {
+        id: Date.now(), // ID local para distinguir
+        titulo: book.title,
+        paginasLidas: 0,
+        totalPaginas: 200, // Valor padrão
+        imagem: book.img,
+        salvo: true, // Padrão
+      };
 
-// Substitua a parte do modal de progresso:
-<TouchableOpacity
-  style={styles.progressOption}
-  onPress={() => {
-    if (selectedBook) {
-      handleAddToWishlist(selectedBook);
-      setProgressModalVisible(false);
+      await updateDoc(docRef, {
+        queroLer: [...queroLerAtual, novoLivro]
+      });
+
+      Alert.alert("Sucesso", `"${book.title}" foi adicionado à sua lista de desejos ("Quero Ler").`);
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível adicionar o livro.");
     }
-  }}
->
-  <Text style={styles.progressOptionText}>Adicionar à "Quero Ler"</Text>
-</TouchableOpacity>
+  };
+
+  // Função para adicionar livro a uma estante existente
+  const handleAddBookToShelf = async (book: Book, shelfId: string) => {
+    if (!user?.uid) {
+      Alert.alert("Erro", "Usuário não autenticado.");
+      return;
+    }
+
+    try {
+      const docRef = doc(db, "usuarios", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        const estantes = dados.estantes || [];
+
+        const estanteIndex = estantes.findIndex((e: any) => e.id === shelfId);
+        if (estanteIndex !== -1) {
+          const livroJaNaEstante = estantes[estanteIndex].livros.some((id: any) => id === book.id);
+          if (livroJaNaEstante) {
+            Alert.alert("Atenção", `"${book.title}" já está nesta estante.`);
+            return;
+          }
+
+          estantes[estanteIndex].livros.push(book.id);
+
+          await updateDoc(docRef, {
+            estantes: estantes
+          });
+
+          Alert.alert("Sucesso", `"${book.title}" foi adicionado à estante.`);
+        }
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível adicionar o livro à estante.");
+    }
+  };
+
+  // Função para criar nova estante com o livro selecionado
+  const handleCreateNewShelf = async () => {
+    if (!user?.uid || !selectedBook) return;
+
+    if (!novaEstanteNome.trim()) {
+      Alert.alert("Erro", "O nome da estante é obrigatório.");
+      return;
+    }
+
+    try {
+      const docRef = doc(db, "usuarios", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      let estantesAtuais = [];
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        estantesAtuais = dados.estantes || [];
+      }
+
+      const novaEstante = {
+        id: Date.now().toString(),
+        nome: novaEstanteNome.trim(),
+        descricao: novaEstanteDescricao.trim() || undefined,
+        livros: [selectedBook.id], // Adiciona o livro imediatamente
+      };
+
+      estantesAtuais.push(novaEstante);
+
+      await updateDoc(docRef, {
+        estantes: estantesAtuais
+      });
+
+      Alert.alert("Sucesso", `"${selectedBook.title}" foi adicionado à nova estante "${novaEstante.nome}".`);
+      setCreateShelfModalVisible(false);
+      setNovaEstanteNome('');
+      setNovaEstanteDescricao('');
+      setShelfModalVisible(false);
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível criar a estante.");
+    }
+  };
+
+  const openCreateShelfModal = () => {
+    setShelfModalVisible(false);
+    setCreateShelfModalVisible(true);
+  };
 
   const handleAddToShelf = (book: Book) => {
     if (shelfId) {
@@ -290,13 +362,15 @@ const handleAddToWishlist = async (book: Book) => {
       key={shelf.id}
       style={styles.shelfOption}
       onPress={() => {
-        Alert.alert('Sucesso', `Livro adicionado a "${shelf.name}"`);
-        setShelfModalVisible(false);
+        if (selectedBook) {
+          handleAddBookToShelf(selectedBook, shelf.id);
+          setShelfModalVisible(false);
+        }
       }}
     >
       <View style={styles.shelfOptionContent}>
         <Text style={styles.shelfOptionName}>{shelf.name}</Text>
-        <Text style={styles.shelfOptionCount}>{shelf.books.length} livros</Text>
+        <Text style={styles.shelfOptionCount}>{shelf.livros?.length || 0} livros</Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color="#999" />
     </TouchableOpacity>
@@ -399,16 +473,81 @@ const handleAddToWishlist = async (book: Book) => {
 
             <ScrollView style={styles.shelfList}>
               {shelves.length > 0 ? (
-                shelves.map(renderShelfOption)
+                <>
+                  {shelves.map(renderShelfOption)}
+                  <TouchableOpacity
+                    style={styles.shelfOption}
+                    onPress={openCreateShelfModal}
+                  >
+                    <View style={styles.shelfOptionContent}>
+                      <Text style={styles.shelfOptionName}>Criar Nova Estante</Text>
+                    </View>
+                    <Ionicons name="add" size={20} color="#2E7D32" />
+                  </TouchableOpacity>
+                </>
               ) : (
-                <View style={styles.noShelvesContainer}>
-                  <Ionicons name="bookmarks" size={48} color="#ccc" />
-                  <Text style={styles.noShelvesText}>
-                    Nenhuma estante criada
-                  </Text>
-                </View>
+                <TouchableOpacity
+                  style={styles.shelfOption}
+                  onPress={openCreateShelfModal}
+                >
+                  <View style={styles.shelfOptionContent}>
+                    <Text style={styles.shelfOptionName}>Criar Primeira Estante</Text>
+                  </View>
+                  <Ionicons name="add" size={20} color="#2E7D32" />
+                </TouchableOpacity>
               )}
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para criar nova estante */}
+      <Modal
+        visible={createShelfModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCreateShelfModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Criar Nova Estante</Text>
+              <TouchableOpacity onPress={() => setCreateShelfModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Nome da estante"
+              value={novaEstanteNome}
+              onChangeText={setNovaEstanteNome}
+              autoFocus
+            />
+
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Descrição (opcional)"
+              value={novaEstanteDescricao}
+              onChangeText={setNovaEstanteDescricao}
+              multiline
+              numberOfLines={3}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setCreateShelfModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleCreateNewShelf}
+              >
+                <Text style={styles.modalButtonText}>Criar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -445,8 +584,7 @@ const handleAddToWishlist = async (book: Book) => {
               style={styles.progressOption}
               onPress={() => {
                 if (selectedBook) {
-                  // Aqui você pode adicionar a lógica para "Quero Ler" ou "Lidos"
-                  Alert.alert("Funcionalidade", "Opção ainda não implementada.");
+                  handleAddToWishlist(selectedBook);
                   setProgressModalVisible(false);
                 }
               }}
@@ -467,7 +605,11 @@ const styles = StyleSheet.create({
   header: { padding: 20, paddingTop: 50 },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#2E7D32' },
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', marginHorizontal: 12, marginBottom: 12, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E9ECEF', gap: 8 },
-  input: { flex: 1, fontSize: 16, color: '#333' },
+  input: { flex: 1, fontSize: 16, color: '#333', paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 12 },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
   categoriesContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, marginBottom: 12, gap: 8 },
   chip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#E8F5E9' },
   chipText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
@@ -502,8 +644,8 @@ const styles = StyleSheet.create({
   emptyText: { marginTop: 16, fontSize: 16, color: '#666', textAlign: 'center', paddingHorizontal: 40 },
   // Modal styles
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '80%' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
+  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '80%', padding: 16 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0', paddingBottom: 12 },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#2E7D32' },
   shelfList: { paddingHorizontal: 12, paddingVertical: 8 },
   shelfOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
@@ -523,4 +665,30 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '600',
   },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 4,
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+  },
+  confirmButton: {
+    backgroundColor: '#2E7D32',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  confirmButtonText: {
+    color: '#fff',
+  }
 });

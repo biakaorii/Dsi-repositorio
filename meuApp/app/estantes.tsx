@@ -1,286 +1,180 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import { useShelf } from '../utils/useShelf';
-import { Shelf } from '../utils/types';
-import BottomNavBar from '../components/BottomNavBar';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Importar Firebase
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/config/firebaseConfig";
+import BottomNavBar from "@/components/BottomNavBar";
+
+interface Estante {
+  id: string;
+  nome: string;
+  descricao?: string;
+  livros: (number | string)[];
+}
 
 export default function EstantesScreen() {
   const router = useRouter();
-  const { shelves, loading, loadShelves, deleteShelf } = useShelf();
-  const [selectedShelf, setSelectedShelf] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [estantes, setEstantes] = useState<Estante[]>([]);
 
-  // Recarregar estantes quando a tela ganhar foco
-  useFocusEffect(
-    useCallback(() => {
-      loadShelves();
-    }, [loadShelves])
-  );
+  useEffect(() => {
+    if (user?.uid) {
+      carregarEstantes();
+    }
+  }, [user]);
 
-  const handleCreateShelf = () => {
-    router.push('/criar-estante' as any);
+  const carregarEstantes = async () => {
+    if (!user?.uid) return;
+
+    try {
+      const docRef = doc(db, "usuarios", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        const estantesDoUsuario = dados.estantes || [];
+        setEstantes(estantesDoUsuario);
+      } else {
+        setEstantes([]);
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível carregar suas estantes.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEditShelf = (shelfId: string) => {
-    router.push({
-      pathname: '/criar-estante' as any,
-      params: { shelfId },
-    });
+  const handlePressEstante = (id: string) => {
+    router.push(`/detalhes-estante?id=${id}`);
   };
 
-  const handleDeleteShelf = (shelfId: string, shelfName: string) => {
-    Alert.alert(
-      'Deletar Estante',
-      `Tem certeza que deseja deletar a estante "${shelfName}"? Todos os livros serão removidos.`,
-      [
-        { text: 'Cancelar', onPress: () => {}, style: 'cancel' },
-        {
-          text: 'Deletar',
-          onPress: async () => {
-            const result = await deleteShelf(shelfId);
-            if (result.success) {
-              Alert.alert('Sucesso', result.message);
-              loadShelves();
-            } else {
-              Alert.alert('Erro', result.message);
-            }
-          },
-          style: 'destructive',
-        },
-      ]
-    );
+  const handleCriarEstante = () => {
+    router.push("/criar-estante");
   };
 
-  const handleViewShelf = (shelfId: string) => {
-    router.push({
-      pathname: '/detalhes-estante' as any,
-      params: { shelfId },
-    });
-  };
-
-  const renderShelfCard = ({ item }: { item: Shelf }) => (
-    <TouchableOpacity
-      style={styles.shelfCard}
-      onPress={() => handleViewShelf(item.id)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.shelfHeader}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.shelfName} numberOfLines={2}>
-            {item.name}
-          </Text>
-          {item.description && (
-            <Text style={styles.shelfDescription} numberOfLines={1}>
-              {item.description}
-            </Text>
-          )}
-        </View>
-        <View style={styles.bookCountBadge}>
-          <Ionicons name="book" size={16} color="#fff" />
-          <Text style={styles.bookCount}>{item.books.length}</Text>
-        </View>
-      </View>
-
-      <View style={styles.shelfFooter}>
-        <Text style={styles.createdDate}>
-          Criado em {new Date(item.createdAt).toLocaleDateString('pt-BR')}
-        </Text>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            onPress={() => handleEditShelf(item.id)}
-            style={styles.iconButton}
-          >
-            <Ionicons name="create" size={20} color="#2E7D32" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => handleDeleteShelf(item.id, item.name)}
-            style={styles.iconButton}
-          >
-            <Ionicons name="trash" size={20} color="#d32f2f" />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Ionicons name="library" size={64} color="#ccc" />
-      <Text style={styles.emptyText}>Nenhuma estante criada</Text>
-      <Text style={styles.emptySubtext}>
-        Toque no botão "+" para criar sua primeira estante
-      </Text>
-    </View>
-  );
-
-  if (loading && shelves.length === 0) {
+  if (loading) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#2E7D32" />
+        <Text>Carregando estantes...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Minhas Estantes</Text>
-        <TouchableOpacity
-          onPress={handleCreateShelf}
-          style={styles.createButton}
-        >
-          <Ionicons name="add" size={28} color="#fff" />
-        </TouchableOpacity>
       </View>
 
-      {/* Lista de estantes */}
-      <FlatList
-        data={shelves}
-        renderItem={renderShelfCard}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={renderEmptyState}
-        showsVerticalScrollIndicator={false}
-      />
+      <ScrollView contentContainerStyle={styles.content}>
+        {estantes.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="bookmarks-outline" size={64} color="#ccc" />
+            <Text style={styles.emptyText}>Você ainda não tem estantes.</Text>
+            <Text style={styles.emptySubtext}>Crie sua primeira estante agora!</Text>
+          </View>
+        ) : (
+          estantes.map((estante) => (
+            <TouchableOpacity
+              key={estante.id}
+              style={styles.estanteCard}
+              onPress={() => handlePressEstante(estante.id)}
+            >
+              <View style={styles.estanteHeader}>
+                <Text style={styles.estanteTitle}>{estante.nome}</Text>
+                <Ionicons name="chevron-forward" size={20} color="#999" />
+              </View>
+              {estante.descricao ? (
+                <Text style={styles.estanteDescricao}>{estante.descricao}</Text>
+              ) : null}
+              <Text style={styles.estanteCount}>
+                {estante.livros.length} livro{estante.livros.length !== 1 ? 's' : ''}
+              </Text>
+            </TouchableOpacity>
+          ))
+        )}
+      </ScrollView>
 
-      {/* Navbar */}
-      <BottomNavBar />
+      <TouchableOpacity style={styles.adicionarButton} onPress={handleCriarEstante}>
+        <Ionicons name="add" size={24} color="#fff" />
+        <Text style={styles.adicionarButtonText}>Criar Nova Estante</Text>
+      </TouchableOpacity>
+
+      <BottomNavBar/>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: "#fff" },
+  loadingContainer: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 16,
-    backgroundColor: '#f5f5f5',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2E7D32',
-  },
-  createButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#2E7D32',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 80,
-  },
-  shelfCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  shelfHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  shelfName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 4,
-  },
-  shelfDescription: {
-    fontSize: 14,
-    color: '#666',
-  },
-  bookCountBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2E7D32',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 4,
-  },
-  bookCount: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  shelfFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  createdDate: {
-    fontSize: 12,
-    color: '#999',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  iconButton: {
-    padding: 8,
-  },
+  header: { padding: 20, paddingTop: 50 },
+  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#2E7D32" },
+  content: { paddingHorizontal: 20, paddingBottom: 100 },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingTop: 60,
   },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#999',
-    marginTop: 16,
+  emptyText: { fontSize: 16, color: "#666", textAlign: "center", marginTop: 16 },
+  emptySubtext: { fontSize: 14, color: "#999", textAlign: "center", marginTop: 8 },
+  estanteCard: {
+    backgroundColor: "#F1F8E9",
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#ccc',
-    marginTop: 8,
-    textAlign: 'center',
-    paddingHorizontal: 32,
+  estanteHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  estanteTitle: { fontSize: 16, fontWeight: "bold", color: "#333" },
+  estanteDescricao: { fontSize: 14, color: "#666", marginBottom: 6 },
+  estanteCount: { fontSize: 12, color: "#888" },
+  adicionarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: "#2E7D32",
+    padding: 16,
+    margin: 20,
+    borderRadius: 10,
+    position: 'absolute',
+    bottom: 90, // Ajuste para não sobrepor a BottomNavBar mais alta
+    left: 20,
+    right: 20,
+  },
+  adicionarButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 8,
   },
 });
