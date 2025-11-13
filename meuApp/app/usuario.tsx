@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
-import BottomNavBar from "../components/BottomNavBar";
+import BottomNavBar from "@/components/BottomNavBar";
 
 export default function PerfilScreen() {
   const router = useRouter();

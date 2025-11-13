@@ -34,6 +34,7 @@ export default function Layout() {
               <Stack.Screen name="criar-comunidade"/>
               <Stack.Screen name="chat-comunidade"/>
               <Stack.Screen name="detalhes-comunidade"/>
+              <Stack.Screen name="perfil-usuario" />
             </Stack>
             <Toast topOffset={height / 2 - 60} />
           </LivrosProvider>
