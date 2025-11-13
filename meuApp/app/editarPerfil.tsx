@@ -19,14 +19,52 @@ export default function EditarPerfilScreen() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imageKey, setImageKey] = useState(0); // Para forçar reload da imagem
+  
+  // Estados para empreendedor
+  const [businessName, setBusinessName] = useState("");
+  const [cnpj, setCnpj] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [businessDescription, setBusinessDescription] = useState("");
+  const [businessBio, setBusinessBio] = useState(""); // História do empreendedor (separada)
+  const [mission, setMission] = useState("");
+  const [foundedYear, setFoundedYear] = useState("");
+  const [businessType, setBusinessType] = useState<'fisica' | 'online' | 'hibrida'>('fisica');
+  const [workingHours, setWorkingHours] = useState("");
+  const [phoneWhatsApp, setPhoneWhatsApp] = useState("");
+  const [website, setWebsite] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [servicesText, setServicesText] = useState("");
 
   useEffect(() => {
     if (user) {
       setNome(user.name || "");
       setIdade(user.age || "");
-      setBio(user.bio || "");
-      setGenerosFavoritos(user.genres?.join(", ") || "");
       setProfileImage(user.profilePhotoUrl || null);
+      
+      // Carregar dados do empreendedor se aplicável
+      if (user.profileType === 'empreendedor') {
+        setBusinessName(user.businessName || "");
+        setCnpj(user.cnpj || "");
+        setAddress(user.address || "");
+        setCity(user.city || "");
+        setState(user.state || "");
+        setBusinessDescription(user.businessDescription || "");
+        setBusinessBio(user.bio || ""); // História do negócio
+        setMission(user.mission || "");
+        setFoundedYear(user.foundedYear || "");
+        setBusinessType(user.businessType || 'fisica');
+        setWorkingHours(user.workingHours || "");
+        setPhoneWhatsApp(user.phoneWhatsApp || "");
+        setWebsite(user.website || "");
+        setInstagram(user.instagram || "");
+        setServicesText(user.services?.join("\n") || "");
+      } else {
+        // Para leitores/críticos
+        setBio(user.bio || "");
+        setGenerosFavoritos(user.genres?.join(", ") || "");
+      }
     }
   }, [user]);
 
@@ -90,12 +128,6 @@ export default function EditarPerfilScreen() {
 
     setUploading(true);
 
-    // Converter gêneros de string para array
-    const genresArray = generosFavoritos
-      .split(",")
-      .map(g => g.trim())
-      .filter(g => g.length > 0);
-
     try {
       let photoUrl = user.profilePhotoUrl;
 
@@ -138,13 +170,83 @@ export default function EditarPerfilScreen() {
         }
       }
 
-      await updateUser({
-        name: nome,
-        age: idade,
-        bio: bio,
-        genres: genresArray,
-        profilePhotoUrl: photoUrl,
-      });
+      // Preparar dados base (sem undefined)
+      const updateData: any = {};
+      
+      // Adicionar foto apenas se existir
+      if (photoUrl) {
+        updateData.profilePhotoUrl = photoUrl;
+      }
+
+      // Adicionar campos específicos por tipo de usuário
+      if (user.profileType === 'empreendedor') {
+        // Validação: nome da livraria é obrigatório
+        if (!businessName || businessName.trim() === '') {
+          throw new Error('O nome da livraria é obrigatório');
+        }
+
+        // Empreendedores: apenas dados do negócio (sem valores undefined)
+        if (businessBio && businessBio.trim()) {
+          updateData.bio = businessBio.trim();
+        }
+        updateData.businessName = businessName.trim();
+        
+        if (cnpj && cnpj.trim()) updateData.cnpj = cnpj.trim();
+        if (address && address.trim()) updateData.address = address.trim();
+        if (city && city.trim()) updateData.city = city.trim();
+        if (state && state.trim()) updateData.state = state.trim();
+        if (businessDescription && businessDescription.trim()) {
+          updateData.businessDescription = businessDescription.trim();
+        }
+        if (mission && mission.trim()) updateData.mission = mission.trim();
+        if (foundedYear && foundedYear.trim()) updateData.foundedYear = foundedYear.trim();
+        
+        updateData.businessType = businessType;
+        
+        if (workingHours && workingHours.trim()) updateData.workingHours = workingHours.trim();
+        if (phoneWhatsApp && phoneWhatsApp.trim()) updateData.phoneWhatsApp = phoneWhatsApp.trim();
+        if (website && website.trim()) updateData.website = website.trim();
+        if (instagram && instagram.trim()) updateData.instagram = instagram.trim();
+        
+        const servicesArray = servicesText
+          .split('\n')
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+        if (servicesArray.length > 0) {
+          updateData.services = servicesArray;
+        }
+      } else {
+        // Leitores/Críticos: nome, idade, bio, gêneros
+        // Converter gêneros de string para array
+        const genresArray = generosFavoritos
+          .split(",")
+          .map((g: string) => g.trim())
+          .filter((g: string) => g.length > 0);
+        
+        if (nome && nome.trim()) updateData.name = nome.trim();
+        if (idade && idade.trim()) updateData.age = idade.trim();
+        if (bio && bio.trim()) updateData.bio = bio.trim();
+        if (genresArray.length > 0) updateData.genres = genresArray;
+      }
+
+      console.log('🔵 Dados a serem atualizados:', updateData);
+      console.log('🔵 Número de campos:', Object.keys(updateData).length);
+      
+      // Verificar se há dados para atualizar
+      if (Object.keys(updateData).length === 0) {
+        throw new Error('Nenhum dado para atualizar');
+      }
+      
+      const result = await updateUser(updateData);
+      
+      console.log('🔵 Resultado do updateUser:', result);
+      
+      if (!result.success) {
+        console.error('❌ Erro retornado pelo updateUser:', result.error);
+        throw new Error(result.error || 'Erro ao atualizar perfil');
+      }
+      
+      console.log('✅ Perfil atualizado com sucesso!');
 
       // Forçar atualização da imagem no estado local
       if (photoUrl) {
@@ -164,12 +266,16 @@ export default function EditarPerfilScreen() {
       setTimeout(() => {
         router.back();
       }, 1000);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ ERRO AO SALVAR PERFIL:', error);
+      console.error('❌ Mensagem do erro:', error.message);
+      console.error('❌ Stack:', error.stack);
+      
       Toast.show({
         type: 'error',
-        text1: 'Erro',
-        text2: 'Não foi possível salvar as alterações.',
-        visibilityTime: 3000,
+        text1: 'Erro ao Salvar',
+        text2: error.message || 'Não foi possível salvar as alterações.',
+        visibilityTime: 4000,
         autoHide: true,
         topOffset: 50,
       });
@@ -239,31 +345,35 @@ export default function EditarPerfilScreen() {
           </View>
         </View>
 
-        {/* Campo Nome */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome Completo</Text>
-          <TextInput
-            style={styles.input}
-            value={nome}
-            onChangeText={setNome}
-            placeholder="Digite seu nome"
-            placeholderTextColor="#999"
-          />
-        </View>
+        {/* Campo Nome - Apenas para Leitores/Críticos */}
+        {user.profileType !== 'empreendedor' && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nome Completo</Text>
+            <TextInput
+              style={styles.input}
+              value={nome}
+              onChangeText={setNome}
+              placeholder="Digite seu nome"
+              placeholderTextColor="#999"
+            />
+          </View>
+        )}
 
-        {/* Campo Idade */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Idade</Text>
-          <TextInput
-            style={styles.input}
-            value={idade}
-            onChangeText={setIdade}
-            placeholder="Digite sua idade"
-            placeholderTextColor="#999"
-            keyboardType="numeric"
-            maxLength={3}
-          />
-        </View>
+        {/* Campo Idade - Apenas para Leitores/Críticos */}
+        {user.profileType !== 'empreendedor' && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Idade</Text>
+            <TextInput
+              style={styles.input}
+              value={idade}
+              onChangeText={setIdade}
+              placeholder="Digite sua idade"
+              placeholderTextColor="#999"
+              keyboardType="numeric"
+              maxLength={3}
+            />
+          </View>
+        )}
 
         {/* Campo Email (somente leitura) */}
         <View style={styles.inputGroup}>
@@ -276,33 +386,323 @@ export default function EditarPerfilScreen() {
           />
         </View>
 
-        {/* Campo Bio */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Bio / Descrição</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={bio}
-            onChangeText={setBio}
-            placeholder="Conte um pouco sobre você..."
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-            placeholderTextColor="#999"
-          />
-        </View>
+        {/* Campos para Leitores e Críticos */}
+        {user.profileType !== 'empreendedor' && (
+          <>
+            {/* Campo Bio */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Bio / Descrição</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={bio}
+                onChangeText={setBio}
+                placeholder="Conte um pouco sobre você..."
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+                placeholderTextColor="#999"
+              />
+            </View>
 
-        {/* Campo Gêneros Favoritos */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Gêneros Favoritos</Text>
-          <TextInput
-            style={styles.input}
-            value={generosFavoritos}
-            onChangeText={setGenerosFavoritos}
-            placeholder="Ex: Fantasia, Romance"
-            placeholderTextColor="#999"
-          />
-          <Text style={styles.hint}>Separe os gêneros por vírgula</Text>
-        </View>
+            {/* Campo Gêneros Favoritos */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Gêneros Favoritos</Text>
+              <TextInput
+                style={styles.input}
+                value={generosFavoritos}
+                onChangeText={setGenerosFavoritos}
+                placeholder="Ex: Fantasia, Romance"
+                placeholderTextColor="#999"
+              />
+              <Text style={styles.hint}>Separe os gêneros por vírgula</Text>
+            </View>
+          </>
+        )}
+
+        {/* Campos específicos para Empreendedores */}
+        {user.profileType === 'empreendedor' && (
+          <>
+            <View style={styles.divider}>
+              <Text style={styles.dividerText}>Informações do Negócio</Text>
+            </View>
+
+            {/* Informações Básicas */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="business" size={16} color="#2E7D32" /> Nome da Livraria *
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={businessName}
+                onChangeText={setBusinessName}
+                placeholder="Ex: Livraria Central"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="document-text" size={16} color="#2E7D32" /> CNPJ
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={cnpj}
+                onChangeText={setCnpj}
+                placeholder="00.000.000/0000-00"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="location" size={16} color="#2E7D32" /> Endereço Completo
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Rua, número, bairro"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.row}>
+              <View style={[styles.inputGroup, { flex: 2 }]}>
+                <Text style={styles.label}>Cidade</Text>
+                <TextInput
+                  style={styles.input}
+                  value={city}
+                  onChangeText={setCity}
+                  placeholder="Cidade"
+                  placeholderTextColor="#999"
+                />
+              </View>
+              <View style={[styles.inputGroup, { flex: 1, marginLeft: 10 }]}>
+                <Text style={styles.label}>UF</Text>
+                <TextInput
+                  style={styles.input}
+                  value={state}
+                  onChangeText={setState}
+                  placeholder="SP"
+                  placeholderTextColor="#999"
+                  maxLength={2}
+                  autoCapitalize="characters"
+                />
+              </View>
+            </View>
+
+            {/* Sobre o Negócio */}
+            <View style={styles.divider}>
+              <Text style={styles.dividerText}>Sobre o Negócio</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="information-circle" size={16} color="#2E7D32" /> Descrição Curta
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={businessDescription}
+                onChangeText={setBusinessDescription}
+                placeholder="Ex: Livraria independente especializada em literatura contemporânea"
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="flag" size={16} color="#2E7D32" /> Missão
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={mission}
+                onChangeText={setMission}
+                placeholder="Ex: Promover o acesso à leitura e incentivar autores nacionais"
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View style={styles.row}>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={styles.label}>
+                  <Ionicons name="calendar" size={16} color="#2E7D32" /> Ano de Fundação
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={foundedYear}
+                  onChangeText={setFoundedYear}
+                  placeholder="2019"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  maxLength={4}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Tipo de Negócio</Text>
+              <View style={styles.typeSelector}>
+                <TouchableOpacity
+                  style={[styles.typeButton, businessType === 'fisica' && styles.typeButtonActive]}
+                  onPress={() => setBusinessType('fisica')}
+                >
+                  <Ionicons 
+                    name="storefront" 
+                    size={18} 
+                    color={businessType === 'fisica' ? '#fff' : '#4CAF50'} 
+                  />
+                  <Text style={[styles.typeButtonText, businessType === 'fisica' && styles.typeButtonTextActive]}>
+                    Física
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.typeButton, businessType === 'online' && styles.typeButtonActive]}
+                  onPress={() => setBusinessType('online')}
+                >
+                  <Ionicons 
+                    name="globe" 
+                    size={18} 
+                    color={businessType === 'online' ? '#fff' : '#4CAF50'} 
+                  />
+                  <Text style={[styles.typeButtonText, businessType === 'online' && styles.typeButtonTextActive]}>
+                    Online
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.typeButton, businessType === 'hibrida' && styles.typeButtonActive]}
+                  onPress={() => setBusinessType('hibrida')}
+                >
+                  <Ionicons 
+                    name="layers" 
+                    size={18} 
+                    color={businessType === 'hibrida' ? '#fff' : '#4CAF50'} 
+                  />
+                  <Text style={[styles.typeButtonText, businessType === 'hibrida' && styles.typeButtonTextActive]}>
+                    Híbrida
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="time" size={16} color="#2E7D32" /> Horário de Funcionamento
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={workingHours}
+                onChangeText={setWorkingHours}
+                placeholder="Ex: Seg-Sex 9h-18h, Sáb 9h-13h"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            {/* História */}
+            <View style={styles.divider}>
+              <Text style={styles.dividerText}>Sua História</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="book" size={16} color="#2E7D32" /> Conte sua história
+              </Text>
+              <Text style={styles.hint}>
+                Compartilhe sua paixão por livros e a história do seu negócio
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea, { height: 120 }]}
+                value={businessBio}
+                onChangeText={setBusinessBio}
+                placeholder="Conte a história do seu negócio..."
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={6}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Contatos */}
+            <View style={styles.divider}>
+              <Text style={styles.dividerText}>Contatos</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="logo-whatsapp" size={16} color="#25D366" /> WhatsApp
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={phoneWhatsApp}
+                onChangeText={setPhoneWhatsApp}
+                placeholder="(11) 98765-4321"
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="globe-outline" size={16} color="#2E7D32" /> Website
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={website}
+                onChangeText={setWebsite}
+                placeholder="www.minhaliv raria.com"
+                placeholderTextColor="#999"
+                keyboardType="url"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="logo-instagram" size={16} color="#E4405F" /> Instagram
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={instagram}
+                onChangeText={setInstagram}
+                placeholder="@minhalivraria"
+                placeholderTextColor="#999"
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* Diferenciais/Serviços */}
+            <View style={styles.divider}>
+              <Text style={styles.dividerText}>Diferenciais e Serviços</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                <Ionicons name="star" size={16} color="#2E7D32" /> Serviços Oferecidos
+              </Text>
+              <Text style={styles.hint}>
+                Digite um diferencial por linha
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea, { height: 120 }]}
+                value={servicesText}
+                onChangeText={setServicesText}
+                placeholder={"Clube do livro mensal\nVenda de livros usados\nEnvio para todo Brasil"}
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={6}
+                textAlignVertical="top"
+              />
+            </View>
+          </>
+        )}
 
         {/* Botão Salvar Principal */}
         <TouchableOpacity 
@@ -450,6 +850,21 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
 
+  divider: {
+    marginVertical: 24,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#E9ECEF",
+    backgroundColor: "#F1F8E9",
+    alignItems: "center",
+  },
+  dividerText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2E7D32",
+  },
+
   section: {
     marginTop: 30,
     marginBottom: 20,
@@ -499,6 +914,41 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginLeft: 8,
+  },
+
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+
+  typeSelector: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 5,
+  },
+  typeButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#4CAF50",
+    backgroundColor: "#fff",
+  },
+  typeButtonActive: {
+    backgroundColor: "#4CAF50",
+    borderColor: "#4CAF50",
+  },
+  typeButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#4CAF50",
+  },
+  typeButtonTextActive: {
+    color: "#fff",
   },
 
   bottomSpacing: {

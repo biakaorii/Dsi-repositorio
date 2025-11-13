@@ -1,12 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Slider from '@react-native-community/slider';
 import BottomNavBar from "../components/BottomNavBar";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProgressoScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  // Redirecionar empreendedores para a tela de perfil
+  useEffect(() => {
+    if (user?.profileType === 'empreendedor') {
+      router.replace('/usuario');
+    }
+  }, [user]);
+
+  // Se for empreendedor, não renderiza nada (vai redirecionar)
+  if (user?.profileType === 'empreendedor') {
+    return null;
+  }
   
 
   const [categoriaAtiva, setCategoriaAtiva] = useState<'lendo' | 'lidos' | 'queroLer'>('lendo');

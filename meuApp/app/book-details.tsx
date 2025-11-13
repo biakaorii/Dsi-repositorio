@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useReviews, Review } from "../contexts/ReviewsContext";
+import { useFavorites } from "../contexts/FavoritesContext";
 import Toast from 'react-native-toast-message';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
@@ -24,6 +25,7 @@ export default function BookDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuth();
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const {
     reviews,
     loading: reviewsLoading,
@@ -281,6 +283,48 @@ export default function BookDetailsScreen() {
     return (sum / bookReviews.length).toFixed(1);
   };
 
+  const handleFavoriteToggle = async () => {
+    if (!user) {
+      Toast.show({
+        type: 'error',
+        text1: 'Atenção',
+        text2: 'Faça login para favoritar',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 50,
+      });
+      return;
+    }
+
+    const favorite = isFavorite(bookId);
+    
+    if (favorite) {
+      const result = await removeFavorite(bookId);
+      if (result.success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Removido',
+          text2: 'Livro removido dos favoritos',
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        });
+      }
+    } else {
+      const result = await addFavorite(bookId, bookTitle, bookAuthor, bookImage);
+      if (result.success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Favoritado',
+          text2: 'Livro adicionado aos favoritos',
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        });
+      }
+    }
+  };
+
   if (reviewsLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -297,7 +341,13 @@ export default function BookDetailsScreen() {
           <Ionicons name="arrow-back" size={24} color="#2E7D32" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detalhes do Livro</Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity onPress={handleFavoriteToggle}>
+          <Ionicons 
+            name={isFavorite(bookId) ? "heart" : "heart-outline"} 
+            size={24} 
+            color="#E63946" 
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -403,18 +453,53 @@ export default function BookDetailsScreen() {
                 <View key={review.id} style={styles.reviewCard}>
                   <View style={styles.reviewHeader}>
                     <View style={styles.reviewHeaderLeft}>
-                      {currentUserPhoto ? (
-                        <Image
-                          source={{ uri: `${currentUserPhoto}?t=${Date.now()}` }}
-                          style={styles.profilePhoto}
-                        />
-                      ) : (
-                        <View style={styles.profilePhotoPlaceholder}>
-                          <Ionicons name="person" size={24} color="#999" />
-                        </View>
-                      )}
+                      <TouchableOpacity
+                        onPress={() => {
+                          // Navegar para o perfil do usuário
+                          router.push({
+                            pathname: "/perfil-usuario" as any,
+                            params: { userId: review.userId }
+                          });
+                        }}
+                      >
+                        {currentUserPhoto ? (
+                          <Image
+                            source={{ uri: `${currentUserPhoto}?t=${Date.now()}` }}
+                            style={styles.profilePhoto}
+                          />
+                        ) : (
+                          <View style={styles.profilePhotoPlaceholder}>
+                            <Ionicons name="person" size={24} color="#999" />
+                          </View>
+                        )}
+                      </TouchableOpacity>
                       <View style={styles.reviewerInfo}>
-                        <Text style={styles.reviewerName}>{review.userName}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            // Navegar para o perfil do usuário
+                            router.push({
+                              pathname: "/perfil-usuario" as any,
+                              params: { userId: review.userId }
+                            });
+                          }}
+                          activeOpacity={0.6}
+                        >
+                          {review.userProfileType === 'empreendedor' && review.businessName ? (
+                            <View style={styles.reviewerNameContainer}>
+                              <Ionicons name="storefront" size={18} color="#4CAF50" style={styles.storeIcon} />
+                              <Text style={[styles.reviewerName, styles.businessName]}>
+                                {review.businessName}
+                              </Text>
+                              <View style={styles.businessBadge}>
+                                <Text style={styles.businessBadgeText}>LIVRARIA</Text>
+                              </View>
+                            </View>
+                          ) : (
+                            <Text style={styles.reviewerName}>
+                              {review.userName}
+                            </Text>
+                          )}
+                        </TouchableOpacity>
                         {renderStars(review.rating, undefined, 16)}
                       </View>
                     </View>
@@ -698,11 +783,40 @@ const styles = StyleSheet.create({
   reviewerInfo: {
     flex: 1,
   },
+  businessReviewerContainer: {
+    gap: 6,
+  },
+  reviewerNameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+    gap: 6,
+  },
+  storeIcon: {
+    marginRight: 0,
+  },
   reviewerName: {
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
-    marginBottom: 5,
+    textDecorationLine: "underline",
+  },
+  businessName: {
+    color: "#4CAF50",
+    fontWeight: "700",
+  },
+  businessBadge: {
+    backgroundColor: "#4CAF50",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginLeft: 4,
+  },
+  businessBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   reviewDate: {
     fontSize: 12,
