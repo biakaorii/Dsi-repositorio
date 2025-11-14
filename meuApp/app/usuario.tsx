@@ -339,8 +339,11 @@ export default function PerfilScreen() {
           
           {/* Meus Reviews - Apenas para Leitores/Críticos */}
           {!isEntrepreneur && (
-            <TouchableOpacity style={styles.optionButton}>
-              <Ionicons name="book-outline" size={20} color="#333" />
+            <TouchableOpacity 
+              style={styles.optionButton}
+              onPress={() => router.push("/meus-reviews")}
+            >
+              <Ionicons name="chatbubbles-outline" size={20} color="#333" />
               <Text style={styles.optionText}>Meus Reviews</Text>
             </TouchableOpacity>
           )}
