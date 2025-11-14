@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 const navItems = [
   { route: "/home", icon: "home", activeIcon: "home", hideForEntrepreneur: false },
   { route: "/search", icon: "search-outline", activeIcon: "search", hideForEntrepreneur: false },
-  { route: "/cadastroLivro", icon: "add-circle-outline", activeIcon: "add-circle", hideForEntrepreneur: false },
   { route: "/comunidades", icon: "megaphone-outline", activeIcon: "megaphone", hideForEntrepreneur: false },
   { route: "/progresso", icon: "book-outline", activeIcon: "book", hideForEntrepreneur: true },
   { route: "/usuario", icon: "person-outline", activeIcon: "person", hideForEntrepreneur: false },
