@@ -36,6 +36,7 @@ export default function Layout() {
               <Stack.Screen name="progresso"/>
               <Stack.Screen name="cadastroLivro"/>
               <Stack.Screen name="book-details"/>
+              <Stack.Screen name="book-details-local"/>
               <Stack.Screen name="comunidades"/>
               <Stack.Screen name="criar-comunidade"/>
               <Stack.Screen name="chat-comunidade"/>
