@@ -233,7 +233,10 @@ export default function PerfilScreen() {
           )}
 
           {!isEntrepreneur && (
-            <TouchableOpacity style={styles.optionButton}><Ionicons name="book-outline" size={20} color="#333" /><Text style={styles.optionText}>Meus Reviews</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.optionButton} onPress={() => router.push("/meus-reviews")}>
+              <Ionicons name="chatbubbles-outline" size={20} color="#333" />
+              <Text style={styles.optionText}>Meus Reviews</Text>
+            </TouchableOpacity>
           )}
 
           <TouchableOpacity style={styles.optionButton} onPress={handleLogout}>
