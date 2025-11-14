@@ -1,19 +1,26 @@
 import { Stack } from "expo-router";
 import Toast from 'react-native-toast-message';
 import { Dimensions } from 'react-native';
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ReviewsProvider } from '../contexts/ReviewsContext';
 import { ComunidadesProvider } from '../contexts/ComunidadesContext';
 import { LivrosProvider } from '../contexts/LivrosContext';
+import { ReactNode } from 'react';
 
 const { height } = Dimensions.get('window');
+
+// Wrapper que usa useAuth e passa userId ao LivrosProvider
+function LivrosProviderWrapper({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  return <LivrosProvider userId={user?.uid}>{children}</LivrosProvider>;
+}
 
 export default function Layout() {
   return (
     <AuthProvider>
       <ReviewsProvider>
         <ComunidadesProvider>
-          <LivrosProvider>
+          <LivrosProviderWrapper>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="login" />
@@ -36,7 +43,7 @@ export default function Layout() {
               <Stack.Screen name="perfil-usuario" />
             </Stack>
             <Toast topOffset={height / 2 - 60} />
-          </LivrosProvider>
+          </LivrosProviderWrapper>
         </ComunidadesProvider>
       </ReviewsProvider>
     </AuthProvider>

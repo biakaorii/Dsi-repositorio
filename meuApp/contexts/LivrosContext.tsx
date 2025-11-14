@@ -8,6 +8,17 @@ import React, {
   ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { db } from "@/config/firebaseConfig";
+import { supabase } from "@/config/supabaseConfig";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  setDoc,
+  doc,
+  deleteDoc,
+} from "firebase/firestore";
 
 export type Livro = {
   id: string;
@@ -35,7 +46,12 @@ type LivrosContextData = {
 const LivrosContext = createContext<LivrosContextData | undefined>(undefined);
 const STORAGE_KEY = "@meuapp_livros";
 
-export function LivrosProvider({ children }: { children: ReactNode }) {
+interface LivrosProviderProps {
+  children: ReactNode;
+  userId?: string;
+}
+
+export function LivrosProvider({ children, userId }: LivrosProviderProps) {
   const [livros, setLivros] = useState<Livro[]>([]);
   const [carregandoLivros, setCarregandoLivros] = useState(true);
 
@@ -56,8 +72,28 @@ export function LivrosProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    carregarDoStorage();
-  }, [carregarDoStorage]);
+    if (userId) {
+      setCarregandoLivros(true);
+      try {
+        const q = query(collection(db, "books"), where("ownerId", "==", userId));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          const remote: Livro[] = snapshot.docs.map((d) => ({ ...(d.data() as any), id: d.id }));
+          setLivros(remote);
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(remote)).catch(() => {});
+          setCarregandoLivros(false);
+        });
+
+        return () => {
+          unsubscribe();
+        };
+      } catch (error) {
+        console.error("Erro ao escutar livros remotos:", error);
+        carregarDoStorage();
+      }
+    } else {
+      carregarDoStorage();
+    }
+  }, [userId, carregarDoStorage]);
 
   const atualizarLista = async (updater: (lista: Livro[]) => Livro[]) => {
     let novaLista: Livro[] = [];
@@ -69,17 +105,130 @@ export function LivrosProvider({ children }: { children: ReactNode }) {
   };
 
   const adicionarLivro = async (livro: Livro) => {
-    await atualizarLista((prev) => [livro, ...prev]);
+    try {
+      await atualizarLista((prev) => [livro, ...prev]);
+
+      if (userId) {
+        const livroToSave = { ...livro } as any;
+
+        if (livro.capaUri && !livro.capaUri.startsWith("http")) {
+          try {
+            const fileName = livro.capaUri.split("/").pop();
+            const fileExt = fileName?.split(".").pop() || "jpg";
+            const filePath = `books/${livro.ownerId}/${livro.id}/cover.${fileExt}`;
+
+            const response = await fetch(livro.capaUri);
+            const blob = await response.blob();
+            const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as ArrayBuffer);
+              reader.onerror = reject;
+              reader.readAsArrayBuffer(blob);
+            });
+
+            const { error: uploadError } = await supabase.storage
+              .from("photos")
+              .upload(filePath, arrayBuffer, {
+                contentType: `image/${fileExt}`,
+                upsert: true,
+              });
+
+            if (!uploadError) {
+              const { data: publicUrlData } = supabase.storage
+                .from("photos")
+                .getPublicUrl(filePath);
+              livroToSave.capaUri = publicUrlData.publicUrl;
+            } else {
+              console.warn("Upload de capa falhou:", uploadError.message || uploadError);
+            }
+          } catch (err) {
+            console.error("Erro ao fazer upload da capa:", err);
+          }
+        }
+
+        await setDoc(doc(db, "books", livro.id), livroToSave);
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar livro:", error);
+      throw error;
+    }
   };
 
   const atualizarLivro = async (livroAtualizado: Livro) => {
-    await atualizarLista((prev) =>
-      prev.map((livro) => (livro.id === livroAtualizado.id ? livroAtualizado : livro))
-    );
+    try {
+      await atualizarLista((prev) =>
+        prev.map((livro) => (livro.id === livroAtualizado.id ? livroAtualizado : livro))
+      );
+
+      if (userId) {
+        const livroToSave = { ...livroAtualizado } as any;
+
+        if (livroAtualizado.capaUri && !livroAtualizado.capaUri.startsWith("http")) {
+          try {
+            const fileName = livroAtualizado.capaUri.split("/").pop();
+            const fileExt = fileName?.split(".").pop() || "jpg";
+            const filePath = `books/${livroAtualizado.ownerId}/${livroAtualizado.id}/cover.${fileExt}`;
+
+            const response = await fetch(livroAtualizado.capaUri);
+            const blob = await response.blob();
+            const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as ArrayBuffer);
+              reader.onerror = reject;
+              reader.readAsArrayBuffer(blob);
+            });
+
+            const { error: uploadError } = await supabase.storage
+              .from("photos")
+              .upload(filePath, arrayBuffer, {
+                contentType: `image/${fileExt}`,
+                upsert: true,
+              });
+
+            if (!uploadError) {
+              const { data: publicUrlData } = supabase.storage
+                .from("photos")
+                .getPublicUrl(filePath);
+              livroToSave.capaUri = publicUrlData.publicUrl;
+            } else {
+              console.warn("Upload de capa falhou:", uploadError.message || uploadError);
+            }
+          } catch (err) {
+            console.error("Erro ao fazer upload da capa:", err);
+          }
+        }
+
+        await setDoc(doc(db, "books", livroAtualizado.id), livroToSave);
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar livro:", error);
+      throw error;
+    }
   };
 
   const removerLivro = async (livroId: string) => {
-    await atualizarLista((prev) => prev.filter((livro) => livro.id !== livroId));
+    try {
+      await atualizarLista((prev) => prev.filter((livro) => livro.id !== livroId));
+
+      if (userId) {
+        await deleteDoc(doc(db, "books", livroId));
+
+        try {
+          const listPath = `books/${userId}/${livroId}`;
+          const { data: files, error: listError } = await supabase.storage.from("photos").list(listPath);
+          if (!listError && files && files.length > 0) {
+            const filesToDelete = files.map((f: any) => `${listPath}/${f.name}`);
+            const { error: deleteError } = await supabase.storage.from("photos").remove(filesToDelete);
+            if (deleteError) console.warn("Erro ao deletar arquivos da capa:", deleteError.message || deleteError);
+          }
+        } catch (err) {
+          console.error("Erro ao remover capa do Supabase:", err);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao remover livro:", error);
+      throw error;
+    }
   };
 
   return (

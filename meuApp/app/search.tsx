@@ -12,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 import BottomNavBar from "../components/BottomNavBar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const categories = [
   "romance","fantasia","ficção","suspense","terror","ação","drama","mistério","literatura brasileira", 
@@ -34,6 +35,7 @@ export default function Search() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
 
   const getBetterImageUrl = (imageUrl: string): string => {
     if (!imageUrl) return '';
@@ -194,6 +196,17 @@ export default function Search() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Pesquisar</Text>
+        {user ? (
+          <View style={{ position: 'absolute', right: 20, top: 50 }}>
+            <TouchableOpacity
+              onPress={() => router.push('/cadastroLivro')}
+              style={{ backgroundColor: '#2E7D32', padding: 8, borderRadius: 10, flexDirection: 'row', alignItems: 'center' }}
+            >
+              <Ionicons name="add" size={18} color="#fff" />
+              <Text style={{ color: '#fff', marginLeft: 6, fontWeight: '600' }}>Cadastrar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
 
       {/* Barra de Pesquisa */}
