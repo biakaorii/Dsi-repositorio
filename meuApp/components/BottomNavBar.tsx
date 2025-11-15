@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const navItems = [
   { route: "/home", icon: "home", activeIcon: "home", hideForEntrepreneur: false },
   { route: "/search", icon: "search-outline", activeIcon: "search", hideForEntrepreneur: false },
+  { route: "/estantes", icon: "bookmarks-outline", activeIcon: "bookmarks", hideForEntrepreneur: true }, // Nova rota
   { route: "/comunidades", icon: "megaphone-outline", activeIcon: "megaphone", hideForEntrepreneur: false },
   { route: "/progresso", icon: "book-outline", activeIcon: "book", hideForEntrepreneur: true },
   { route: "/usuario", icon: "person-outline", activeIcon: "person", hideForEntrepreneur: false },
@@ -36,10 +37,10 @@ export default function BottomNavBar() {
         if (item.route === "/search") {
           return (
             <Link key={item.route} href={item.route} asChild>
-              <TouchableOpacity>
+              <TouchableOpacity style={styles.navItem}>
                 <Ionicons
                   name={getIconName(item)}
-                  size={26}
+                  size={28}
                   color={getIconColor(item.route)}
                 />
               </TouchableOpacity>
@@ -49,11 +50,12 @@ export default function BottomNavBar() {
           return (
             <TouchableOpacity
               key={item.route}
+              style={styles.navItem}
               onPress={() => router.push(item.route)}
             >
               <Ionicons
                 name={getIconName(item)}
-                size={26}
+                size={28}
                 color={getIconColor(item.route)}
               />
             </TouchableOpacity>
@@ -70,13 +72,26 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
     backgroundColor: "#fff",
-    paddingVertical: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
     borderTopWidth: 1,
     borderTopColor: "#eee",
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    height: 60,
+    height: 80,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  navItem: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
   },
 });
