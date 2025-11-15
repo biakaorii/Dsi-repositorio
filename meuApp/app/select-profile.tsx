@@ -15,7 +15,8 @@ export default function SelectProfileScreen() {
         router.push('/entrepreneur-form');
         break;
       case 'critico':
-        router.push('/critic-form'); // opcional
+        // rota opcional para formulário de crítico — usar cast para evitar tipos gerados do router
+        router.push('/critic-form' as any); // opcional
         break;
       default:
         break;

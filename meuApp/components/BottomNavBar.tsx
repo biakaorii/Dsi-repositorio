@@ -34,7 +34,6 @@ export default function BottomNavBar() {
         .filter(item => !(item.hideForEntrepreneur && isEntrepreneur))
         .map((item) => {
         if (item.route === "/search") {
-          // Usa Link para /search (como no original)
           return (
             <Link key={item.route} href={item.route} asChild>
               <TouchableOpacity>
@@ -47,7 +46,6 @@ export default function BottomNavBar() {
             </Link>
           );
         } else {
-          
           return (
             <TouchableOpacity
               key={item.route}
