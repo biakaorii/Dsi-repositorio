@@ -12,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
+import Toast from 'react-native-toast-message';
 
 // Importar Firebase
 import { doc, getDoc } from "firebase/firestore";
@@ -73,14 +74,38 @@ export default function DetalhesEstanteScreen() {
           const livrosDaEstante = todosLivros.filter(l => estanteEncontrada.livros.includes(l.id));
           setLivros(livrosDaEstante);
         } else {
-          Alert.alert("Erro", "Estante não encontrada.");
+          Toast.show({
+            type: 'error',
+            text1: 'Erro',
+            text2: 'Estante não encontrada.',
+            visibilityTime: 3000,
+          });
         }
       }
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível carregar os dados da estante.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível carregar os dados da estante.',
+        visibilityTime: 3000,
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditarEstante = () => {
+    if (!id) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'ID da estante não encontrado.',
+        visibilityTime: 3000,
+      });
+      return;
+    }
+
+    router.push(`/criar-estante?editId=${id}`);
   };
 
   if (loading) {
@@ -107,7 +132,9 @@ export default function DetalhesEstanteScreen() {
           <Ionicons name="arrow-back" size={24} color="#2E7D32" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{estante.nome}</Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity onPress={handleEditarEstante}>
+          <Ionicons name="create" size={24} color="#2E7D32" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20 }}>
@@ -140,6 +167,8 @@ export default function DetalhesEstanteScreen() {
           ))
         )}
       </ScrollView>
+
+      <Toast />
     </View>
   );
 }

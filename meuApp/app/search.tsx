@@ -8,7 +8,6 @@ import {
   StyleSheet, 
   FlatList, 
   ActivityIndicator,
-  Alert,
   Modal,
   ScrollView,
 } from 'react-native';
@@ -17,6 +16,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Book } from '@/utils/types';
 import { useShelf } from '@/utils/useShelf';
 import BottomNavBar from "../components/BottomNavBar";
+import Toast from 'react-native-toast-message';
 
 // Importar Firebase
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -107,7 +107,12 @@ export default function Search() {
   // Função para adicionar livro à lista "Lendo"
   const handleAddToReading = async (book: Book) => {
     if (!user?.uid) {
-      Alert.alert("Erro", "Usuário não autenticado.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Usuário não autenticado.',
+        visibilityTime: 3000,
+      });
       return;
     }
 
@@ -124,7 +129,12 @@ export default function Search() {
       // Verificar se o livro já está na lista
       const jaExiste = lendoAtual.some((l: any) => l.id === book.id);
       if (jaExiste) {
-        Alert.alert("Atenção", `"${book.title}" já está na sua lista de leitura.`);
+        Toast.show({
+          type: 'info',
+          text1: 'Atenção',
+          text2: `"${book.title}" já está na sua lista de leitura.`,
+          visibilityTime: 3000,
+        });
         return;
       }
 
@@ -141,16 +151,31 @@ export default function Search() {
         lendo: [...lendoAtual, novoLivro]
       });
 
-      Alert.alert("Sucesso", `"${book.title}" foi adicionado à sua lista de leitura.`);
+      Toast.show({
+        type: 'success',
+        text1: 'Sucesso',
+        text2: `"${book.title}" foi adicionado à sua lista de leitura.`,
+        visibilityTime: 3000,
+      });
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível adicionar o livro.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível adicionar o livro.',
+        visibilityTime: 3000,
+      });
     }
   };
 
   // Função para adicionar livro à lista "Quero Ler"
   const handleAddToWishlist = async (book: Book) => {
     if (!user?.uid) {
-      Alert.alert("Erro", "Usuário não autenticado.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Usuário não autenticado.',
+        visibilityTime: 3000,
+      });
       return;
     }
 
@@ -167,7 +192,12 @@ export default function Search() {
       // Verificar se o livro já está na lista
       const jaExiste = queroLerAtual.some((l: any) => l.id === book.id);
       if (jaExiste) {
-        Alert.alert("Atenção", `"${book.title}" já está na sua lista de desejos.`);
+        Toast.show({
+          type: 'info',
+          text1: 'Atenção',
+          text2: `"${book.title}" já está na sua lista de desejos.`,
+          visibilityTime: 3000,
+        });
         return;
       }
 
@@ -185,16 +215,31 @@ export default function Search() {
         queroLer: [...queroLerAtual, novoLivro]
       });
 
-      Alert.alert("Sucesso", `"${book.title}" foi adicionado à sua lista de desejos ("Quero Ler").`);
+      Toast.show({
+        type: 'success',
+        text1: 'Sucesso',
+        text2: `"${book.title}" foi adicionado à sua lista de desejos ("Quero Ler").`,
+        visibilityTime: 3000,
+      });
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível adicionar o livro.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível adicionar o livro.',
+        visibilityTime: 3000,
+      });
     }
   };
 
   // Função para adicionar livro a uma estante existente
   const handleAddBookToShelf = async (book: Book, shelfId: string) => {
     if (!user?.uid) {
-      Alert.alert("Erro", "Usuário não autenticado.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Usuário não autenticado.',
+        visibilityTime: 3000,
+      });
       return;
     }
 
@@ -210,7 +255,12 @@ export default function Search() {
         if (estanteIndex !== -1) {
           const livroJaNaEstante = estantes[estanteIndex].livros.some((id: any) => id === book.id);
           if (livroJaNaEstante) {
-            Alert.alert("Atenção", `"${book.title}" já está nesta estante.`);
+            Toast.show({
+              type: 'info',
+              text1: 'Atenção',
+              text2: `"${book.title}" já está nesta estante.`,
+              visibilityTime: 3000,
+            });
             return;
           }
 
@@ -220,11 +270,21 @@ export default function Search() {
             estantes: estantes
           });
 
-          Alert.alert("Sucesso", `"${book.title}" foi adicionado à estante.`);
+          Toast.show({
+            type: 'success',
+            text1: 'Sucesso',
+            text2: `"${book.title}" foi adicionado à estante.`,
+            visibilityTime: 3000,
+          });
         }
       }
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível adicionar o livro à estante.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível adicionar o livro à estante.',
+        visibilityTime: 3000,
+      });
     }
   };
 
@@ -233,7 +293,12 @@ export default function Search() {
     if (!user?.uid || !selectedBook) return;
 
     if (!novaEstanteNome.trim()) {
-      Alert.alert("Erro", "O nome da estante é obrigatório.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'O nome da estante é obrigatório.',
+        visibilityTime: 3000,
+      });
       return;
     }
 
@@ -260,13 +325,23 @@ export default function Search() {
         estantes: estantesAtuais
       });
 
-      Alert.alert("Sucesso", `"${selectedBook.title}" foi adicionado à nova estante "${novaEstante.nome}".`);
+      Toast.show({
+        type: 'success',
+        text1: 'Sucesso',
+        text2: `"${selectedBook.title}" foi adicionado à nova estante "${novaEstante.nome}".`,
+        visibilityTime: 3000,
+      });
       setCreateShelfModalVisible(false);
       setNovaEstanteNome('');
       setNovaEstanteDescricao('');
       setShelfModalVisible(false);
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível criar a estante.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível criar a estante.',
+        visibilityTime: 3000,
+      });
     }
   };
 
@@ -280,7 +355,12 @@ export default function Search() {
       // Se veio de detalhes-estante, adiciona direto
       const shelf = shelves.find(s => s.id === shelfId);
       if (shelf) {
-        Alert.alert('Sucesso', `"${book.title}" será adicionado à estante`);
+        Toast.show({
+          type: 'success',
+          text1: 'Sucesso',
+          text2: `"${book.title}" será adicionado à estante`,
+          visibilityTime: 3000,
+        });
       }
     } else {
       // Se veio de navegação normal, mostra modal com opções de estantes
@@ -324,10 +404,10 @@ export default function Search() {
       
       <View style={styles.bookInfo}>
         <Text style={styles.bookTitle} numberOfLines={2}>
-          {item.title}
+          {item.title || 'Título Desconhecido'}
         </Text>
         <Text style={styles.bookAuthor} numberOfLines={1}>
-          {item.author}
+          {item.author || 'Autor Desconhecido'}
         </Text>
         
         {item.likes && item.likes > 0 && (
@@ -596,6 +676,7 @@ export default function Search() {
       </Modal>
 
       <BottomNavBar />
+      <Toast />
     </View>
   );
 }
@@ -605,10 +686,29 @@ const styles = StyleSheet.create({
   header: { padding: 20, paddingTop: 50 },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#2E7D32' },
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', marginHorizontal: 12, marginBottom: 12, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E9ECEF', gap: 8 },
-  input: { flex: 1, fontSize: 16, color: '#333', paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 12 },
+  input: { 
+    flex: 1, 
+    fontSize: 16, 
+    color: '#000', // ✅ Cor do texto escura para contraste
+    backgroundColor:'#fff', // ✅ Fundo branco para o input
+    paddingVertical: 12, 
+    paddingHorizontal: 12, 
+    borderWidth: 1, 
+    borderColor: '#ccc', 
+    borderRadius: 8, 
+    marginBottom: 12 
+  },
   textArea: {
     height: 80,
+    color: '#000', // ✅ Cor do texto escura
+    backgroundColor:'#fff', // ✅ Fundo branco
     textAlignVertical: 'top',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginBottom: 12,
   },
   categoriesContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, marginBottom: 12, gap: 8 },
   chip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#E8F5E9' },

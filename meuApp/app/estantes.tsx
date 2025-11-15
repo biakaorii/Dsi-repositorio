@@ -5,15 +5,16 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
+import { Alert } from "react-native"; // ✅ Importação correta
+import Toast from 'react-native-toast-message';
 
 // Importar Firebase
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/config/firebaseConfig";
 import BottomNavBar from "@/components/BottomNavBar";
 
@@ -51,7 +52,12 @@ export default function EstantesScreen() {
         setEstantes([]);
       }
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível carregar suas estantes.");
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível carregar suas estantes.',
+        visibilityTime: 3000,
+      });
     } finally {
       setLoading(false);
     }
@@ -63,6 +69,66 @@ export default function EstantesScreen() {
 
   const handleCriarEstante = () => {
     router.push("/criar-estante");
+  };
+
+  const handleEditarEstante = (id: string) => {
+    if (!id) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'ID da estante não encontrado.',
+        visibilityTime: 3000,
+      });
+      return;
+    }
+    router.push(`/criar-estante?editId=${id}`);
+  };
+
+  const handleDeletarEstante = async (id: string, nome: string) => {
+    Alert.alert(
+      "Excluir Estante",
+      `Tem certeza que deseja excluir "${nome}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => { // ✅ Esta função interna também é async
+            if (!user?.uid) return;
+
+            try {
+              const docRef = doc(db, "usuarios", user.uid);
+              const docSnap = await getDoc(docRef);
+
+              if (docSnap.exists()) {
+                const dados = docSnap.data();
+                const estantesAtuais = dados.estantes || [];
+                const novasEstantes = estantesAtuais.filter((e: any) => e.id !== id);
+
+                await updateDoc(docRef, {
+                  estantes: novasEstantes
+                });
+
+                setEstantes(novasEstantes);
+                Toast.show({
+                  type: 'success',
+                  text1: 'Sucesso',
+                  text2: `A estante "${nome}" foi excluída.`,
+                  visibilityTime: 3000,
+                });
+              }
+            } catch (error) {
+              Toast.show({
+                type: 'error',
+                text1: 'Erro',
+                text2: 'Não foi possível excluir a estante.',
+                visibilityTime: 3000,
+              });
+            }
+          }
+        }
+      ]
+    );
   };
 
   if (loading) {
@@ -89,22 +155,38 @@ export default function EstantesScreen() {
           </View>
         ) : (
           estantes.map((estante) => (
-            <TouchableOpacity
-              key={estante.id}
-              style={styles.estanteCard}
-              onPress={() => handlePressEstante(estante.id)}
-            >
-              <View style={styles.estanteHeader}>
-                <Text style={styles.estanteTitle}>{estante.nome}</Text>
-                <Ionicons name="chevron-forward" size={20} color="#999" />
+            <View key={estante.id} style={styles.estanteCard}>
+              <TouchableOpacity
+                style={styles.estanteContent}
+                onPress={() => handlePressEstante(estante.id)}
+              >
+                <View style={styles.estanteHeader}>
+                  <Text style={styles.estanteTitle}>{estante.nome}</Text>
+                  <Ionicons name="chevron-forward" size={20} color="#999" />
+                </View>
+                {estante.descricao ? (
+                  <Text style={styles.estanteDescricao}>{estante.descricao}</Text>
+                ) : null}
+                <Text style={styles.estanteCount}>
+                  {estante.livros.length} livro{estante.livros.length !== 1 ? 's' : ''}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => handleEditarEstante(estante.id)}
+                >
+                  <Ionicons name="create" size={20} color="#2E7D32" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleDeletarEstante(estante.id, estante.nome)}
+                >
+                  <Ionicons name="trash" size={20} color="#ff4757" />
+                </TouchableOpacity>
               </View>
-              {estante.descricao ? (
-                <Text style={styles.estanteDescricao}>{estante.descricao}</Text>
-              ) : null}
-              <Text style={styles.estanteCount}>
-                {estante.livros.length} livro{estante.livros.length !== 1 ? 's' : ''}
-              </Text>
-            </TouchableOpacity>
+            </View>
           ))
         )}
       </ScrollView>
@@ -114,7 +196,8 @@ export default function EstantesScreen() {
         <Text style={styles.adicionarButtonText}>Criar Nova Estante</Text>
       </TouchableOpacity>
 
-      <BottomNavBar/>
+      <BottomNavBar />
+      <Toast />
     </View>
   );
 }
@@ -148,6 +231,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  estanteContent: {
+    flex: 1,
+    marginRight: 8,
   },
   estanteHeader: {
     flexDirection: 'row',
@@ -158,6 +248,24 @@ const styles = StyleSheet.create({
   estanteTitle: { fontSize: 16, fontWeight: "bold", color: "#333" },
   estanteDescricao: { fontSize: 14, color: "#666", marginBottom: 6 },
   estanteCount: { fontSize: 12, color: "#888" },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  editButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "#f8f8f8",
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "#f8f8f8",
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   adicionarButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -167,7 +275,7 @@ const styles = StyleSheet.create({
     margin: 20,
     borderRadius: 10,
     position: 'absolute',
-    bottom: 90, // Ajuste para não sobrepor a BottomNavBar mais alta
+    bottom: 90,
     left: 20,
     right: 20,
   },
