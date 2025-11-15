@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -15,25 +15,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useComunidades } from "../contexts/ComunidadesContext";
 import { useAuth } from "../contexts/AuthContext";
-import Toast from "react-native-toast-message";
 import {
-  addDoc,
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  Timestamp,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../config/firebaseConfig";
+  useCommunityMessages,
+  CommunityMessage,
+} from "../contexts/CommunityMessagesContext";
+import Toast from "react-native-toast-message";
 
-interface ChatMessage {
-  id: string;
-  message: string;
-  userId: string;
-  userName: string;
-  createdAt: Date;
+interface ChatMessage extends CommunityMessage {
   isOwn: boolean;
 }
 
@@ -42,12 +30,19 @@ export default function ChatComunidadeScreen() {
   const params = useLocalSearchParams();
   const { comunidades, isMember, isOwner } = useComunidades();
   const { user } = useAuth();
+  const {
+    getMessages,
+    startListening,
+    stopListening,
+    sendMessage: sendCommunityMessage,
+    updateMessage: updateCommunityMessage,
+    deleteMessage: deleteCommunityMessage,
+  } = useCommunityMessages();
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
-  const listRef = useRef<FlatList>(null);
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const listRef = useRef<FlatList<ChatMessage>>(null);
 
-  // Contexto da comunidade
   const comunidadeId = params.id as string;
   const comunidade = comunidades.find((c) => c.id === comunidadeId);
   const comunidadeNome = comunidade?.nome || "Comunidade";
@@ -55,46 +50,43 @@ export default function ChatComunidadeScreen() {
   const userIsMember = user ? isMember(comunidadeId, user.uid) : false;
   const isAdmin = user && comunidade ? isOwner(comunidadeId, user.uid) : false;
 
-  // Listener em tempo real (sempre declarar hooks antes de returns)
+  const rawMessages = comunidadeId ? getMessages(comunidadeId) : [];
+  const messages = useMemo<ChatMessage[]>(
+    () =>
+      rawMessages.map((msg) => ({
+        ...msg,
+        isOwn: user ? msg.userId === user.uid : false,
+      })),
+    [rawMessages, user?.uid]
+  );
+
   useEffect(() => {
     if (!comunidadeId) return;
-    let unsubscribe: undefined | (() => void);
-    if (userIsMember) {
-      const ref = collection(db, "comunidades", comunidadeId, "mensagens");
-      const q = query(ref, orderBy("createdAt", "asc"));
-      unsubscribe = onSnapshot(
-        q,
-        (snap) => {
-          const list: ChatMessage[] = [];
-          snap.forEach((d) => {
-            const data = d.data() as any;
-            const createdAt: Date = data.createdAt?.toDate?.() || new Date();
-            list.push({
-              id: d.id,
-              message: data.message || "",
-              userId: data.userId || "",
-              userName: data.userName || "Usuário",
-              createdAt,
-              isOwn: user ? data.userId === user.uid : false,
-            });
-          });
-          setMessages(list);
-        },
-        (err) => {
-          console.error("Erro ao carregar mensagens:", err);
-        }
-      );
-    } else {
-      setMessages([]);
+    if (!userIsMember) {
+      stopListening(comunidadeId);
+      return;
     }
-    return () => { if (unsubscribe) unsubscribe(); };
-  }, [comunidadeId, userIsMember, user?.uid]);
+    startListening(comunidadeId);
+    return () => {
+      stopListening(comunidadeId);
+    };
+  }, [comunidadeId, userIsMember, startListening, stopListening]);
 
-  // Auto-scroll ao final quando mensagens mudam
   useEffect(() => {
     if (!listRef.current) return;
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
   }, [messages.length]);
+
+  useEffect(() => {
+    if (!editingMessage) {
+      return;
+    }
+    const stillExists = messages.some((msg) => msg.id === editingMessage.id);
+    if (!stillExists) {
+      setEditingMessage(null);
+      setMessage("");
+    }
+  }, [messages, editingMessage]);
 
   // Guards após hooks para manter ordem estável
   if (!comunidade || !user) {
@@ -126,25 +118,78 @@ export default function ChatComunidadeScreen() {
     );
   }
 
+  function handleEditStart(item: ChatMessage) {
+    setEditingMessage(item);
+    setMessage(item.message);
+  }
+
+  function handleCancelEdit() {
+    setEditingMessage(null);
+    setMessage("");
+  }
+
   async function handleSend() {
     const text = message.trim();
-    if (!text) return;
-    if (!user) return;
+    if (!text || !user || !comunidadeId) return;
     try {
       setSending(true);
-      const ref = collection(db, "comunidades", comunidadeId, "mensagens");
-      await addDoc(ref, {
-        message: text,
-        userId: user.uid,
-        userName: (user as any)?.name || "Usuário",
-        createdAt: Timestamp.now(),
+      if (editingMessage) {
+        const result = await updateCommunityMessage(comunidadeId, editingMessage.id, text);
+        if (!result.success) {
+          Toast.show({
+            type: "error",
+            text1: "Erro ao editar",
+            text2: result.error || "Tente novamente",
+            visibilityTime: 2500,
+            topOffset: 50,
+          });
+        } else {
+          setEditingMessage(null);
+          setMessage("");
+        }
+      } else {
+        const result = await sendCommunityMessage(comunidadeId, text);
+        if (!result.success) {
+          Toast.show({
+            type: "error",
+            text1: "Erro ao enviar",
+            text2: result.error || "Tente novamente",
+            visibilityTime: 2500,
+            topOffset: 50,
+          });
+        } else {
+          setMessage("");
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+      Toast.show({
+        type: "error",
+        text1: "Erro ao enviar",
+        text2: "Tente novamente",
+        visibilityTime: 2500,
+        topOffset: 50,
       });
-      setMessage("");
-    } catch (e) {
-      console.error("Erro ao enviar mensagem:", e);
-      Toast.show({ type: "error", text1: "Erro ao enviar", text2: "Tente novamente", visibilityTime: 2500, topOffset: 50 });
     } finally {
       setSending(false);
+    }
+  }
+
+  async function deleteMessageById(messageId: string) {
+    if (!comunidadeId) return;
+    const result = await deleteCommunityMessage(comunidadeId, messageId);
+    if (!result.success) {
+      Toast.show({
+        type: "error",
+        text1: "Erro ao excluir",
+        text2: result.error || "Tente novamente",
+        visibilityTime: 2000,
+        topOffset: 50,
+      });
+      return;
+    }
+    if (editingMessage?.id === messageId) {
+      handleCancelEdit();
     }
   }
 
@@ -152,23 +197,28 @@ export default function ChatComunidadeScreen() {
     if (!user) return;
     const canDelete = isAdmin || authorId === user.uid;
     if (!canDelete) return;
+
     if (Platform.OS === "web") {
       const ok = (globalThis as any)?.confirm?.("Excluir esta mensagem?") ?? true;
-      if (!ok) return;
-      try { await deleteDoc(doc(db, "comunidades", comunidadeId, "mensagens", messageId)); }
-      catch { Toast.show({ type: "error", text1: "Erro ao excluir", visibilityTime: 2000, topOffset: 50 }); }
+      if (ok) {
+        await deleteMessageById(messageId);
+      }
       return;
     }
+
     Alert.alert("Excluir mensagem", "Deseja excluir esta mensagem?", [
       { text: "Cancelar", style: "cancel" },
-      { text: "Excluir", style: "destructive", onPress: async () => {
-        try { await deleteDoc(doc(db, "comunidades", comunidadeId, "mensagens", messageId)); }
-        catch { Toast.show({ type: "error", text1: "Erro ao excluir", visibilityTime: 2000, topOffset: 50 }); }
-      }}
+      {
+        text: "Excluir",
+        style: "destructive",
+        onPress: () => {
+          deleteMessageById(messageId);
+        },
+      },
     ]);
   }
 
-  const renderMessage = ({ item }: { item: any }) => (
+  const renderMessage = ({ item }: { item: ChatMessage }) => (
     <View
       style={[
         styles.messageContainer,
@@ -177,14 +227,27 @@ export default function ChatComunidadeScreen() {
     >
       {!item.isOwn && <Text style={styles.userName}>{item.userName}</Text>}
       <Text style={styles.messageText}>{item.message}</Text>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+      <View style={styles.messageFooter}>
         <Text style={styles.timestamp}>
           {new Date(item.createdAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
         </Text>
         {(item.isOwn || isAdmin) && (
-          <TouchableOpacity onPress={() => handleDelete(item.id, item.userId)}>
-            <Ionicons name="trash-outline" size={18} color="#E63946" />
-          </TouchableOpacity>
+          <View style={styles.messageActions}>
+            {item.isOwn && (
+              <TouchableOpacity
+                onPress={() => handleEditStart(item)}
+                style={styles.actionButton}
+              >
+                <Ionicons name="create-outline" size={18} color="#2E7D32" />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={() => handleDelete(item.id, item.userId)}
+              style={styles.actionButton}
+            >
+              <Ionicons name="trash-outline" size={18} color="#E63946" />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     </View>
@@ -243,28 +306,38 @@ export default function ChatComunidadeScreen() {
       />
 
       {/* Input de mensagem */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Digite uma mensagem..."
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          maxLength={500}
-          onKeyPress={(e) => {
-            if (Platform.OS === 'web' && (e as any).nativeEvent.key === 'Enter' && !((e as any).shiftKey)) {
-              e.preventDefault?.();
-              handleSend();
-            }
-          }}
-        />
-        <TouchableOpacity
-          style={[styles.sendButton, (!message.trim() || sending) && { opacity: 0.5 }]}
-          onPress={handleSend}
-          disabled={!message.trim() || sending}
-        >
-          <Ionicons name="send" size={24} color="#fff" />
-        </TouchableOpacity>
+      <View style={styles.inputWrapper}>
+        {editingMessage && (
+          <View style={styles.editIndicator}>
+            <Text style={styles.editIndicatorText}>Editando mensagem</Text>
+            <TouchableOpacity onPress={handleCancelEdit}>
+              <Text style={styles.editCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite uma mensagem..."
+            value={message}
+            onChangeText={setMessage}
+            multiline
+            maxLength={500}
+            onKeyPress={(e) => {
+              if (Platform.OS === "web" && (e as any).nativeEvent.key === "Enter" && !(e as any).shiftKey) {
+                e.preventDefault?.();
+                handleSend();
+              }
+            }}
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, (!message.trim() || sending) && { opacity: 0.5 }]}
+            onPress={handleSend}
+            disabled={!message.trim() || sending}
+          >
+            <Ionicons name="send" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -374,19 +447,55 @@ const styles = StyleSheet.create({
     color: "#333",
     lineHeight: 20,
   },
+  messageFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 6,
+    gap: 12,
+  },
   timestamp: {
     fontSize: 11,
     color: "#666",
     alignSelf: "flex-end",
   },
+  messageActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  actionButton: {
+    padding: 4,
+  },
+  inputWrapper: {
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#E9ECEF",
+  },
+  editIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: "#FFF3E0",
+    borderBottomWidth: 1,
+    borderBottomColor: "#FFE0B2",
+  },
+  editIndicatorText: {
+    color: "#BF360C",
+    fontWeight: "600",
+  },
+  editCancelText: {
+    color: "#E53935",
+    fontWeight: "600",
+  },
   inputContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
-    backgroundColor: "#fff",
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#E9ECEF",
+    gap: 8,
   },
   input: {
     flex: 1,
