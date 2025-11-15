@@ -549,6 +549,17 @@ export default function Search() {
         <Text style={styles.headerTitle}>
           {shelfId ? 'Adicionar Livro' : 'Pesquisar'}
         </Text>
+        {user ? (
+          <View style={{ position: 'absolute', right: 20, top: 50 }}>
+            <TouchableOpacity
+              onPress={() => router.push('/cadastroLivro')}
+              style={{ backgroundColor: '#2E7D32', padding: 8, borderRadius: 10, flexDirection: 'row', alignItems: 'center' }}
+            >
+              <Ionicons name="add" size={18} color="#fff" />
+              <Text style={{ color: '#fff', marginLeft: 6, fontWeight: '600' }}>Cadastrar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
 
       {/* Barra de Pesquisa */}
