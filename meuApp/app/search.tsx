@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  Image, 
-  StyleSheet, 
-  FlatList, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  FlatList,
   ActivityIndicator,
   Modal,
   ScrollView,
@@ -16,12 +16,11 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import BottomNavBar from "../components/BottomNavBar";
 import Toast from 'react-native-toast-message';
 
-// Importar Firebase
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/config/firebaseConfig";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Definindo o tipo Book localmente
+// Definindo tipos localmente
 interface Book {
   id: string;
   title: string;
@@ -30,7 +29,6 @@ interface Book {
   likes?: number;
 }
 
-// Definindo o tipo Shelf localmente
 interface Shelf {
   id: string;
   name: string;
@@ -47,7 +45,7 @@ export default function Search() {
   const router = useRouter();
   const { shelfId } = useLocalSearchParams<{ shelfId?: string }>();
   
-  // Simulando estantes (você pode carregar do Firebase se quiser)
+  // Estado para estantes (vai ser carregado do Firebase)
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const { user } = useAuth();
 
@@ -60,6 +58,37 @@ export default function Search() {
   const [createShelfModalVisible, setCreateShelfModalVisible] = useState(false);
   const [novaEstanteNome, setNovaEstanteNome] = useState('');
   const [novaEstanteDescricao, setNovaEstanteDescricao] = useState('');
+
+  // Função para carregar estantes do Firebase
+  const carregarEstantes = async () => {
+    if (!user?.uid) return;
+
+    try {
+      const docRef = doc(db, "usuarios", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        const estantesDoUsuario = dados.estantes || [];
+        setShelves(estantesDoUsuario);
+      } else {
+        setShelves([]);
+      }
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível carregar suas estantes.',
+        visibilityTime: 3000,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (user?.uid) {
+      carregarEstantes();
+    }
+  }, [user]);
 
   const getBetterImageUrl = (imageUrl: string): string => {
     if (!imageUrl) return '';
@@ -352,6 +381,8 @@ export default function Search() {
       setNovaEstanteNome('');
       setNovaEstanteDescricao('');
       setShelfModalVisible(false);
+      // Atualiza a lista de estantes localmente
+      setShelves(estantesAtuais);
     } catch (error) {
       Toast.show({
         type: 'error',
@@ -612,37 +643,41 @@ export default function Search() {
               </TouchableOpacity>
             </View>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Nome da estante"
-              value={novaEstanteNome}
-              onChangeText={setNovaEstanteNome}
-              autoFocus
-            />
+            <ScrollView contentContainerStyle={styles.modalForm}>
+              <TextInput
+                style={styles.input}
+                placeholder="Nome da estante"
+                value={novaEstanteNome}
+                onChangeText={setNovaEstanteNome}
+                autoFocus
+                placeholderTextColor="#999"
+              />
 
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Descrição (opcional)"
-              value={novaEstanteDescricao}
-              onChangeText={setNovaEstanteDescricao}
-              multiline
-              numberOfLines={3}
-            />
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Descrição (opcional)"
+                value={novaEstanteDescricao}
+                onChangeText={setNovaEstanteDescricao}
+                multiline
+                numberOfLines={3}
+                placeholderTextColor="#999"
+              />
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setCreateShelfModalVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={handleCreateNewShelf}
-              >
-                <Text style={styles.modalButtonText}>Criar</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setCreateShelfModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.confirmButton]}
+                  onPress={handleCreateNewShelf}
+                >
+                  <Text style={styles.modalButtonText}>Criar</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -705,25 +740,22 @@ const styles = StyleSheet.create({
     flex: 1, 
     fontSize: 16, 
     color: '#000', // ✅ Cor do texto escura para contraste
-    backgroundColor:'#fff', // ✅ Fundo branco para o input
+    backgroundColor: '#fff', // ✅ Fundo branco para o input
     paddingVertical: 12, 
     paddingHorizontal: 12, 
     borderWidth: 1, 
     borderColor: '#ccc', 
     borderRadius: 8, 
-    marginBottom: 12 
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   textArea: {
     height: 80,
-    color: '#000', // ✅ Cor do texto escura
-    backgroundColor:'#fff', // ✅ Fundo branco
     textAlignVertical: 'top',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    marginBottom: 12,
   },
   categoriesContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, marginBottom: 12, gap: 8 },
   chip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#E8F5E9' },
@@ -759,8 +791,8 @@ const styles = StyleSheet.create({
   emptyText: { marginTop: 16, fontSize: 16, color: '#666', textAlign: 'center', paddingHorizontal: 40 },
   // Modal styles
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '80%', padding: 16 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0', paddingBottom: 12 },
+  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '80%', padding: 0 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0', paddingBottom: 12, paddingHorizontal: 16, paddingTop: 16 },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#2E7D32' },
   shelfList: { paddingHorizontal: 12, paddingVertical: 8 },
   shelfOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
@@ -779,6 +811,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '600',
+  },
+  modalForm: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 20,
   },
   modalButtons: {
     flexDirection: 'row',
