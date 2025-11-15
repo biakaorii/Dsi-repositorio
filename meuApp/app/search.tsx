@@ -137,18 +137,14 @@ export default function Search() {
 
   // Renderiza um card de livro
   const renderBook = ({ item }: { item: Book }) => {
-    // Para livros locais, navegar para a rota de detalhes do livro cadastrado
+    // Para livros locais, navegar para a tela de preview
     // Para livros da API, manter o comportamento anterior
     const handlePress = () => {
       if (item.isLocal) {
         router.push({
-          pathname: '/book-details-local' as any,
+          pathname: '/book-preview-local' as any,
           params: {
             id: item.id,
-            title: item.title,
-            author: item.author,
-            image: item.thumbnail,
-            isLocal: 'true',
           }
         });
       } else {
