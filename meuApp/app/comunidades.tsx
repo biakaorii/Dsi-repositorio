@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,25 @@ import {
   ActivityIndicator,
   Modal,
   Image,
+  Linking,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { WebView } from "react-native-webview";
 import BottomNavBar from "../components/BottomNavBar";
 import { useComunidades, Comunidade } from "../contexts/ComunidadesContext";
 import { useAuth } from "../contexts/AuthContext";
 import Toast from "react-native-toast-message";
+
+type Livraria = {
+  id: string;
+  name: string;
+  address: string;
+  distance?: string;
+  rating?: number;
+  isOpen?: boolean;
+};
 
 export default function ComunidadesScreen() {
   const { comunidades, loading, isMember, joinComunidade } = useComunidades();
@@ -26,6 +38,10 @@ export default function ComunidadesScreen() {
   const [selectedComunidade, setSelectedComunidade] = useState<Comunidade | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [joiningLoading, setJoiningLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'comunidades' | 'livrarias'>('comunidades');
+  const [mapLoading, setMapLoading] = useState(true);
+  const [livrarias, setLivrarias] = useState<Livraria[]>([]);
+  const webViewRef = useRef<WebView>(null);
   const router = useRouter();
 
   // Separar comunidades em duas listas: minhas e outras
@@ -55,6 +71,37 @@ export default function ComunidadesScreen() {
       setOutrasComunidades(outras);
     }
   }, [searchQuery, comunidades, user]);
+
+  // Carregar livrarias próximas
+  useEffect(() => {
+    const mockLivrarias: Livraria[] = [
+      {
+        id: "1",
+        name: "Livraria Cultura",
+        address: "Av. Paulista, 2073 - Consolação, São Paulo",
+        distance: "1.2 km",
+        rating: 4.5,
+        isOpen: true,
+      },
+      {
+        id: "2",
+        name: "Saraiva Megastore",
+        address: "Shopping Eldorado - Pinheiros, São Paulo",
+        distance: "2.5 km",
+        rating: 4.3,
+        isOpen: true,
+      },
+      {
+        id: "3",
+        name: "Livraria da Vila",
+        address: "R. Fradique Coutinho, 915 - Pinheiros, São Paulo",
+        distance: "3.1 km",
+        rating: 4.7,
+        isOpen: false,
+      },
+    ];
+    setLivrarias(mockLivrarias);
+  }, []);
 
   const handleComunidadeClick = (comunidade: Comunidade) => {
     if (!user) return;
@@ -111,6 +158,73 @@ export default function ComunidadesScreen() {
       });
     }
   };
+
+  const openDirections = (livraria: Livraria) => {
+    const query = encodeURIComponent(livraria.address);
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${query}`;
+    Linking.openURL(url);
+  };
+
+  // HTML do mapa
+  const mapHTML = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <style>
+          * { margin: 0; padding: 0; }
+          body { overflow: hidden; }
+          iframe { 
+            width: 100vw; 
+            height: 100vh; 
+            border: 0;
+            display: block;
+          }
+        </style>
+      </head>
+      <body>
+        <iframe 
+          src="https://www.google.com/maps/embed/v1/search?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=livrarias+perto+de+mim&zoom=14"
+          frameborder="0"
+          loading="lazy"
+          allowfullscreen>
+        </iframe>
+      </body>
+    </html>
+  `;
+
+  const renderLivraria = ({ item }: { item: Livraria }) => (
+    <TouchableOpacity 
+      style={styles.livrariaCard}
+      onPress={() => openDirections(item)}
+    >
+      <View style={styles.livrariaIcon}>
+        <Ionicons name="book" size={20} color="#2E7D32" />
+      </View>
+      
+      <View style={styles.livrariaInfo}>
+        <Text style={styles.livrariaName} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={styles.livrariaAddress} numberOfLines={1}>
+          {item.address}
+        </Text>
+        <View style={styles.livrariaFooter}>
+          {item.rating && (
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={12} color="#FFB800" />
+              <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+            </View>
+          )}
+          {item.distance && (
+            <Text style={styles.distanceText}>{item.distance}</Text>
+          )}
+        </View>
+      </View>
+
+      <Ionicons name="chevron-forward" size={16} color="#2E7D32" />
+    </TouchableOpacity>
+  );
 
   const renderComunidade = ({ item }: { item: Comunidade }) => {
     const formatDate = (date: Date) => {
@@ -178,70 +292,131 @@ export default function ComunidadesScreen() {
         <Text style={styles.headerTitle}>Comunidades</Text>
       </View>
 
-      {/* Barra de pesquisa */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar comunidades..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery("")}>
-            <Ionicons name="close-circle" size={20} color="#999" />
-          </TouchableOpacity>
-        )}
+      {/* Tabs de Navegação */}
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'comunidades' && styles.activeTab]}
+          onPress={() => setActiveTab('comunidades')}
+        >
+          <Ionicons 
+            name="people" 
+            size={20} 
+            color={activeTab === 'comunidades' ? "#2E7D32" : "#666"} 
+          />
+          <Text style={[styles.tabText, activeTab === 'comunidades' && styles.activeTabText]}>
+            Comunidades
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'livrarias' && styles.activeTab]}
+          onPress={() => setActiveTab('livrarias')}
+        >
+          <Ionicons 
+            name="map" 
+            size={20} 
+            color={activeTab === 'livrarias' ? "#2E7D32" : "#666"} 
+          />
+          <Text style={[styles.tabText, activeTab === 'livrarias' && styles.activeTabText]}>
+            Livrarias
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Lista de comunidades */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2E7D32" />
-          <Text style={styles.loadingText}>Carregando comunidades...</Text>
-        </View>
-      ) : minhasComunidades.length === 0 && outrasComunidades.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="people-outline" size={64} color="#ccc" />
-          <Text style={styles.emptyText}>
-            {searchQuery ? "Nenhuma comunidade encontrada" : "Ainda não há comunidades"}
-          </Text>
-          <Text style={styles.emptySubtext}>
-            {searchQuery ? "Tente buscar por outro nome" : "Seja o primeiro a criar uma!"}
-          </Text>
+      {/* Conteúdo da aba Livrarias */}
+      {activeTab === 'livrarias' ? (
+        <View style={styles.livrariasContent}>
+          {/* Mapa em tela cheia */}
+          <View style={styles.mapContainerFullScreen}>
+            {mapLoading && (
+              <View style={styles.mapLoadingContainer}>
+                <ActivityIndicator size="large" color="#2E7D32" />
+                <Text style={styles.loadingText}>Carregando mapa...</Text>
+              </View>
+            )}
+            <WebView
+              ref={webViewRef}
+              source={{ html: mapHTML }}
+              style={styles.webView}
+              onLoadStart={() => setMapLoading(true)}
+              onLoadEnd={() => setMapLoading(false)}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              cacheEnabled={true}
+              scrollEnabled={false}
+              bounces={false}
+            />
+          </View>
         </View>
       ) : (
-        <FlatList
-          data={[]}
-          renderItem={() => null}
-          ListHeaderComponent={
-            <>
-              {/* Minhas Comunidades */}
-              {minhasComunidades.length > 0 && (
-                <>
-                  <Text style={styles.sectionLabel}>Minhas Comunidades</Text>
-                  {minhasComunidades.map((item) => (
-                    <View key={item.id}>{renderComunidade({ item })}</View>
-                  ))}
-                </>
-              )}
+        <>
+          {/* Conteúdo da aba Comunidades */}
+          {/* Barra de pesquisa */}
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar comunidades..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery("")}>
+                <Ionicons name="close-circle" size={20} color="#999" />
+              </TouchableOpacity>
+            )}
+          </View>
 
-              {/* Outras Comunidades */}
-              {outrasComunidades.length > 0 && (
+          {/* Lista de comunidades */}
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#2E7D32" />
+              <Text style={styles.loadingText}>Carregando comunidades...</Text>
+            </View>
+          ) : minhasComunidades.length === 0 && outrasComunidades.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="people-outline" size={64} color="#ccc" />
+              <Text style={styles.emptyText}>
+                {searchQuery ? "Nenhuma comunidade encontrada" : "Ainda não há comunidades"}
+              </Text>
+              <Text style={styles.emptySubtext}>
+                {searchQuery ? "Tente buscar por outro nome" : "Seja o primeiro a criar uma!"}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={[]}
+              renderItem={() => null}
+              ListHeaderComponent={
                 <>
-                  <Text style={styles.sectionLabel}>
-                    {minhasComunidades.length > 0 ? "Descubra mais comunidades" : "Todas as Comunidades"}
-                  </Text>
-                  {outrasComunidades.map((item) => (
-                    <View key={item.id}>{renderComunidade({ item })}</View>
-                  ))}
+                  {/* Minhas Comunidades */}
+                  {minhasComunidades.length > 0 && (
+                    <>
+                      <Text style={styles.sectionLabel}>Minhas Comunidades</Text>
+                      {minhasComunidades.map((item) => (
+                        <View key={item.id}>{renderComunidade({ item })}</View>
+                      ))}
+                    </>
+                  )}
+
+                  {/* Outras Comunidades */}
+                  {outrasComunidades.length > 0 && (
+                    <>
+                      <Text style={styles.sectionLabel}>
+                        {minhasComunidades.length > 0 ? "Descubra mais comunidades" : "Todas as Comunidades"}
+                      </Text>
+                      {outrasComunidades.map((item) => (
+                        <View key={item.id}>{renderComunidade({ item })}</View>
+                      ))}
+                    </>
+                  )}
                 </>
-              )}
-            </>
-          }
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+              }
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </>
       )}
 
       {/* Barra de navegação inferior */}
@@ -360,12 +535,159 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#2E7D32",
   },
+  // Tabs
+  tabsContainer: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderBottomWidth: 2,
+    borderBottomColor: "#E9ECEF",
+  },
+  tab: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 16,
+    gap: 8,
+    borderBottomWidth: 3,
+    borderBottomColor: "transparent",
+  },
+  activeTab: {
+    borderBottomColor: "#2E7D32",
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  activeTabText: {
+    color: "#2E7D32",
+  },
+  // Conteúdo da aba Livrarias
+  livrariasContent: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  mapContainerFullScreen: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    position: "relative",
+  },
+  mapContainerFull: {
+    height: "50%",
+    backgroundColor: "#f5f5f5",
+    position: "relative",
+  },
+  // Seção do Mapa
+  mapSection: {
+    backgroundColor: "#F8F9FA",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9ECEF",
+  },
+  mapSectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#fff",
+  },
+  mapHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  mapSectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#2E7D32",
+  },
+  mapContainer: {
+    height: 250,
+    backgroundColor: "#f5f5f5",
+    position: "relative",
+  },
+  mapLoadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    zIndex: 10,
+  },
+  webView: {
+    flex: 1,
+  },
+  livrariasList: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#fff",
+  },
+  livrariasListTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#2E7D32",
+    marginBottom: 12,
+  },
+  livrariasListContent: {
+    paddingBottom: 100,
+  },
+  livrariaCard: {
+    flexDirection: "row",
+    backgroundColor: "#F8F9FA",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+  },
+  livrariaIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#E8F5E9",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  livrariaInfo: {
+    flex: 1,
+  },
+  livrariaName: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  livrariaAddress: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 6,
+  },
+  livrariaFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#FFB800",
+  },
+  distanceText: {
+    fontSize: 12,
+    color: "#666",
+  },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F8F9FA",
     marginHorizontal: 20,
-    marginBottom: 15,
+    marginVertical: 15,
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 12,
