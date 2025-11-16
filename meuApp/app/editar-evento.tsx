@@ -17,38 +17,31 @@ import { useEventos } from "../contexts/EventosContext";
 import CustomDatePicker from "../components/CustomDatePicker";
 import Toast from "react-native-toast-message";
 
-export default function CriarEventoScreen() {
+export default function EditarEventoScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { addEvento } = useEventos();
+  const { updateEvento } = useEventos();
 
-  const [titulo, setTitulo] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [local, setLocal] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [estado, setEstado] = useState("");
-  const [pais, setPais] = useState("Brasil");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [categoria, setCategoria] = useState<"lancamento" | "encontro" | "feira" | "outro">("lancamento");
-  const [linkIngressos, setLinkIngressos] = useState("");
-  const [dataInicio, setDataInicio] = useState(new Date());
-  const [dataFim, setDataFim] = useState<Date | undefined>();
+  const eventoId = params.id as string;
+  const [titulo, setTitulo] = useState((params.titulo as string) || "");
+  const [descricao, setDescricao] = useState((params.descricao as string) || "");
+  const [local, setLocal] = useState((params.local as string) || "");
+  const [cidade, setCidade] = useState((params.cidade as string) || "");
+  const [estado, setEstado] = useState((params.estado as string) || "");
+  const [pais, setPais] = useState((params.pais as string) || "Brasil");
+  const [latitude, setLatitude] = useState((params.latitude as string) || "");
+  const [longitude, setLongitude] = useState((params.longitude as string) || "");
+  const [categoria, setCategoria] = useState<"lancamento" | "encontro" | "feira" | "outro">(
+    (params.categoria as any) || "lancamento"
+  );
+  const [linkIngressos, setLinkIngressos] = useState((params.linkIngressos as string) || "");
+  const [dataInicio, setDataInicio] = useState(
+    params.dataInicio ? new Date(params.dataInicio as string) : new Date()
+  );
+  const [dataFim, setDataFim] = useState<Date | undefined>(
+    params.dataFim ? new Date(params.dataFim as string) : undefined
+  );
   const [loading, setLoading] = useState(false);
-
-  // Restaurar dados do formulário se vierem dos params (ao voltar de selecionar localização)
-  useEffect(() => {
-    if (params.titulo) setTitulo(params.titulo as string);
-    if (params.descricao) setDescricao(params.descricao as string);
-    if (params.local) setLocal(params.local as string);
-    if (params.cidade) setCidade(params.cidade as string);
-    if (params.estado) setEstado(params.estado as string);
-    if (params.pais) setPais(params.pais as string);
-    if (params.categoria) setCategoria(params.categoria as any);
-    if (params.linkIngressos) setLinkIngressos(params.linkIngressos as string);
-    if (params.dataInicio) setDataInicio(new Date(params.dataInicio as string));
-    if (params.dataFim) setDataFim(new Date(params.dataFim as string));
-  }, []);
 
   // Atualizar coordenadas quando retornar da seleção e limpar params
   useEffect(() => {
@@ -128,7 +121,7 @@ export default function CriarEventoScreen() {
     }
 
     setLoading(true);
-    const result = await addEvento({
+    const result = await updateEvento(eventoId, {
       titulo: titulo.trim(),
       descricao: descricao.trim() || undefined,
       local: local.trim(),
@@ -138,7 +131,7 @@ export default function CriarEventoScreen() {
       latitude: lat,
       longitude: lng,
       dataInicio,
-      ...(dataFim && { dataFim }), // Só inclui dataFim se estiver definida
+      dataFim: dataFim || undefined,
       categoria,
       linkIngressos: linkIngressos.trim() || undefined,
     });
@@ -147,8 +140,8 @@ export default function CriarEventoScreen() {
     if (result.success) {
       Toast.show({
         type: "success",
-        text1: "Evento criado!",
-        text2: "Seu evento foi adicionado ao mapa",
+        text1: "Evento atualizado!",
+        text2: "As alterações foram salvas com sucesso",
         visibilityTime: 2000,
       });
       router.back();
@@ -156,7 +149,7 @@ export default function CriarEventoScreen() {
       Toast.show({
         type: "error",
         text1: "Erro",
-        text2: result.error || "Não foi possível criar o evento",
+        text2: result.error || "Não foi possível atualizar o evento",
         visibilityTime: 3000,
       });
     }
@@ -182,7 +175,7 @@ export default function CriarEventoScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={24} color="#2E7D32" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Criar novo evento</Text>
+        <Text style={styles.headerTitle}>Editar evento</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -402,7 +395,7 @@ export default function CriarEventoScreen() {
           ) : (
             <>
               <Ionicons name="checkmark-circle" size={24} color="#fff" />
-              <Text style={styles.submitButtonText}>Criar evento</Text>
+              <Text style={styles.submitButtonText}>Salvar alterações</Text>
             </>
           )}
         </TouchableOpacity>

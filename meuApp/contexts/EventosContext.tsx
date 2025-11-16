@@ -15,7 +15,7 @@ export type Evento = {
   longitude: number;
   dataInicio: Date;
   dataFim?: Date;
-  categoria: 'show' | 'lancamento' | 'encontro' | 'feira' | 'outro';
+  categoria: 'lancamento' | 'encontro' | 'feira' | 'outro';
   linkIngressos?: string;
   userId: string;
   userName: string;

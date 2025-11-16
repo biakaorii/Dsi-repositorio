@@ -9,28 +9,24 @@ import {
   ActivityIndicator,
   Modal,
   Image,
-  Linking,
-  Platform,
+  Dimensions,
+  ScrollView,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { WebView } from "react-native-webview";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import BottomNavBar from "../components/BottomNavBar";
 import { useComunidades, Comunidade } from "../contexts/ComunidadesContext";
+import { useEventos } from "../contexts/EventosContext";
 import { useAuth } from "../contexts/AuthContext";
 import Toast from "react-native-toast-message";
 
-type Livraria = {
-  id: string;
-  name: string;
-  address: string;
-  distance?: string;
-  rating?: number;
-  isOpen?: boolean;
-};
+const { width, height } = Dimensions.get("window");
 
 export default function ComunidadesScreen() {
   const { comunidades, loading, isMember, joinComunidade } = useComunidades();
+  const { eventos, loading: eventosLoading, toggleSelecionado, deleteEvento } = useEventos();
   const { user } = useAuth();
   const [minhasComunidades, setMinhasComunidades] = useState<Comunidade[]>([]);
   const [outrasComunidades, setOutrasComunidades] = useState<Comunidade[]>([]);
@@ -38,10 +34,8 @@ export default function ComunidadesScreen() {
   const [selectedComunidade, setSelectedComunidade] = useState<Comunidade | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [joiningLoading, setJoiningLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'comunidades' | 'livrarias'>('comunidades');
-  const [mapLoading, setMapLoading] = useState(true);
-  const [livrarias, setLivrarias] = useState<Livraria[]>([]);
-  const webViewRef = useRef<WebView>(null);
+  const [activeTab, setActiveTab] = useState<'comunidades' | 'eventos'>('comunidades');
+  const mapRef = useRef<MapView>(null);
   const router = useRouter();
 
   // Separar comunidades em duas listas: minhas e outras
@@ -71,37 +65,6 @@ export default function ComunidadesScreen() {
       setOutrasComunidades(outras);
     }
   }, [searchQuery, comunidades, user]);
-
-  // Carregar livrarias próximas
-  useEffect(() => {
-    const mockLivrarias: Livraria[] = [
-      {
-        id: "1",
-        name: "Livraria Cultura",
-        address: "Av. Paulista, 2073 - Consolação, São Paulo",
-        distance: "1.2 km",
-        rating: 4.5,
-        isOpen: true,
-      },
-      {
-        id: "2",
-        name: "Saraiva Megastore",
-        address: "Shopping Eldorado - Pinheiros, São Paulo",
-        distance: "2.5 km",
-        rating: 4.3,
-        isOpen: true,
-      },
-      {
-        id: "3",
-        name: "Livraria da Vila",
-        address: "R. Fradique Coutinho, 915 - Pinheiros, São Paulo",
-        distance: "3.1 km",
-        rating: 4.7,
-        isOpen: false,
-      },
-    ];
-    setLivrarias(mockLivrarias);
-  }, []);
 
   const handleComunidadeClick = (comunidade: Comunidade) => {
     if (!user) return;
@@ -159,72 +122,36 @@ export default function ComunidadesScreen() {
     }
   };
 
-  const openDirections = (livraria: Livraria) => {
-    const query = encodeURIComponent(livraria.address);
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${query}`;
-    Linking.openURL(url);
+  // Funções auxiliares para categorias de eventos
+  const getCategoryColor = (categoria: string) => {
+    const colors: { [key: string]: string } = {
+      lancamento: "#FF6B6B",
+      encontro: "#4ECDC4",
+      feira: "#FFD93D",
+      outro: "#95A5A6",
+    };
+    return colors[categoria] || "#2E7D32";
   };
 
-  // HTML do mapa
-  const mapHTML = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <style>
-          * { margin: 0; padding: 0; }
-          body { overflow: hidden; }
-          iframe { 
-            width: 100vw; 
-            height: 100vh; 
-            border: 0;
-            display: block;
-          }
-        </style>
-      </head>
-      <body>
-        <iframe 
-          src="https://www.google.com/maps/embed/v1/search?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=livrarias+perto+de+mim&zoom=14"
-          frameborder="0"
-          loading="lazy"
-          allowfullscreen>
-        </iframe>
-      </body>
-    </html>
-  `;
+  const getCategoryIcon = (categoria: string) => {
+    const icons: { [key: string]: any } = {
+      lancamento: "book",
+      encontro: "people",
+      feira: "storefront",
+      outro: "ellipsis-horizontal",
+    };
+    return icons[categoria] || "calendar";
+  };
 
-  const renderLivraria = ({ item }: { item: Livraria }) => (
-    <TouchableOpacity 
-      style={styles.livrariaCard}
-      onPress={() => openDirections(item)}
-    >
-      <View style={styles.livrariaIcon}>
-        <Ionicons name="book" size={20} color="#2E7D32" />
-      </View>
-      
-      <View style={styles.livrariaInfo}>
-        <Text style={styles.livrariaName} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text style={styles.livrariaAddress} numberOfLines={1}>
-          {item.address}
-        </Text>
-        <View style={styles.livrariaFooter}>
-          {item.rating && (
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={12} color="#FFB800" />
-              <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
-            </View>
-          )}
-          {item.distance && (
-            <Text style={styles.distanceText}>{item.distance}</Text>
-          )}
-        </View>
-      </View>
-
-      <Ionicons name="chevron-forward" size={16} color="#2E7D32" />
-    </TouchableOpacity>
-  );
+  const getCategoryLabel = (categoria: string) => {
+    const labels: { [key: string]: string } = {
+      lancamento: "Lançamento",
+      encontro: "Encontro",
+      feira: "Feira",
+      outro: "Outro",
+    };
+    return labels[categoria] || categoria;
+  };
 
   const renderComunidade = ({ item }: { item: Comunidade }) => {
     const formatDate = (date: Date) => {
@@ -289,7 +216,9 @@ export default function ComunidadesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Comunidades</Text>
+        <Text style={styles.headerTitle}>
+          {activeTab === 'comunidades' ? 'Comunidades' : 'Eventos'}
+        </Text>
       </View>
 
       {/* Tabs de Navegação */}
@@ -309,45 +238,260 @@ export default function ComunidadesScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'livrarias' && styles.activeTab]}
-          onPress={() => setActiveTab('livrarias')}
+          style={[styles.tab, activeTab === 'eventos' && styles.activeTab]}
+          onPress={() => setActiveTab('eventos')}
         >
           <Ionicons 
-            name="map" 
+            name="calendar" 
             size={20} 
-            color={activeTab === 'livrarias' ? "#2E7D32" : "#666"} 
+            color={activeTab === 'eventos' ? "#2E7D32" : "#666"} 
           />
-          <Text style={[styles.tabText, activeTab === 'livrarias' && styles.activeTabText]}>
-            Livrarias
+          <Text style={[styles.tabText, activeTab === 'eventos' && styles.activeTabText]}>
+            Eventos
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Conteúdo da aba Livrarias */}
-      {activeTab === 'livrarias' ? (
-        <View style={styles.livrariasContent}>
-          {/* Mapa em tela cheia */}
-          <View style={styles.mapContainerFullScreen}>
-            {mapLoading && (
-              <View style={styles.mapLoadingContainer}>
+      {/* Conteúdo da aba Eventos */}
+      {activeTab === 'eventos' ? (
+        <ScrollView style={styles.eventosScrollView} showsVerticalScrollIndicator={false}>
+          <Text style={styles.eventosSubtitle}>
+            Visualize os pontos onde eventos literários estão acontecendo.
+          </Text>
+
+          {/* Mapa Nativo */}
+          <View style={styles.eventosMapContainer}>
+            {eventosLoading ? (
+              <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#2E7D32" />
-                <Text style={styles.loadingText}>Carregando mapa...</Text>
+                <Text style={styles.loadingText}>Carregando eventos...</Text>
               </View>
+            ) : eventos.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="map-outline" size={64} color="#ccc" />
+                <Text style={styles.emptyText}>Nenhum evento encontrado</Text>
+                <Text style={styles.emptySubtext}>
+                  Seja o primeiro a criar um evento!
+                </Text>
+              </View>
+            ) : (
+              <MapView
+                ref={mapRef}
+                style={styles.map}
+                provider={PROVIDER_GOOGLE}
+                initialRegion={{
+                  latitude: eventos.length > 0 ? eventos[0].latitude : -23.5505,
+                  longitude: eventos.length > 0 ? eventos[0].longitude : -46.6333,
+                  latitudeDelta: 0.0922,
+                  longitudeDelta: 0.0421,
+                }}
+                showsUserLocation={true}
+                showsMyLocationButton={true}
+              >
+                {eventos.map((evento, index) => (
+                    <Marker
+                      key={evento.id}
+                      coordinate={{
+                        latitude: evento.latitude,
+                        longitude: evento.longitude,
+                      }}
+                      title={evento.titulo}
+                      description={`${evento.local} • ${evento.cidade}`}
+                      onPress={async () => {
+                        await toggleSelecionado(evento.id);
+                        if (mapRef.current) {
+                          mapRef.current.animateToRegion({
+                            latitude: evento.latitude,
+                            longitude: evento.longitude,
+                            latitudeDelta: 0.05,
+                            longitudeDelta: 0.05,
+                          }, 500);
+                        }
+                      }}
+                    >
+                      <View style={[
+                        styles.markerContainer,
+                        evento.selecionado && styles.markerContainerSelected
+                      ]}>
+                        <Ionicons name="calendar" size={20} color="#fff" />
+                      </View>
+                    </Marker>
+                  ))}
+              </MapView>
             )}
-            <WebView
-              ref={webViewRef}
-              source={{ html: mapHTML }}
-              style={styles.webView}
-              onLoadStart={() => setMapLoading(true)}
-              onLoadEnd={() => setMapLoading(false)}
-              javaScriptEnabled={true}
-              domStorageEnabled={true}
-              cacheEnabled={true}
-              scrollEnabled={false}
-              bounces={false}
-            />
           </View>
-        </View>
+
+          {/* Linha separadora */}
+          <View style={styles.mapDivider} />
+
+          {/* Lista de Eventos */}
+          <View style={styles.eventsSection}>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Eventos Literários</Text>
+                <Text style={styles.sectionSubtitle}>
+                  {eventos.length} {eventos.length === 1 ? 'evento disponível' : 'eventos disponíveis'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.createEventButton}
+                onPress={() => router.push("/criar-evento" as any)}
+              >
+                <Ionicons name="add-circle" size={22} color="#fff" />
+                <Text style={styles.createEventButtonText}>Novo</Text>
+              </TouchableOpacity>
+            </View>
+
+            {eventos.length === 0 ? (
+              <View style={styles.emptyEventsContainer}>
+                <Ionicons name="calendar-outline" size={64} color="#ccc" />
+                <Text style={styles.emptyEventsText}>Nenhum evento cadastrado</Text>
+                <Text style={styles.emptyEventsSubtext}>
+                  Seja o primeiro a criar um evento literário!
+                </Text>
+              </View>
+            ) : (
+              eventos.map((evento, index) => {
+                const isOwner = user?.uid === evento.userId;
+                
+                return (
+                  <View
+                    key={evento.id}
+                    style={[
+                      styles.eventCard,
+                      evento.selecionado && styles.eventCardSelected,
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.eventCardContent}
+                      onPress={() => toggleSelecionado(evento.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.eventIconContainer}>
+                        <View style={[styles.eventIcon, { backgroundColor: getCategoryColor(evento.categoria) }]}>
+                          <Ionicons name={getCategoryIcon(evento.categoria)} size={24} color="#fff" />
+                        </View>
+                        {evento.selecionado && (
+                          <View style={styles.selectedBadge}>
+                            <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                          </View>
+                        )}
+                      </View>
+
+                      <View style={styles.eventInfo}>
+                        <View style={styles.eventHeader}>
+                          <View style={[styles.eventCategoryBadge, { backgroundColor: getCategoryColor(evento.categoria) + '20' }]}>
+                            <Text style={[styles.eventCategory, { color: getCategoryColor(evento.categoria) }]}>
+                              {getCategoryLabel(evento.categoria)}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <Text style={styles.eventTitle} numberOfLines={2}>{evento.titulo}</Text>
+
+                        <View style={styles.eventDetails}>
+                          <View style={styles.eventDetailRow}>
+                            <Ionicons name="location" size={16} color="#666" />
+                            <Text style={styles.eventDetailText} numberOfLines={1}>
+                              {evento.local}, {evento.cidade}
+                            </Text>
+                          </View>
+
+                          <View style={styles.eventDetailRow}>
+                            <Ionicons name="calendar-outline" size={16} color="#666" />
+                            <Text style={styles.eventDetailText}>
+                              {new Intl.DateTimeFormat("pt-BR", {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }).format(evento.dataInicio)}
+                            </Text>
+                          </View>
+
+                          <View style={styles.eventDetailRow}>
+                            <Ionicons name="person-outline" size={16} color="#666" />
+                            <Text style={styles.eventDetailText} numberOfLines={1}>
+                              {evento.userName}
+                            </Text>
+                          </View>
+                        </View>
+
+                        {evento.descricao && (
+                          <Text style={styles.eventDescription} numberOfLines={2}>
+                            {evento.descricao}
+                          </Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+
+                    {/* Botões de ação - apenas para o dono */}
+                    {isOwner && (
+                      <View style={styles.eventActions}>
+                        <TouchableOpacity
+                          style={styles.editEventButton}
+                          onPress={() => router.push({
+                            pathname: "/editar-evento",
+                            params: {
+                              id: evento.id,
+                              titulo: evento.titulo,
+                              descricao: evento.descricao || "",
+                              local: evento.local,
+                              cidade: evento.cidade,
+                              estado: evento.estado,
+                              pais: evento.pais,
+                              latitude: evento.latitude.toString(),
+                              longitude: evento.longitude.toString(),
+                              dataInicio: evento.dataInicio.toISOString(),
+                              dataFim: evento.dataFim?.toISOString() || "",
+                              categoria: evento.categoria,
+                              linkIngressos: evento.linkIngressos || "",
+                            },
+                          } as any)}
+                        >
+                          <Ionicons name="pencil" size={18} color="#2E7D32" />
+                          <Text style={styles.editEventButtonText}>Editar</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={styles.deleteEventButton}
+                          onPress={() => {
+                            Alert.alert(
+                              "Confirmar Exclusão",
+                              `Tem certeza que deseja excluir o evento "${evento.titulo}"?`,
+                              [
+                                { text: "Cancelar", style: "cancel" },
+                                {
+                                  text: "Excluir",
+                                  style: "destructive",
+                                  onPress: async () => {
+                                    const result = await deleteEvento(evento.id);
+                                    if (result.success) {
+                                      Toast.show({
+                                        type: "success",
+                                        text1: "Evento excluído!",
+                                        text2: "O evento foi removido com sucesso",
+                                      });
+                                    } else {
+                                      Alert.alert("Erro", result.error || "Erro ao excluir evento");
+                                    }
+                                  },
+                                },
+                              ]
+                            );
+                          }}
+                        >
+                          <Ionicons name="trash" size={18} color="#D32F2F" />
+                          <Text style={styles.deleteEventButtonText}>Excluir</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
+          </View>
+        </ScrollView>
       ) : (
         <>
           {/* Conteúdo da aba Comunidades */}
@@ -422,13 +566,15 @@ export default function ComunidadesScreen() {
       {/* Barra de navegação inferior */}
       <BottomNavBar />
 
-      {/* Botão flutuante + */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push("/criar-comunidade")}
-      >
-        <Ionicons name="add" size={28} color="#fff" />
-      </TouchableOpacity>
+      {/* Botão flutuante + (apenas na aba de comunidades) */}
+      {activeTab === 'comunidades' && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => router.push("/criar-comunidade")}
+        >
+          <Ionicons name="add" size={28} color="#fff" />
+        </TouchableOpacity>
+      )}
 
       {/* Dialog de confirmação de entrada */}
       <Modal
@@ -912,6 +1058,410 @@ const styles = StyleSheet.create({
   joinButtonText: {
     color: "#fff",
     fontSize: 16,
+    fontWeight: "600",
+  },
+  openMapButton: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+    margin: 40,
+    padding: 60,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: "#2E7D32",
+    borderStyle: "dashed",
+  },
+  openMapTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2E7D32",
+    marginTop: 20,
+    marginBottom: 12,
+  },
+  openMapSubtitle: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+  eventosMapContent: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  categoriesContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+  },
+  categoriesContentContainer: {
+    gap: 8,
+  },
+  categoryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#F0F8F0",
+    borderWidth: 1,
+    borderColor: "#2E7D32",
+  },
+  categoryButtonActive: {
+    backgroundColor: "#2E7D32",
+  },
+  categoryButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2E7D32",
+  },
+  categoryButtonTextActive: {
+    color: "#fff",
+  },
+  eventosMapContainer: {
+    height: 400,
+    backgroundColor: "#E9ECEF",
+    marginHorizontal: 16,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  map: {
+    width: "100%",
+    height: "100%",
+  },
+  mapDivider: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  markerContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#2E7D32",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  marker: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#2E7D32",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  markerSelecionado: {
+    backgroundColor: "#FFB800",
+    borderColor: "#FFD700",
+  },
+  eventosInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#F8F9FA",
+    borderTopWidth: 1,
+    borderTopColor: "#E9ECEF",
+  },
+  eventosCount: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "600",
+  },
+  addEventButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F0F8F0",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#2E7D32",
+  },
+  addEventButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2E7D32",
+  },
+  // Estilos adicionais para a aba de eventos
+  eventosScrollView: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  eventosSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    lineHeight: 20,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    gap: 12,
+    marginBottom: 16,
+  },
+  createButton: {
+    flex: 1,
+    backgroundColor: "#2E7D32",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  createButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  filterButton: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#2E7D32",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  filterButtonText: {
+    color: "#2E7D32",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  refreshButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 20,
+    alignSelf: "center",
+  },
+  refreshButtonText: {
+    color: "#666",
+    fontSize: 13,
+  },
+  markerContainerSelected: {
+    backgroundColor: "#1B5E20",
+    borderWidth: 4,
+    borderColor: "#4CAF50",
+  },
+  markerText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  eventsSection: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 100,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#1a1a1a",
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: "#666",
+  },
+  createEventButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#2E7D32",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    shadowColor: "#2E7D32",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  createEventButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  emptyEventsContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+  },
+  emptyEventsText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#999",
+    marginTop: 16,
+  },
+  emptyEventsSubtext: {
+    fontSize: 14,
+    color: "#bbb",
+    marginTop: 8,
+  },
+  eventCard: {
+    flexDirection: "column",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    overflow: "hidden",
+  },
+  eventCardContent: {
+    flexDirection: "row",
+    padding: 16,
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  eventIconContainer: {
+    position: "relative",
+  },
+  eventIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectedBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#4CAF50",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  eventInfo: {
+    flex: 1,
+  },
+  eventHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 10,
+  },
+  eventHeaderLeft: {
+    flex: 1,
+    marginRight: 8,
+  },
+  eventTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 6,
+  },
+  eventCategoryBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  eventCategoryText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#fff",
+    textTransform: "uppercase",
+  },
+  eventDetails: {
+    gap: 8,
+  },
+  eventDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  eventDetailText: {
+    fontSize: 14,
+    color: "#555",
+    flex: 1,
+  },
+  eventActions: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  editEventButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#E8F5E9",
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#2E7D32",
+  },
+  editEventButtonText: {
+    color: "#2E7D32",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  deleteEventButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#FFEBEE",
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#D32F2F",
+  },
+  deleteEventButtonText: {
+    color: "#D32F2F",
+    fontSize: 14,
     fontWeight: "600",
   },
 });

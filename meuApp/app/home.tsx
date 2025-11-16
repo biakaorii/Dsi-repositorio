@@ -150,23 +150,6 @@ export default function HomeScreen() {
           <Text style={styles.bannerText}>Descubra novos livros 📚</Text>
         </View>
 
-        {/* Card de Eventos */}
-        <TouchableOpacity 
-          style={styles.eventsCard}
-          onPress={() => router.push("/eventos-mapa" as any)}
-        >
-          <View style={styles.eventsCardIcon}>
-            <Ionicons name="map" size={32} color="#2E7D32" />
-          </View>
-          <View style={styles.eventsCardContent}>
-            <Text style={styles.eventsCardTitle}>Mapa de Eventos Literários</Text>
-            <Text style={styles.eventsCardSubtitle}>
-              Descubra shows, lançamentos e encontros perto de você
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="#2E7D32" />
-        </TouchableOpacity>
-
         {/* Recomendados */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recomendados para você</Text>
@@ -274,46 +257,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   bannerText: { fontSize: 16, fontWeight: "600", color: "#2E7D32" },
-
-  eventsCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    marginHorizontal: 20,
-    marginBottom: 20,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#2E7D32",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  eventsCardIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#E8F5E9",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  eventsCardContent: {
-    flex: 1,
-  },
-  eventsCardTitle: {
-    fontSize: 15,
-    fontWeight: "bold",
-    color: "#2E7D32",
-    marginBottom: 4,
-  },
-  eventsCardSubtitle: {
-    fontSize: 12,
-    color: "#666",
-    lineHeight: 16,
-  },
 
   section: { marginBottom: 20, paddingHorizontal: 20 },
   sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 10, color: "#333" },
