@@ -1,0 +1,83 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Regras para coleção de usuários
+    match /users/{userId} {
+      // Permitir leitura para usuários autenticados
+      allow read: if request.auth != null;
+      
+      // Permitir criação apenas se for o próprio usuário
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Permitir atualização apenas se for o próprio usuário
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Permitir deleção apenas se for o próprio usuário
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Regras para coleção de reviews
+    match /reviews/{reviewId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Regras para coleção de favoritos
+    match /favorites/{favoriteId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // ✨ NOVA: Regras para coleção de citações
+    match /citacoes/{citacaoId} {
+      // Permitir leitura para todos usuários autenticados
+      allow read: if request.auth != null;
+      
+      // Permitir criação se o usuário estiver autenticado
+      allow create: if request.auth != null 
+                    && request.auth.uid == request.resource.data.userId;
+      
+      // Permitir atualização apenas se for o próprio usuário
+      allow update: if request.auth != null 
+                    && request.auth.uid == resource.data.userId;
+      
+      // Permitir deleção apenas se for o próprio usuário
+      allow delete: if request.auth != null 
+                    && request.auth.uid == resource.data.userId;
+    }
+    
+    // Regras para coleção de comunidades
+    match /comunidades/{comunidadeId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+      
+      // Subcoleção de mensagens
+      match /mensagens/{mensagemId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow delete: if request.auth != null;
+      }
+    }
+    
+    // Regras para coleção de estantes
+    match /estantes/{estanteId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Regras para outras coleções (livros, etc)
+    match /{document=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}

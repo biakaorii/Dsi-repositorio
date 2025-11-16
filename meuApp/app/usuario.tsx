@@ -239,6 +239,13 @@ export default function PerfilScreen() {
             </TouchableOpacity>
           )}
 
+          {!isEntrepreneur && (
+            <TouchableOpacity style={styles.optionButton} onPress={() => router.push("/citacoes" as any)}>
+              <Ionicons name="chatbox-ellipses" size={20} color="#333" />
+              <Text style={styles.optionText}>Minhas Citações</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity style={styles.optionButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#E63946" />
             <Text style={[styles.optionText, { color: "#E63946" }]}>Sair</Text>
