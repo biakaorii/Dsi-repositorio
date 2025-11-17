@@ -27,24 +27,26 @@ interface Book {
   author: string;
   img?: string;
   likes?: number;
+  description?: string;
+  averageRating?: number;
 }
 
 interface Shelf {
   id: string;
   name: string;
-  description?: string;
-  books: (number | string)[];
+  descricao?: string;
+  livros: string[]; // IDs dos livros
 }
 
 const categories = [
-  "romance","fantasia","ficção","suspense","terror","ação","drama","mistério","literatura brasileira", 
+  "romance", "fantasia", "ficção", "suspense", "terror", "ação", "drama", "mistério", "literatura brasileira",
   "literatura estrangeira"
 ];
 
 export default function Search() {
   const router = useRouter();
   const { shelfId } = useLocalSearchParams<{ shelfId?: string }>();
-  
+
   // Estado para estantes (vai ser carregado do Firebase)
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const { user } = useAuth();
@@ -75,6 +77,7 @@ export default function Search() {
         setShelves([]);
       }
     } catch (error) {
+      console.error("Erro ao carregar estantes:", error);
       Toast.show({
         type: 'error',
         text1: 'Erro',
@@ -92,7 +95,7 @@ export default function Search() {
 
   const getBetterImageUrl = (imageUrl: string): string => {
     if (!imageUrl) return '';
-    
+
     return imageUrl
       .replace('&edge=curl', '')
       .replace('zoom=1', 'zoom=0')  // zoom=0 dá imagens maiores
@@ -115,10 +118,10 @@ export default function Search() {
       if (data.items) {
         const formattedBooks: Book[] = data.items.map((item: any) => {
           const info = item.volumeInfo;
-          
-          const originalThumb = 
-            info.imageLinks?.thumbnail || 
-            info.imageLinks?.smallThumbnail || 
+
+          const originalThumb =
+            info.imageLinks?.thumbnail ||
+            info.imageLinks?.smallThumbnail ||
             '';
 
           return {
@@ -127,6 +130,8 @@ export default function Search() {
             author: info.authors?.[0] || 'Autor Desconhecido',
             img: getBetterImageUrl(originalThumb),
             likes: info.ratingsCount || 0,
+            description: info.description || undefined,
+            averageRating: info.averageRating || 0,
           };
         });
 
@@ -421,9 +426,9 @@ export default function Search() {
   };
 
   const renderCategory = (category: string) => (
-    <TouchableOpacity 
-      key={category} 
-      style={styles.chip} 
+    <TouchableOpacity
+      key={category}
+      style={styles.chip}
       onPress={() => setQuery(category)}
     >
       <Text style={styles.chipText}>{category}</Text>
@@ -432,12 +437,12 @@ export default function Search() {
 
   const renderBook = ({ item }: { item: Book }) => (
     <View style={styles.bookCard}>
-      <TouchableOpacity 
-        onPress={() => router.push(`/book/${item.id}` as any)}
+      <TouchableOpacity
+        onPress={() => router.push(`/book/${item.id}`)} // ✅ Atualizado: agora redireciona corretamente
       >
         {item.img ? (
-          <Image 
-            source={{ uri: item.img }} 
+          <Image
+            source={{ uri: item.img }}
             style={styles.bookImage}
             resizeMode="cover"
           />
@@ -447,7 +452,7 @@ export default function Search() {
           </View>
         )}
       </TouchableOpacity>
-      
+
       <View style={styles.bookInfo}>
         <Text style={styles.bookTitle} numberOfLines={2}>
           {item.title || 'Título Desconhecido'}
@@ -455,7 +460,7 @@ export default function Search() {
         <Text style={styles.bookAuthor} numberOfLines={1}>
           {item.author || 'Autor Desconhecido'}
         </Text>
-        
+
         {item.likes && item.likes > 0 && (
           <View style={styles.ratingRow}>
             <Ionicons name="heart" size={14} color="#ff6b6b" />
@@ -495,7 +500,7 @@ export default function Search() {
       }}
     >
       <View style={styles.shelfOptionContent}>
-        <Text style={styles.shelfOptionName}>{shelf.name}</Text>
+        <Text style={styles.shelfOptionName}>{shelf.nome || shelf.name}</Text>
         <Text style={styles.shelfOptionCount}>{shelf.livros?.length || 0} livros</Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color="#999" />
@@ -747,22 +752,10 @@ const styles = StyleSheet.create({
   header: { padding: 20, paddingTop: 50 },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#2E7D32' },
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', marginHorizontal: 12, marginBottom: 12, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E9ECEF', gap: 8 },
-  input: { 
-    flex: 1, 
-    fontSize: 16, 
-    color: '#000', // ✅ Cor do texto escura para contraste
-    backgroundColor: '#fff', // ✅ Fundo branco para o input
-    paddingVertical: 12, 
-    paddingHorizontal: 12, 
-    borderWidth: 1, 
-    borderColor: '#ccc', 
-    borderRadius: 8, 
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+  input: {
+    flex: 1,fontSize: 16,color: '#000',backgroundColor: '#fff',paddingVertical: 12,paddingHorizontal: 12,borderWidth: 1,
+    borderColor: '#ccc',borderRadius: 8,marginBottom: 12,shadowColor: '#000',shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 2,elevation: 2,
   },
   textArea: {
     height: 80,
@@ -774,19 +767,12 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 12, paddingHorizontal: 12, color: '#333' },
   listContent: { paddingHorizontal: 12, paddingBottom: 100 },
   columnWrapper: { justifyContent: 'space-between', marginBottom: 16 },
-  bookCard: { 
-    width: '100%', 
-    backgroundColor: '#fff', 
-    borderRadius: 8, 
-    overflow: 'hidden', 
-    marginBottom: 12,
-    flexDirection: 'row',
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowOpacity: 0.1, 
-    shadowRadius: 4, 
-    elevation: 3 
+  bookCard: {
+    width: '100%',backgroundColor: '#fff',borderRadius: 8,overflow: 'hidden',marginBottom: 12,
+    flexDirection: 'row',shadowColor: '#000',shadowOffset: { width: 0, height: 2 },shadowOpacity: 0.1,
+    shadowRadius: 4,elevation: 3
   },
+
   bookImage: { width: 70, height: 100, backgroundColor: '#f5f5f5', borderRadius: 4 },
   noImage: { width: 70, height: 100, backgroundColor: '#f5f5f5', justifyContent: 'center', alignItems: 'center', borderRadius: 4 },
   bookInfo: { flex: 1, padding: 12 },
@@ -812,33 +798,21 @@ const styles = StyleSheet.create({
   shelfOptionCount: { fontSize: 12, color: '#999', marginTop: 4 },
   noShelvesContainer: { justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
   noShelvesText: { fontSize: 14, color: '#999', marginTop: 12 },
+  
   progressOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    paddingHorizontal: 16,paddingVertical: 16,borderBottomWidth: 1,borderBottomColor: '#f0f0f0',
   },
   progressOptionText: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '600',
+    fontSize: 16,color: '#333',fontWeight: '600',
   },
   modalForm: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 20,
+    paddingHorizontal: 16,paddingTop: 8,paddingBottom: 20,
   },
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
+    flexDirection: 'row',justifyContent: 'space-between',marginTop: 16,
   },
   modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 4,
+    flex: 1,paddingVertical: 12,borderRadius: 8,alignItems: 'center',marginHorizontal: 4,
   },
   cancelButton: {
     backgroundColor: '#f0f0f0',
@@ -847,9 +821,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2E7D32',
   },
   modalButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 16,fontWeight: '600',color: '#333',
   },
   confirmButtonText: {
     color: '#fff',
