@@ -1,0 +1,5 @@
+CACHEDIR.TAG
+bin/
+lib/
+node_modules/
+pyvenv.cfg
