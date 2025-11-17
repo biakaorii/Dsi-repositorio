@@ -84,6 +84,20 @@ export default function CadastroLivroScreen() {
     setEditingId(null);
   };
 
+  // Verificar se já existe livro similar (título + autor)
+  const checkDuplicateBook = (titulo: string, autor: string): LivroModel | null => {
+    const tituloNorm = titulo.trim().toLowerCase();
+    const autorNorm = autor.trim().toLowerCase();
+
+    const duplicate = livros.find(
+      (livro) =>
+        livro.titulo.toLowerCase() === tituloNorm &&
+        livro.autor.toLowerCase() === autorNorm
+    );
+
+    return duplicate || null;
+  };
+
   const handleSubmit = async () => {
     const { titulo, autor, paginas } = form;
 
@@ -113,6 +127,41 @@ export default function CadastroLivroScreen() {
       showToast("error", "Sem permissão", "Apenas quem cadastrou pode editar este livro.");
       return;
     }
+
+    // Validação anti-duplicatas (apenas para novo cadastro, não para edição)
+    if (!editingId) {
+      const duplicate = checkDuplicateBook(titulo, autor);
+      if (duplicate) {
+        Alert.alert(
+          "Livro duplicado",
+          `Você já tem "${duplicate.titulo}" de ${duplicate.autor} cadastrado. Deseja criar uma cópia mesmo assim?`,
+          [
+            {
+              text: "Cancelar",
+              style: "cancel",
+              onPress: () => {
+                showToast("info", "Cadastro cancelado", "Nenhuma alteração foi feita.");
+              },
+            },
+            {
+              text: "Criar cópia",
+              onPress: () => saveBook(),
+            },
+          ]
+        );
+        return;
+      }
+    }
+
+    saveBook();
+  };
+
+  const saveBook = async () => {
+    const { titulo, autor, paginas } = form;
+
+    if (!user) return;
+
+    const existing = editingId ? livros.find((livro) => livro.id === editingId) : null;
 
     try {
       setSubmitting(true);
