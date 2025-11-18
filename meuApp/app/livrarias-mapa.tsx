@@ -1,118 +1,164 @@
-import React, { useState, useRef } from "react";
+// app/livrarias-mapa.tsx
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
-  Dimensions,
-  Alert,
+  Platform,
+  FlatList,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import { useEventos } from "../contexts/EventosContext";
-import BottomNavBar from "../components/BottomNavBar";
+import { WebView } from "react-native-webview";
 
-const { width, height } = Dimensions.get("window");
+type Livraria = {
+  id: string;
+  name: string;
+  address: string;
+  distance?: string;
+  rating?: number;
+  isOpen?: boolean;
+};
 
 export default function LivrariasMapaScreen() {
   const router = useRouter();
-  const { eventos, loading, toggleSelecionado } = useEventos();
-  const [selectedCategoria, setSelectedCategoria] = useState<string | null>(null);
-  const mapRef = useRef<MapView>(null);
+  const [loading, setLoading] = useState(true);
+  const [livrarias, setLivrarias] = useState<Livraria[]>([]);
+  const webViewRef = useRef<WebView>(null);
 
-  // Filtrar eventos por categoria
-  const eventosFiltrados = selectedCategoria
-    ? eventos.filter((e) => e.categoria === selectedCategoria)
-    : eventos;
+  // HTML simplificado e otimizado do Google Maps Embed
+  const mapHTML = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <style>
+          * { margin: 0; padding: 0; }
+          body { overflow: hidden; }
+          iframe { 
+            width: 100vw; 
+            height: 100vh; 
+            border: 0;
+            display: block;
+          }
+        </style>
+      </head>
+      <body>
+        <iframe 
+          src="https://www.google.com/maps/embed/v1/search?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=livrarias+perto+de+mim&zoom=14"
+          frameborder="0"
+          loading="lazy"
+          allowfullscreen>
+        </iframe>
+      </body>
+    </html>
+  `;
 
-  // Região inicial do mapa (São Paulo como padrão)
-  const initialRegion = {
-    latitude: eventosFiltrados.length > 0 ? eventosFiltrados[0].latitude : -23.5505,
-    longitude: eventosFiltrados.length > 0 ? eventosFiltrados[0].longitude : -46.6333,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+  // Função para extrair livrarias do mapa (simula busca)
+  useEffect(() => {
+    // Simular dados de livrarias próximas INSTANTANEAMENTE
+    const mockLivrarias: Livraria[] = [
+      {
+        id: "1",
+        name: "Livraria Cultura",
+        address: "Av. Paulista, 2073 - Consolação, São Paulo",
+        distance: "1.2 km",
+        rating: 4.5,
+        isOpen: true,
+      },
+      {
+        id: "2",
+        name: "Saraiva Megastore",
+        address: "Shopping Eldorado - Pinheiros, São Paulo",
+        distance: "2.5 km",
+        rating: 4.3,
+        isOpen: true,
+      },
+      {
+        id: "3",
+        name: "Livraria da Vila",
+        address: "R. Fradique Coutinho, 915 - Pinheiros, São Paulo",
+        distance: "3.1 km",
+        rating: 4.7,
+        isOpen: false,
+      },
+      {
+        id: "4",
+        name: "Livraria Martins Fontes",
+        address: "Av. Paulista, 509 - Bela Vista, São Paulo",
+        distance: "1.8 km",
+        rating: 4.6,
+        isOpen: true,
+      },
+      {
+        id: "5",
+        name: "Livraria Travessa",
+        address: "Shopping Iguatemi - Faria Lima, São Paulo",
+        distance: "4.2 km",
+        rating: 4.4,
+        isOpen: true,
+      },
+    ];
+
+    // Carregar lista imediatamente
+    setLivrarias(mockLivrarias);
+  }, []);
+
+  const openDirections = (livraria: Livraria) => {
+    const query = encodeURIComponent(livraria.address);
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${query}`;
+    Linking.openURL(url);
   };
 
-  // Estilo do mapa (dark theme)
-  const mapStyle = [
-    {
-      elementType: "geometry",
-      stylers: [{ color: "#1d2c4d" }],
-    },
-    {
-      elementType: "labels.text.fill",
-      stylers: [{ color: "#8ec3b9" }],
-    },
-    {
-      elementType: "labels.text.stroke",
-      stylers: [{ color: "#1a3646" }],
-    },
-    {
-      featureType: "water",
-      elementType: "geometry",
-      stylers: [{ color: "#0e1626" }],
-    },
-    {
-      featureType: "road",
-      elementType: "geometry",
-      stylers: [{ color: "#2c3e50" }],
-    },
-  ];
+  const renderLivraria = ({ item }: { item: Livraria }) => (
+    <TouchableOpacity 
+      style={styles.livrariaCard}
+      onPress={() => openDirections(item)}
+    >
+      <View style={styles.livrariaIcon}>
+        <Ionicons name="book" size={24} color="#2E7D32" />
+      </View>
+      
+      <View style={styles.livrariaInfo}>
+        <View style={styles.livrariaHeader}>
+          <Text style={styles.livrariaName} numberOfLines={1}>
+            {item.name}
+          </Text>
+          {item.isOpen !== undefined && (
+            <View style={[styles.statusBadge, item.isOpen ? styles.openBadge : styles.closedBadge]}>
+              <Text style={styles.statusText}>
+                {item.isOpen ? "Aberto" : "Fechado"}
+              </Text>
+            </View>
+          )}
+        </View>
+        
+        <Text style={styles.livrariaAddress} numberOfLines={2}>
+          {item.address}
+        </Text>
+        
+        <View style={styles.livrariaFooter}>
+          {item.rating && (
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={14} color="#FFB800" />
+              <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+            </View>
+          )}
+          {item.distance && (
+            <View style={styles.distanceContainer}>
+              <Ionicons name="walk" size={14} color="#666" />
+              <Text style={styles.distanceText}>{item.distance}</Text>
+            </View>
+          )}
+        </View>
+      </View>
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
-
-  const handleToggleSelecionado = async (eventoId: string) => {
-    const result = await toggleSelecionado(eventoId);
-    if (!result.success) {
-      Alert.alert("Erro", result.error || "Não foi possível atualizar o evento");
-    }
-  };
-
-  const handleMarkerPress = async (eventoId: string) => {
-    await handleToggleSelecionado(eventoId);
-    
-    // Encontrar o evento e centralizar no mapa
-    const evento = eventosFiltrados.find(e => e.id === eventoId);
-    if (evento && mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: evento.latitude,
-        longitude: evento.longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      }, 500);
-    }
-  };
-
-  const handleRefresh = () => {
-    // Centralizar no primeiro evento
-    if (eventosFiltrados.length > 0 && mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: eventosFiltrados[0].latitude,
-        longitude: eventosFiltrados[0].longitude,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      }, 1000);
-    }
-  };
-
-  const categorias = [
-    { id: "show", label: "Shows", icon: "musical-notes" },
-    { id: "lancamento", label: "Lançamentos", icon: "book" },
-    { id: "encontro", label: "Encontros", icon: "people" },
-    { id: "feira", label: "Feiras", icon: "storefront" },
-    { id: "outro", label: "Outros", icon: "ellipsis-horizontal" },
-  ];
+      <Ionicons name="chevron-forward" size={20} color="#2E7D32" />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -121,212 +167,67 @@ export default function LivrariasMapaScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#2E7D32" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mapa de Eventos</Text>
-        <TouchableOpacity onPress={() => router.push("/criar-evento" as any)}>
-          <Ionicons name="add-circle" size={28} color="#2E7D32" />
+        <Text style={styles.headerTitle}>Livrarias Próximas</Text>
+        <TouchableOpacity onPress={() => webViewRef.current?.reload()}>
+          <Ionicons name="refresh" size={24} color="#2E7D32" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.subtitle}>
-          Visualize os pontos onde eventos literários estão acontecendo.
+      {/* Informação */}
+      <View style={styles.infoBar}>
+        <Ionicons name="location" size={20} color="#2E7D32" />
+        <Text style={styles.infoText}>
+          O Google Maps irá solicitar sua localização para mostrar livrarias próximas
         </Text>
+      </View>
 
-        {/* Botões de Categoria */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesContainer}
-        >
-          <TouchableOpacity
-            style={[styles.categoryButton, !selectedCategoria && styles.categoryButtonActive]}
-            onPress={() => setSelectedCategoria(null)}
-          >
-            <Ionicons
-              name="apps"
-              size={18}
-              color={!selectedCategoria ? "#fff" : "#2E7D32"}
-            />
-            <Text
-              style={[
-                styles.categoryButtonText,
-                !selectedCategoria && styles.categoryButtonTextActive,
-              ]}
-            >
-              Todos
-            </Text>
-          </TouchableOpacity>
-
-          {categorias.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              style={[
-                styles.categoryButton,
-                selectedCategoria === cat.id && styles.categoryButtonActive,
-              ]}
-              onPress={() =>
-                setSelectedCategoria(selectedCategoria === cat.id ? null : cat.id)
-              }
-            >
-              <Ionicons
-                name={cat.icon as any}
-                size={18}
-                color={selectedCategoria === cat.id ? "#fff" : "#2E7D32"}
-              />
-              <Text
-                style={[
-                  styles.categoryButtonText,
-                  selectedCategoria === cat.id && styles.categoryButtonTextActive,
-                ]}
-              >
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Botão Criar Evento */}
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={styles.createButton}
-            onPress={() => router.push("/criar-evento" as any)}
-          >
-            <Ionicons name="add-circle-outline" size={20} color="#fff" />
-            <Text style={styles.createButtonText}>Criar Evento</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => Alert.alert("Filtros", "Funcionalidade em desenvolvimento")}
-          >
-            <Ionicons name="funnel-outline" size={20} color="#2E7D32" />
-            <Text style={styles.filterButtonText}>Filtros</Text>
-          </TouchableOpacity>
+      {/* Loading Indicator */}
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2E7D32" />
+          <Text style={styles.loadingText}>Carregando mapa...</Text>
         </View>
+      )}
 
-        {/* Botão Atualizar */}
-        <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
-          <Ionicons name="refresh" size={16} color="#666" />
-          <Text style={styles.refreshButtonText}>Atualizar</Text>
-        </TouchableOpacity>
+      {/* WebView com Google Maps - Altura aumentada para ser destaque */}
+      <View style={styles.mapContainer}>
+        <WebView
+          ref={webViewRef}
+          source={{ html: mapHTML }}
+          style={styles.webView}
+          onLoadStart={() => setLoading(true)}
+          onLoadEnd={() => setLoading(false)}
+          onError={() => setLoading(false)}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          startInLoadingState={false}
+          cacheEnabled={true}
+          scrollEnabled={false}
+          bounces={false}
+        />
+      </View>
 
-        {/* Mapa Nativo */}
-        <View style={styles.mapContainer}>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#2E7D32" />
-              <Text style={styles.loadingText}>Carregando eventos...</Text>
-            </View>
-          ) : eventosFiltrados.length === 0 ? (
+      {/* Lista de Livrarias */}
+      <View style={styles.listContainer}>
+        <View style={styles.listHeader}>
+          <Ionicons name="list" size={20} color="#2E7D32" />
+          <Text style={styles.listTitle}>Livrarias Próximas</Text>
+        </View>
+        
+        <FlatList
+          data={livrarias}
+          renderItem={renderLivraria}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="map-outline" size={64} color="#ccc" />
-              <Text style={styles.emptyText}>Nenhum evento encontrado</Text>
-              <Text style={styles.emptySubtext}>
-                Seja o primeiro a criar um evento!
-              </Text>
+              <ActivityIndicator size="large" color="#2E7D32" />
+              <Text style={styles.emptyText}>Buscando livrarias...</Text>
             </View>
-          ) : (
-            <MapView
-              ref={mapRef}
-              style={styles.map}
-              provider={PROVIDER_GOOGLE}
-              initialRegion={initialRegion}
-              customMapStyle={mapStyle}
-              showsUserLocation={true}
-              showsMyLocationButton={true}
-            >
-              {eventosFiltrados.map((evento, index) => (
-                <Marker
-                  key={evento.id}
-                  coordinate={{
-                    latitude: evento.latitude,
-                    longitude: evento.longitude,
-                  }}
-                  title={evento.titulo}
-                  description={`${evento.local} • ${evento.cidade}`}
-                  onPress={() => handleMarkerPress(evento.id)}
-                  pinColor={evento.selecionado ? "#4CAF50" : "#2196F3"}
-                >
-                  <View style={[
-                    styles.markerContainer,
-                    evento.selecionado && styles.markerContainerSelected
-                  ]}>
-                    <Text style={styles.markerText}>{index + 1}</Text>
-                  </View>
-                </Marker>
-              ))}
-            </MapView>
-          )}
-        </View>
-
-        {/* Lista de Eventos */}
-        <View style={styles.eventsSection}>
-          <Text style={styles.sectionTitle}>Eventos</Text>
-          <Text style={styles.sectionSubtitle}>
-            Toque em um cartão para destacar no mapa.
-          </Text>
-
-          {eventosFiltrados.map((evento, index) => (
-            <TouchableOpacity
-              key={evento.id}
-              style={[
-                styles.eventCard,
-                evento.selecionado && styles.eventCardSelected,
-              ]}
-              onPress={() => handleToggleSelecionado(evento.id)}
-            >
-              <View style={styles.eventNumber}>
-                <Text style={styles.eventNumberText}>{index + 1}</Text>
-              </View>
-
-              <View style={styles.eventInfo}>
-                <View style={styles.eventHeader}>
-                  <Text style={styles.eventCategory}>{evento.categoria.toUpperCase()}</Text>
-                  <Text style={styles.eventAuthor}>por {evento.userName}</Text>
-                </View>
-
-                <Text style={styles.eventTitle}>{evento.titulo}</Text>
-
-                <View style={styles.eventLocation}>
-                  <Ionicons name="location" size={14} color="#666" />
-                  <Text style={styles.eventLocationText}>
-                    {evento.local} • {evento.cidade}
-                  </Text>
-                </View>
-
-                <View style={styles.eventDate}>
-                  <Ionicons name="calendar" size={14} color="#666" />
-                  <Text style={styles.eventDateText}>
-                    {formatDate(evento.dataInicio)}
-                    {evento.dataFim && ` → ${formatDate(evento.dataFim)}`}
-                  </Text>
-                </View>
-
-                {evento.descricao && (
-                  <Text style={styles.eventDescription} numberOfLines={2}>
-                    {evento.descricao}
-                  </Text>
-                )}
-
-                <View style={styles.eventFooter}>
-                  <Text style={styles.eventCoords}>
-                    {evento.latitude.toFixed(5)}, {evento.longitude.toFixed(5)}
-                  </Text>
-
-                  {evento.selecionado && (
-                    <View style={styles.selectedBadge}>
-                      <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
-                      <Text style={styles.selectedBadgeText}>Selecionado</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
-
-      <BottomNavBar />
+          }
+        />
+      </View>
     </View>
   );
 }
@@ -341,276 +242,161 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 20,
-    paddingTop: 50,
+    paddingTop: Platform.OS === "ios" ? 60 : 50,
     borderBottomWidth: 1,
     borderBottomColor: "#E9ECEF",
+    backgroundColor: "#fff",
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#2E7D32",
   },
-  content: {
-    flex: 1,
+  infoBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F1F8E9",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9ECEF",
   },
-  subtitle: {
+  infoText: {
     fontSize: 14,
-    color: "#666",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  categoriesContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  categoryButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#2E7D32",
-    marginRight: 8,
-    gap: 6,
-  },
-  categoryButtonActive: {
-    backgroundColor: "#2E7D32",
-  },
-  categoryButtonText: {
-    fontSize: 13,
     color: "#2E7D32",
-    fontWeight: "600",
-  },
-  categoryButtonTextActive: {
-    color: "#fff",
-  },
-  actionsRow: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    gap: 12,
-    marginBottom: 12,
-  },
-  createButton: {
     flex: 1,
-    flexDirection: "row",
-    backgroundColor: "#2E7D32",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: "center",
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
-    gap: 8,
-  },
-  createButtonText: {
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: "bold",
-  },
-  filterButton: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderColor: "#2E7D32",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    zIndex: 10,
   },
-  filterButtonText: {
-    color: "#2E7D32",
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  refreshButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 8,
-    gap: 6,
-  },
-  refreshButtonText: {
-    fontSize: 13,
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
     color: "#666",
   },
   mapContainer: {
-    height: height * 0.4,
-    marginHorizontal: 20,
-    borderRadius: 16,
-    overflow: "hidden",
-    marginBottom: 20,
+    height: "60%", // 60% da tela para o mapa ser o destaque principal
     backgroundColor: "#f5f5f5",
   },
-  map: {
+  webView: {
     flex: 1,
   },
-  markerContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#2196F3",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-    borderColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  markerContainerSelected: {
-    backgroundColor: "#4CAF50",
-    transform: [{ scale: 1.2 }],
-  },
-  markerText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  loadingContainer: {
+  listContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 12,
+    backgroundColor: "#fff",
   },
-  loadingText: {
-    fontSize: 14,
-    color: "#666",
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
+  listHeader: {
+    flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: "#F8F9FA",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9ECEF",
     gap: 8,
   },
-  emptyText: {
+  listTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-    marginTop: 12,
-  },
-  emptySubtext: {
-    fontSize: 13,
-    color: "#999",
-  },
-  eventsSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  sectionTitle: {
-    fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
-    marginBottom: 4,
+    color: "#2E7D32",
   },
-  sectionSubtitle: {
-    fontSize: 13,
-    color: "#666",
-    marginBottom: 16,
+  listContent: {
+    padding: 16,
+    paddingBottom: 20,
   },
-  eventCard: {
+  livrariaCard: {
     flexDirection: "row",
     backgroundColor: "#F8F9FA",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 2,
-    borderColor: "transparent",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
   },
-  eventCardSelected: {
-    borderColor: "#4CAF50",
+  livrariaIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: "#E8F5E9",
-  },
-  eventNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#2E7D32",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
-  eventNumberText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  eventInfo: {
+  livrariaInfo: {
     flex: 1,
   },
-  eventHeader: {
+  livrariaHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 4,
   },
-  eventCategory: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#2E7D32",
-    backgroundColor: "#E8F5E9",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  eventAuthor: {
-    fontSize: 11,
-    color: "#999",
-  },
-  eventTitle: {
+  livrariaName: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
-    marginBottom: 6,
+    flex: 1,
+    marginRight: 8,
   },
-  eventLocation: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 4,
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  eventLocationText: {
-    fontSize: 13,
-    color: "#666",
+  openBadge: {
+    backgroundColor: "#4CAF50",
   },
-  eventDate: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 8,
+  closedBadge: {
+    backgroundColor: "#F44336",
   },
-  eventDateText: {
-    fontSize: 12,
-    color: "#666",
-  },
-  eventDescription: {
-    fontSize: 13,
-    color: "#666",
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  eventFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  eventCoords: {
-    fontSize: 11,
-    color: "#999",
-    fontFamily: "monospace",
-  },
-  selectedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  selectedBadgeText: {
-    fontSize: 12,
-    color: "#4CAF50",
+  statusText: {
+    fontSize: 10,
     fontWeight: "600",
+    color: "#fff",
+  },
+  livrariaAddress: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  livrariaFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#FFB800",
+  },
+  distanceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  distanceText: {
+    fontSize: 13,
+    color: "#666",
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 12,
   },
 });

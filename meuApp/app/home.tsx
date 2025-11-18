@@ -4,6 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, Link } from "expo-router";
 import BottomNavBar from "../components/BottomNavBar";
 import { useReviews } from "../contexts/ReviewsContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/config/firebaseConfig";
 
 type Book = {
   id: string;
@@ -18,6 +21,15 @@ type BookWithRating = Book & {
   avgRating: number;
   reviewCount: number;
 };
+
+interface LivroProgresso {
+  id: number;
+  titulo: string;
+  paginasLidas: number;
+  totalPaginas: number;
+  imagem: string;
+  salvo?: boolean;
+}
 
 const books: Book[] = [
   {
@@ -97,7 +109,9 @@ const books: Book[] = [
 export default function HomeScreen() {
   const router = useRouter();
   const { reviews } = useReviews();
+  const { user } = useAuth();
   const [topRatedBooks, setTopRatedBooks] = useState<BookWithRating[]>([]);
+  const [livrosLendo, setLivrosLendo] = useState<LivroProgresso[]>([]);
 
   // Calcular livros mais bem avaliados
   useEffect(() => {
@@ -122,6 +136,28 @@ export default function HomeScreen() {
     setTopRatedBooks(sorted);
   }, [reviews]);
 
+  // Carregar livros em leitura do usuário
+  useEffect(() => {
+    if (user?.uid) {
+      carregarLivrosLendo();
+    }
+  }, [user]);
+
+  const carregarLivrosLendo = async () => {
+    if (!user?.uid) return;
+    try {
+      const docRef = doc(db, "usuarios", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        setLivrosLendo(dados.lendo || []);
+      }
+    } catch (error) {
+      console.log("Erro ao carregar livros em leitura:", error);
+    }
+  };
+
   const openDetails = (book: Book) => {
     router.push({
       pathname: "/book-details",
@@ -139,17 +175,9 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Início</Text>
-        <View style={styles.headerRight}>
-          <Ionicons name="notifications-outline" size={24} color="#2E7D32" />
-        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Banner */}
-        <View style={styles.banner}>
-          <Text style={styles.bannerText}>Descubra novos livros 📚</Text>
-        </View>
-
         {/* Recomendados */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recomendados para você</Text>
@@ -186,20 +214,36 @@ export default function HomeScreen() {
         )}
 
         {/* Continuar Lendo */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Continuar lendo</Text>
-          <View style={styles.readingCard}>
-            <Image
-              source={{ uri: "https://covers.openlibrary.org/b/id/10521656-L.jpg" }}
-              style={styles.readingImage}
-            />
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.readingTitle}>Harry Potter</Text>
-              <Text style={styles.readingProgress}>Capítulo 8 de 20</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#2E7D32" />
+        {livrosLendo.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Continuar lendo</Text>
+            {livrosLendo.map((livro) => {
+              const progresso = (livro.paginasLidas / livro.totalPaginas) * 100;
+              return (
+                <TouchableOpacity 
+                  key={livro.id} 
+                  style={styles.readingCard}
+                  onPress={() => router.push('/progresso')}
+                >
+                  <Image
+                    source={{ uri: livro.imagem }}
+                    style={styles.readingImage}
+                  />
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text style={styles.readingTitle}>{livro.titulo}</Text>
+                    <Text style={styles.readingProgress}>
+                      Página {livro.paginasLidas} de {livro.totalPaginas} ({Math.round(progresso)}%)
+                    </Text>
+                    <View style={styles.progressBar}>
+                      <View style={[styles.progressFill, { width: `${progresso}%` }]} />
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#2E7D32" />
+                </TouchableOpacity>
+              );
+            })}
           </View>
-        </View>
+        )}
 
         {/* Gêneros Populares */}
         <View style={styles.section}>
@@ -243,20 +287,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: { fontSize: 20, fontWeight: "bold", color: "#2E7D32" },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  banner: {
-    backgroundColor: "#E8F5E9",
-    padding: 20,
-    marginHorizontal: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  bannerText: { fontSize: 16, fontWeight: "600", color: "#2E7D32" },
 
   section: { marginBottom: 20, paddingHorizontal: 20 },
   sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 10, color: "#333" },
@@ -315,10 +345,24 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
     alignItems: "center",
+    marginBottom: 10,
   },
   readingImage: { width: 50, height: 70, borderRadius: 8 },
   readingTitle: { fontSize: 14, fontWeight: "bold", color: "#333" },
-  readingProgress: { fontSize: 12, color: "#2E7D32" },
+  readingProgress: { fontSize: 12, color: "#2E7D32", marginTop: 4, marginBottom: 6 },
+  
+  progressBar: {
+    height: 6,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 3,
+    marginTop: 4,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#2E7D32",
+    borderRadius: 3,
+  },
 
   tagsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tag: {
