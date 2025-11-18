@@ -351,7 +351,7 @@ export default function Search() {
           // Se o livro não existe, criar um novo registro em queroLer
           if (!livroExistente) {
             const novoLivro = {
-              id: Date.now(),
+              id: String(Date.now()), // Normalizar ID para string
               titulo: book.title,
               paginasLidas: 0,
               totalPaginas: 200,
@@ -361,8 +361,10 @@ export default function Search() {
             queroLerAtual.push(novoLivro);
           }
 
-          // Verificar se o livro já está na estante
-          const livroJaNaEstante = estantes[estanteIndex].livros.some((id: any) => id === livroId);
+          // Verificar se o livro já está na estante - normalizar IDs para string
+          const livroJaNaEstante = estantes[estanteIndex].livros.some(
+            (id: any) => String(id) === String(livroId)
+          );
           if (livroJaNaEstante) {
             Toast.show({
               type: 'info',
@@ -443,7 +445,7 @@ export default function Search() {
         // Se o livro não existe, criar um novo registro em queroLer
         if (!livroExistente) {
           const novoLivro = {
-            id: Date.now(),
+            id: String(Date.now()), // Normalizar ID para string
             titulo: selectedBook.title,
             paginasLidas: 0,
             totalPaginas: 200,
@@ -455,7 +457,7 @@ export default function Search() {
       } else {
         // Novo usuário, criar o livro do zero
         const novoLivro = {
-          id: Date.now(),
+          id: String(Date.now()), // Normalizar ID para string
           titulo: selectedBook.title,
           paginasLidas: 0,
           totalPaginas: 200,

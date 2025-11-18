@@ -65,7 +65,16 @@ export default function EstantesScreen() {
   };
 
   const handlePressEstante = (id: string) => {
-  router.push((`/detalhes-estantes?shelfId=${id}`) as any);
+    if (!id) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'ID da estante inválido.',
+        visibilityTime: 3000,
+      });
+      return;
+    }
+    router.push((`/detalhes-estantes?shelfId=${id}`) as any);
   };
 
   const handleCriarEstante = () => {

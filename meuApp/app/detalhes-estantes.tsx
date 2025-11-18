@@ -65,6 +65,13 @@ export default function DetalhesEstanteScreen() {
         if (estanteEncontrada) {
           setEstante(estanteEncontrada);
 
+          // Se a estante não tem livros, apenas definir array vazio
+          if (!estanteEncontrada.livros || estanteEncontrada.livros.length === 0) {
+            setLivros([]);
+            setLoading(false);
+            return;
+          }
+
           // Carregar os livros reais do Firestore (lendo, lidos, queroLer)
           const todosLivros = [
             ...(dados.lendo || []),
@@ -72,39 +79,11 @@ export default function DetalhesEstanteScreen() {
             ...(dados.queroLer || []),
           ];
 
-          // Debug: mostrar o que temos
-          console.log('===== DEBUG carregarEstante =====');
-          console.log('Estante:', estanteEncontrada.nome);
-          console.log('IDs/dados na estante:', JSON.stringify(estanteEncontrada.livros));
-          console.log('Total de livros no usuário:', todosLivros.length);
-          console.log('Livros disponíveis:', todosLivros.map((l: any) => ({ id: l.id, titulo: l.titulo })));
-
-          // Encontrar livros por múltiplos critérios
-          const livrosDaEstante = todosLivros.filter((livro: any) => {
-            // Critério 1: Comparar IDs (string ou número)
-            const idMatch = estanteEncontrada.livros.some((livroId: any) => {
-              const idStr = String(livroId).trim();
-              const livroIdStr = String(livro.id).trim();
-              const matches = idStr === livroIdStr;
-              if (matches) {
-                console.log(`✓ ID Match: ${idStr} === ${livroIdStr}`);
-              }
-              return matches;
-            });
-
-            // Critério 2: Comparar por título (para livros salvos manualmente ou de APIs diferentes)
-            const titleMatch = estanteEncontrada.livros.some((livroData: any) => {
-              if (typeof livroData === 'object' && livroData.titulo) {
-                return livroData.titulo === livro.titulo || livroData.titulo === livro.title;
-              }
-              return false;
-            });
-
-            return idMatch || titleMatch;
-          });
-
-          console.log('Livros encontrados:', livrosDaEstante.length);
-          console.log('=====================================');
+          // Filtrar livros que estão na estante - normalizar IDs para string
+          const idsNaEstante = estanteEncontrada.livros.map((id: any) => String(id));
+          const livrosDaEstante = todosLivros.filter((livro: any) => 
+            idsNaEstante.includes(String(livro.id))
+          );
           
           setLivros(livrosDaEstante);
         } else {
