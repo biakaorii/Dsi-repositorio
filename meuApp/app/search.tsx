@@ -301,10 +301,38 @@ export default function Search() {
       if (docSnap.exists()) {
         const dados = docSnap.data();
         const estantes = dados.estantes || [];
+        const queroLerAtual = dados.queroLer || [];
 
         const estanteIndex = estantes.findIndex((e: any) => e.id === shelfId);
         if (estanteIndex !== -1) {
-          const livroJaNaEstante = estantes[estanteIndex].livros.some((id: any) => id === book.id);
+          // Primeiro, verificar se o livro já existe nas coleções do usuário
+          let livroId = null;
+          let livroExistente = null;
+
+          // Procurar o livro em queroLer, lendo e lidos
+          for (const livro of [...queroLerAtual, ...(dados.lendo || []), ...(dados.lidos || [])]) {
+            if (livro.id === book.id || livro.titulo === book.title || livro.title === book.title) {
+              livroExistente = livro;
+              livroId = livro.id;
+              break;
+            }
+          }
+
+          // Se o livro não existe, criar um novo registro em queroLer
+          if (!livroExistente) {
+            const novoLivro = {
+              id: Date.now(),
+              titulo: book.title,
+              paginasLidas: 0,
+              totalPaginas: 200,
+              imagem: book.img,
+            };
+            livroId = novoLivro.id;
+            queroLerAtual.push(novoLivro);
+          }
+
+          // Verificar se o livro já está na estante
+          const livroJaNaEstante = estantes[estanteIndex].livros.some((id: any) => id === livroId);
           if (livroJaNaEstante) {
             Toast.show({
               type: 'info',
@@ -315,11 +343,16 @@ export default function Search() {
             return;
           }
 
-          estantes[estanteIndex].livros.push(book.id);
+          // Adicionar o livro à estante
+          estantes[estanteIndex].livros.push(livroId);
 
-          await updateDoc(docRef, {
-            estantes: estantes
-          });
+          // Atualizar no Firestore
+          const updateObj: any = { estantes };
+          if (!livroExistente) {
+            updateObj.queroLer = queroLerAtual;
+          }
+
+          await updateDoc(docRef, updateObj);
 
           Toast.show({
             type: 'success',
@@ -330,6 +363,7 @@ export default function Search() {
         }
       }
     } catch (error) {
+      console.error('Erro ao adicionar livro à estante:', error);
       Toast.show({
         type: 'error',
         text1: 'Erro',
@@ -358,22 +392,61 @@ export default function Search() {
       const docSnap = await getDoc(docRef);
 
       let estantesAtuais = [];
+      let queroLerAtual = [];
+      let livroId = null;
+      
       if (docSnap.exists()) {
         const dados = docSnap.data();
         estantesAtuais = dados.estantes || [];
+        queroLerAtual = dados.queroLer || [];
+        
+        // Procurar se o livro já existe nas coleções do usuário
+        let livroExistente = null;
+        for (const livro of [...queroLerAtual, ...(dados.lendo || []), ...(dados.lidos || [])]) {
+          if (livro.id === selectedBook.id || livro.titulo === selectedBook.title || livro.title === selectedBook.title) {
+            livroExistente = livro;
+            livroId = livro.id;
+            break;
+          }
+        }
+
+        // Se o livro não existe, criar um novo registro em queroLer
+        if (!livroExistente) {
+          const novoLivro = {
+            id: Date.now(),
+            titulo: selectedBook.title,
+            paginasLidas: 0,
+            totalPaginas: 200,
+            imagem: selectedBook.img,
+          };
+          livroId = novoLivro.id;
+          queroLerAtual.push(novoLivro);
+        }
+      } else {
+        // Novo usuário, criar o livro do zero
+        const novoLivro = {
+          id: Date.now(),
+          titulo: selectedBook.title,
+          paginasLidas: 0,
+          totalPaginas: 200,
+          imagem: selectedBook.img,
+        };
+        livroId = novoLivro.id;
+        queroLerAtual.push(novoLivro);
       }
 
       const novaEstante = {
         id: Date.now().toString(),
         nome: novaEstanteNome.trim(),
         descricao: novaEstanteDescricao.trim() || undefined,
-        livros: [selectedBook.id], // Adiciona o livro imediatamente
+        livros: [livroId], // Adiciona o ID do livro que garantidamente existe
       };
 
       estantesAtuais.push(novaEstante);
 
       await updateDoc(docRef, {
-        estantes: estantesAtuais
+        estantes: estantesAtuais,
+        queroLer: queroLerAtual,
       });
 
       Toast.show({
