@@ -16,7 +16,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import BottomNavBar from "../components/BottomNavBar";
 import Toast from 'react-native-toast-message';
 
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "@/config/firebaseConfig";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLivros } from "@/contexts/LivrosContext";
@@ -235,9 +235,20 @@ export default function Search() {
         }),
       };
 
-      await updateDoc(docRef, {
-        lendo: [...lendoAtual, novoLivro]
-      });
+      // Usar setDoc se o documento não existe, updateDoc se existe
+      if (docSnap.exists()) {
+        await updateDoc(docRef, {
+          lendo: [...lendoAtual, novoLivro]
+        });
+      } else {
+        // Criar novo documento para usuário
+        await setDoc(docRef, {
+          lendo: [novoLivro],
+          lidos: [],
+          queroLer: [],
+          estantes: [],
+        });
+      }
 
       Toast.show({
         type: 'success',
@@ -306,9 +317,20 @@ export default function Search() {
         }),
       };
 
-      await updateDoc(docRef, {
-        queroLer: [...queroLerAtual, novoLivro]
-      });
+      // Usar setDoc se o documento não existe, updateDoc se existe
+      if (docSnap.exists()) {
+        await updateDoc(docRef, {
+          queroLer: [...queroLerAtual, novoLivro]
+        });
+      } else {
+        // Criar novo documento para usuário
+        await setDoc(docRef, {
+          queroLer: [novoLivro],
+          lendo: [],
+          lidos: [],
+          estantes: [],
+        });
+      }
 
       Toast.show({
         type: 'success',
@@ -511,10 +533,21 @@ export default function Search() {
 
       estantesAtuais.push(novaEstante);
 
-      await updateDoc(docRef, {
-        estantes: estantesAtuais,
-        queroLer: queroLerAtual,
-      });
+      // Usar setDoc se o documento não existe, updateDoc se existe
+      if (docSnap.exists()) {
+        await updateDoc(docRef, {
+          estantes: estantesAtuais,
+          queroLer: queroLerAtual,
+        });
+      } else {
+        // Criar novo documento para usuário
+        await setDoc(docRef, {
+          estantes: estantesAtuais,
+          queroLer: queroLerAtual,
+          lendo: [],
+          lidos: [],
+        });
+      }
 
       Toast.show({
         type: 'success',
@@ -529,11 +562,12 @@ export default function Search() {
       // Atualiza a lista de estantes localmente
       setShelves(estantesAtuais);
     } catch (error) {
+      console.error('Erro ao criar a estante:', error);
       Toast.show({
         type: 'error',
         text1: 'Erro',
-        text2: 'Não foi possível criar a estante.',
-        visibilityTime: 3000,
+        text2: error instanceof Error ? error.message : 'Não foi possível criar a estante.',
+        visibilityTime: 4000,
       });
     }
   };
