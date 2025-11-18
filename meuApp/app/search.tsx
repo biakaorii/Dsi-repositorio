@@ -19,6 +19,7 @@ import Toast from 'react-native-toast-message';
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/config/firebaseConfig";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLivros } from "@/contexts/LivrosContext";
 
 // Definindo tipos localmente
 interface Book {
@@ -29,6 +30,11 @@ interface Book {
   likes?: number;
   description?: string;
   averageRating?: number;
+  isLocal?: boolean; // Flag para distinguir livros cadastrados
+  genero?: string;
+  paginas?: number;
+  ownerId?: string;
+  ownerName?: string;
 }
 
 interface Shelf {
@@ -50,6 +56,7 @@ export default function Search() {
   // Estado para estantes (vai ser carregado do Firebase)
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const { user } = useAuth();
+  const { livros } = useLivros(); // Buscar livros cadastrados
 
   const [query, setQuery] = useState('');
   const [books, setBooks] = useState<Book[]>([]);
@@ -110,13 +117,15 @@ export default function Search() {
 
     setLoading(true);
     try {
+      // Buscar na API do Google Books
       const response = await fetch(
         `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=20&langRestrict=pt`
       );
       const data = await response.json();
 
+      let apiBooks: Book[] = [];
       if (data.items) {
-        const formattedBooks: Book[] = data.items.map((item: any) => {
+        apiBooks = data.items.map((item: any) => {
           const info = item.volumeInfo;
 
           const originalThumb =
@@ -132,13 +141,34 @@ export default function Search() {
             likes: info.ratingsCount || 0,
             description: info.description || undefined,
             averageRating: info.averageRating || 0,
+            isLocal: false,
           };
         });
-
-        setBooks(formattedBooks);
-      } else {
-        setBooks([]);
       }
+
+      // Filtrar livros cadastrados que correspondem à pesquisa
+      const localBooks: Book[] = livros
+        .filter(livro =>
+          livro.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          livro.autor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (livro.genero && livro.genero.toLowerCase().includes(searchQuery.toLowerCase()))
+        )
+        .map(livro => ({
+          id: livro.id,
+          title: livro.titulo,
+          author: livro.autor,
+          img: livro.capaUri || '',
+          description: livro.descricao,
+          isLocal: true,
+          genero: livro.genero,
+          paginas: livro.paginas,
+          ownerId: livro.ownerId,
+          ownerName: livro.ownerName,
+        }));
+
+      // Mesclar resultados: livros cadastrados primeiro, depois da API
+      const allBooks = [...localBooks, ...apiBooks];
+      setBooks(allBooks);
     } catch (error) {
       console.error('Erro ao buscar livros:', error);
       setBooks([]);
@@ -153,7 +183,7 @@ export default function Search() {
     }, 600);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, livros]); // Adicionar livros como dependência
 
   // Função para adicionar livro à lista "Lendo"
   const handleAddToReading = async (book: Book) => {
@@ -508,58 +538,86 @@ export default function Search() {
     </TouchableOpacity>
   );
 
-  const renderBook = ({ item }: { item: Book }) => (
-    <View style={styles.bookCard}>
-      <TouchableOpacity
-        onPress={() => router.push(`/book/${item.id}`)} // ✅ Atualizado: agora redireciona corretamente
-      >
-        {item.img ? (
-          <Image
-            source={{ uri: item.img }}
-            style={styles.bookImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.noImage}>
-            <Ionicons name="book" size={40} color="#ccc" />
-          </View>
-        )}
-      </TouchableOpacity>
+  const renderBook = ({ item }: { item: Book }) => {
+    // Navegar para preview local ou detalhes da API
+    const handlePress = () => {
+      if (item.isLocal) {
+        router.push({
+          pathname: '/book-preview-local' as any,
+          params: { id: item.id }
+        });
+      } else {
+        router.push(`/book/${item.id}`);
+      }
+    };
 
-      <View style={styles.bookInfo}>
-        <Text style={styles.bookTitle} numberOfLines={2}>
-          {item.title || 'Título Desconhecido'}
-        </Text>
-        <Text style={styles.bookAuthor} numberOfLines={1}>
-          {item.author || 'Autor Desconhecido'}
-        </Text>
+    return (
+      <View style={styles.bookCard}>
+        <TouchableOpacity onPress={handlePress}>
+          {item.img ? (
+            <Image
+              source={{ uri: item.img }}
+              style={styles.bookImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.noImage}>
+              <Ionicons name="book" size={40} color="#ccc" />
+            </View>
+          )}
+        </TouchableOpacity>
 
-        {item.likes && item.likes > 0 && (
-          <View style={styles.ratingRow}>
-            <Ionicons name="heart" size={14} color="#ff6b6b" />
-            <Text style={styles.ratingText}>
-              {item.likes}
+        <View style={styles.bookInfo}>
+          <Text style={styles.bookTitle} numberOfLines={2}>
+            {item.title || 'Título Desconhecido'}
+          </Text>
+          <Text style={styles.bookAuthor} numberOfLines={1}>
+            {item.author || 'Autor Desconhecido'}
+          </Text>
+
+          {/* Badge para livros cadastrados */}
+          {item.isLocal && (
+            <View style={styles.localBadge}>
+              <Ionicons name="checkmark-circle" size={12} color="#2E7D32" />
+              <Text style={styles.localBadgeText}>
+                Cadastrado{item.ownerName ? ` por ${item.ownerName}` : ''}
+              </Text>
+            </View>
+          )}
+
+          {item.genero && item.isLocal && (
+            <Text style={styles.bookGenre} numberOfLines={1}>
+              {item.genero}
             </Text>
-          </View>
-        )}
-      </View>
+          )}
 
-      <View style={styles.buttonGroup}>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => handleAddToProgress(item)}
-        >
-          <Ionicons name="book-outline" size={20} color="#2E7D32" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => handleAddToShelf(item)}
-        >
-          <Ionicons name="add-circle" size={20} color="#2E7D32" />
-        </TouchableOpacity>
+          {item.likes && item.likes > 0 && !item.isLocal && (
+            <View style={styles.ratingRow}>
+              <Ionicons name="heart" size={14} color="#ff6b6b" />
+              <Text style={styles.ratingText}>
+                {item.likes}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.buttonGroup}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => handleAddToProgress(item)}
+          >
+            <Ionicons name="book-outline" size={20} color="#2E7D32" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => handleAddToShelf(item)}
+          >
+            <Ionicons name="add-circle" size={20} color="#2E7D32" />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderShelfOption = (shelf: any) => (
     <TouchableOpacity
@@ -851,6 +909,19 @@ const styles = StyleSheet.create({
   bookInfo: { flex: 1, padding: 12 },
   bookTitle: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 4 },
   bookAuthor: { fontSize: 12, color: '#666', marginBottom: 6 },
+  bookGenre: { fontSize: 11, color: '#2E7D32', marginBottom: 4, fontStyle: 'italic' },
+  localBadge: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 4, 
+    marginTop: 4, 
+    paddingHorizontal: 8, 
+    paddingVertical: 4, 
+    backgroundColor: '#E8F5E9', 
+    borderRadius: 8, 
+    alignSelf: 'flex-start' 
+  },
+  localBadgeText: { fontSize: 10, color: '#2E7D32', fontWeight: '600' },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   ratingText: { fontSize: 12, color: '#ff6b6b', fontWeight: '600' },
   ratingsCount: { fontSize: 10, color: '#888' },
