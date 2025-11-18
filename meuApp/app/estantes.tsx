@@ -1,3 +1,4 @@
+//estantes.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -64,7 +65,7 @@ export default function EstantesScreen() {
   };
 
   const handlePressEstante = (id: string) => {
-  router.push((`/detalhes-estante?shelfId=${id}`) as any);
+  router.push((`/detalhes-estantes?shelfId=${id}`) as any);
   };
 
   const handleCriarEstante = () => {

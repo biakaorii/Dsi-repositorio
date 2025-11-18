@@ -1,3 +1,4 @@
+//detalhes-estantes.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -36,7 +37,7 @@ interface Estante {
 
 export default function DetalhesEstanteScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { shelfId } = useLocalSearchParams<{ shelfId?: string }>();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
 
@@ -44,13 +45,13 @@ export default function DetalhesEstanteScreen() {
   const [livros, setLivros] = useState<Livro[]>([]);
 
   useEffect(() => {
-    if (user?.uid && id) {
+    if (user?.uid && shelfId) {
       carregarEstante();
     }
-  }, [user, id]);
+  }, [user, shelfId]);
 
   const carregarEstante = async () => {
-    if (!user?.uid || !id) return;
+    if (!user?.uid || !shelfId) return;
 
     try {
       const docRef = doc(db, "usuarios", user.uid);
@@ -60,7 +61,7 @@ export default function DetalhesEstanteScreen() {
         const dados = docSnap.data();
         const estantes = dados.estantes || [];
 
-        const estanteEncontrada = estantes.find((e: any) => e.id === id);
+        const estanteEncontrada = estantes.find((e: any) => e.id === shelfId);
         if (estanteEncontrada) {
           setEstante(estanteEncontrada);
 
@@ -71,7 +72,40 @@ export default function DetalhesEstanteScreen() {
             ...(dados.queroLer || []),
           ];
 
-          const livrosDaEstante = todosLivros.filter(l => estanteEncontrada.livros.includes(l.id));
+          // Debug: mostrar o que temos
+          console.log('===== DEBUG carregarEstante =====');
+          console.log('Estante:', estanteEncontrada.nome);
+          console.log('IDs/dados na estante:', JSON.stringify(estanteEncontrada.livros));
+          console.log('Total de livros no usuário:', todosLivros.length);
+          console.log('Livros disponíveis:', todosLivros.map((l: any) => ({ id: l.id, titulo: l.titulo })));
+
+          // Encontrar livros por múltiplos critérios
+          const livrosDaEstante = todosLivros.filter((livro: any) => {
+            // Critério 1: Comparar IDs (string ou número)
+            const idMatch = estanteEncontrada.livros.some((livroId: any) => {
+              const idStr = String(livroId).trim();
+              const livroIdStr = String(livro.id).trim();
+              const matches = idStr === livroIdStr;
+              if (matches) {
+                console.log(`✓ ID Match: ${idStr} === ${livroIdStr}`);
+              }
+              return matches;
+            });
+
+            // Critério 2: Comparar por título (para livros salvos manualmente ou de APIs diferentes)
+            const titleMatch = estanteEncontrada.livros.some((livroData: any) => {
+              if (typeof livroData === 'object' && livroData.titulo) {
+                return livroData.titulo === livro.titulo || livroData.titulo === livro.title;
+              }
+              return false;
+            });
+
+            return idMatch || titleMatch;
+          });
+
+          console.log('Livros encontrados:', livrosDaEstante.length);
+          console.log('=====================================');
+          
           setLivros(livrosDaEstante);
         } else {
           Toast.show({
@@ -83,6 +117,7 @@ export default function DetalhesEstanteScreen() {
         }
       }
     } catch (error) {
+      console.error('Erro ao carregar estante:', error);
       Toast.show({
         type: 'error',
         text1: 'Erro',
@@ -95,7 +130,7 @@ export default function DetalhesEstanteScreen() {
   };
 
   const handleEditarEstante = () => {
-    if (!id) {
+    if (!shelfId) {
       Toast.show({
         type: 'error',
         text1: 'Erro',
@@ -105,7 +140,7 @@ export default function DetalhesEstanteScreen() {
       return;
     }
 
-    router.push(`/criar-estante?editId=${id}`);
+    router.push((`/criar-estantes?editId=${shelfId}`) as any);
   };
 
   if (loading) {
