@@ -208,7 +208,7 @@ export default function Search() {
       }
 
       // Verificar se o livro já está na lista
-      const jaExiste = lendoAtual.some((l: any) => l.id === book.id);
+      const jaExiste = lendoAtual.some((l: any) => String(l.id) === String(book.id));
       if (jaExiste) {
         Toast.show({
           type: 'info',
@@ -221,7 +221,7 @@ export default function Search() {
 
       // Adicionar novo livro
       const novoLivro = {
-        id: Date.now(), // ID local para distinguir
+        id: String(Date.now()), // ID local para distinguir - normalizado para string
         titulo: book.title,
         paginasLidas: 0,
         totalPaginas: 200, // Valor padrão; idealmente pegaria da API
@@ -271,7 +271,7 @@ export default function Search() {
       }
 
       // Verificar se o livro já está na lista
-      const jaExiste = queroLerAtual.some((l: any) => l.id === book.id);
+      const jaExiste = queroLerAtual.some((l: any) => String(l.id) === String(book.id));
       if (jaExiste) {
         Toast.show({
           type: 'info',
@@ -284,7 +284,7 @@ export default function Search() {
 
       // Adicionar novo livro
       const novoLivro = {
-        id: Date.now(), // ID local para distinguir
+        id: String(Date.now()), // ID local para distinguir - normalizado para string
         titulo: book.title,
         paginasLidas: 0,
         totalPaginas: 200, // Valor padrão
@@ -341,7 +341,7 @@ export default function Search() {
 
           // Procurar o livro em queroLer, lendo e lidos
           for (const livro of [...queroLerAtual, ...(dados.lendo || []), ...(dados.lidos || [])]) {
-            if (livro.id === book.id || livro.titulo === book.title || livro.title === book.title) {
+            if (String(livro.id) === String(book.id) || livro.titulo === book.title || livro.title === book.title) {
               livroExistente = livro;
               livroId = livro.id;
               break;
@@ -435,7 +435,7 @@ export default function Search() {
         // Procurar se o livro já existe nas coleções do usuário
         let livroExistente = null;
         for (const livro of [...queroLerAtual, ...(dados.lendo || []), ...(dados.lidos || [])]) {
-          if (livro.id === selectedBook.id || livro.titulo === selectedBook.title || livro.title === selectedBook.title) {
+          if (String(livro.id) === String(selectedBook.id) || livro.titulo === selectedBook.title || livro.title === selectedBook.title) {
             livroExistente = livro;
             livroId = livro.id;
             break;

@@ -110,8 +110,8 @@ export default function BookDetails() {
         reviewsAtual = dados.avaliacoes || [];
       }
 
-      // Verifica se já avaliou esse livro
-      const jaAvaliou = reviewsAtual.some((r: any) => r.bookId === book.id);
+      // Verifica se já avaliou esse livro - normalizar IDs para comparação
+      const jaAvaliou = reviewsAtual.some((r: any) => String(r.bookId) === String(book.id));
       if (jaAvaliou) {
         Toast.show({
           type: 'info',
@@ -123,7 +123,7 @@ export default function BookDetails() {
       }
 
       const novaAvaliacao = {
-        id: Date.now(),
+        id: String(Date.now()), // Normalizado para string
         bookId: book.id,
         titulo: book.title,
         autor: book.author,
