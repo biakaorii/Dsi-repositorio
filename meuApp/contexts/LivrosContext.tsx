@@ -75,7 +75,8 @@ export function LivrosProvider({ children, userId }: LivrosProviderProps) {
     if (userId) {
       setCarregandoLivros(true);
       try {
-        const q = query(collection(db, "books"), where("ownerId", "==", userId));
+        // Buscar TODOS os livros (não apenas do usuário atual)
+        const q = query(collection(db, "books"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
           const remote: Livro[] = snapshot.docs.map((d) => ({ ...(d.data() as any), id: d.id }));
           setLivros(remote);
