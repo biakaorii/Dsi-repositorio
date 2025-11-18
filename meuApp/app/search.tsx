@@ -221,11 +221,18 @@ export default function Search() {
 
       // Adicionar novo livro
       const novoLivro = {
-        id: String(Date.now()), // ID local para distinguir - normalizado para string
+        id: book.isLocal ? book.id : String(Date.now()), // Usar ID original se for livro cadastrado
         titulo: book.title,
+        autor: book.author,
         paginasLidas: 0,
-        totalPaginas: 200, // Valor padrão; idealmente pegaria da API
-        imagem: book.img,
+        totalPaginas: book.paginas || 200, // Usar páginas do livro cadastrado ou padrão
+        imagem: book.img || '',
+        // Preservar informações adicionais de livros cadastrados
+        ...(book.isLocal && {
+          genero: book.genero,
+          ownerId: book.ownerId,
+          ownerName: book.ownerName,
+        }),
       };
 
       await updateDoc(docRef, {
@@ -284,12 +291,19 @@ export default function Search() {
 
       // Adicionar novo livro
       const novoLivro = {
-        id: String(Date.now()), // ID local para distinguir - normalizado para string
+        id: book.isLocal ? book.id : String(Date.now()), // Usar ID original se for livro cadastrado
         titulo: book.title,
+        autor: book.author,
         paginasLidas: 0,
-        totalPaginas: 200, // Valor padrão
-        imagem: book.img,
+        totalPaginas: book.paginas || 200, // Usar páginas do livro cadastrado ou padrão
+        imagem: book.img || '',
         salvo: true, // Padrão
+        // Preservar informações adicionais de livros cadastrados
+        ...(book.isLocal && {
+          genero: book.genero,
+          ownerId: book.ownerId,
+          ownerName: book.ownerName,
+        }),
       };
 
       await updateDoc(docRef, {
@@ -351,11 +365,18 @@ export default function Search() {
           // Se o livro não existe, criar um novo registro em queroLer
           if (!livroExistente) {
             const novoLivro = {
-              id: String(Date.now()), // Normalizar ID para string
+              id: book.isLocal ? book.id : String(Date.now()), // Usar ID original se for livro cadastrado
               titulo: book.title,
+              autor: book.author,
               paginasLidas: 0,
-              totalPaginas: 200,
-              imagem: book.img,
+              totalPaginas: book.paginas || 200, // Usar páginas do livro cadastrado ou padrão
+              imagem: book.img || '',
+              // Preservar informações adicionais de livros cadastrados
+              ...(book.isLocal && {
+                genero: book.genero,
+                ownerId: book.ownerId,
+                ownerName: book.ownerName,
+              }),
             };
             livroId = novoLivro.id;
             queroLerAtual.push(novoLivro);
@@ -445,11 +466,18 @@ export default function Search() {
         // Se o livro não existe, criar um novo registro em queroLer
         if (!livroExistente) {
           const novoLivro = {
-            id: String(Date.now()), // Normalizar ID para string
+            id: selectedBook.isLocal ? selectedBook.id : String(Date.now()), // Usar ID original se for livro cadastrado
             titulo: selectedBook.title,
+            autor: selectedBook.author,
             paginasLidas: 0,
-            totalPaginas: 200,
-            imagem: selectedBook.img,
+            totalPaginas: selectedBook.paginas || 200, // Usar páginas do livro cadastrado ou padrão
+            imagem: selectedBook.img || '',
+            // Preservar informações adicionais de livros cadastrados
+            ...(selectedBook.isLocal && {
+              genero: selectedBook.genero,
+              ownerId: selectedBook.ownerId,
+              ownerName: selectedBook.ownerName,
+            }),
           };
           livroId = novoLivro.id;
           queroLerAtual.push(novoLivro);
@@ -457,11 +485,18 @@ export default function Search() {
       } else {
         // Novo usuário, criar o livro do zero
         const novoLivro = {
-          id: String(Date.now()), // Normalizar ID para string
+          id: selectedBook.isLocal ? selectedBook.id : String(Date.now()), // Usar ID original se for livro cadastrado
           titulo: selectedBook.title,
+          autor: selectedBook.author,
           paginasLidas: 0,
-          totalPaginas: 200,
-          imagem: selectedBook.img,
+          totalPaginas: selectedBook.paginas || 200, // Usar páginas do livro cadastrado ou padrão
+          imagem: selectedBook.img || '',
+          // Preservar informações adicionais de livros cadastrados
+          ...(selectedBook.isLocal && {
+            genero: selectedBook.genero,
+            ownerId: selectedBook.ownerId,
+            ownerName: selectedBook.ownerName,
+          }),
         };
         livroId = novoLivro.id;
         queroLerAtual.push(novoLivro);
