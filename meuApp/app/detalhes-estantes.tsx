@@ -1,3 +1,4 @@
+//detalhes-estantes.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -36,7 +37,7 @@ interface Estante {
 
 export default function DetalhesEstanteScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { shelfId } = useLocalSearchParams<{ shelfId?: string }>();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
 
@@ -44,13 +45,13 @@ export default function DetalhesEstanteScreen() {
   const [livros, setLivros] = useState<Livro[]>([]);
 
   useEffect(() => {
-    if (user?.uid && id) {
+    if (user?.uid && shelfId) {
       carregarEstante();
     }
-  }, [user, id]);
+  }, [user, shelfId]);
 
   const carregarEstante = async () => {
-    if (!user?.uid || !id) return;
+    if (!user?.uid || !shelfId) return;
 
     try {
       const docRef = doc(db, "usuarios", user.uid);
@@ -60,7 +61,7 @@ export default function DetalhesEstanteScreen() {
         const dados = docSnap.data();
         const estantes = dados.estantes || [];
 
-        const estanteEncontrada = estantes.find((e: any) => e.id === id);
+        const estanteEncontrada = estantes.find((e: any) => e.id === shelfId);
         if (estanteEncontrada) {
           setEstante(estanteEncontrada);
 
@@ -95,7 +96,7 @@ export default function DetalhesEstanteScreen() {
   };
 
   const handleEditarEstante = () => {
-    if (!id) {
+    if (!shelfId) {
       Toast.show({
         type: 'error',
         text1: 'Erro',
@@ -105,7 +106,7 @@ export default function DetalhesEstanteScreen() {
       return;
     }
 
-    router.push(`/criar-estante?editId=${id}`);
+    router.push((`/criar-estantes?editId=${shelfId}`) as any);
   };
 
   if (loading) {
