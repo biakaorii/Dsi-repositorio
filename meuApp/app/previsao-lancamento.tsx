@@ -27,6 +27,7 @@ export default function PrevisaoLancamentoScreen() {
   const [subGenero, setSubGenero] = useState("");
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<number | null>(null);
+  const [probabilidades, setProbabilidades] = useState<{impopular: number, popular: number} | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
 
   const handlePrevisao = async () => {
@@ -45,7 +46,7 @@ export default function PrevisaoLancamentoScreen() {
     
     try {
       // Fazer a previsão usando o serviço
-      const prediction = await predictPopularity({
+      const result = await predictPopularity({
         ano: parseInt(ano),
         paginas: parseInt(paginas),
         queremLer: parseInt(queremLer),
@@ -55,7 +56,8 @@ export default function PrevisaoLancamentoScreen() {
         subGenero,
       });
       
-      setResultado(prediction);
+      setResultado(result.prediction);
+      setProbabilidades(result.probabilities);
       setShowResultModal(true);
       
     } catch (error) {
@@ -79,6 +81,7 @@ export default function PrevisaoLancamentoScreen() {
     setGeneroPrimario("");
     setSubGenero("");
     setResultado(null);
+    setProbabilidades(null);
     setShowResultModal(false);
   };
 
@@ -238,6 +241,20 @@ export default function PrevisaoLancamentoScreen() {
                   ? "Este livro tem grande potencial de popularidade!" 
                   : "Este livro pode ter popularidade limitada."}
               </Text>
+              
+              {probabilidades && (
+                <View style={styles.probabilidadesContainer}>
+                  <Text style={styles.probabilidadesTitle}>Confiança da Previsão:</Text>
+                  <View style={styles.probabilidadeItem}>
+                    <Text style={styles.probabilidadeLabel}>Impopular:</Text>
+                    <Text style={styles.probabilidadeValor}>{(probabilidades.impopular * 100).toFixed(1)}%</Text>
+                  </View>
+                  <View style={styles.probabilidadeItem}>
+                    <Text style={styles.probabilidadeLabel}>Popular:</Text>
+                    <Text style={styles.probabilidadeValor}>{(probabilidades.popular * 100).toFixed(1)}%</Text>
+                  </View>
+                </View>
+              )}
             </View>
             <TouchableOpacity
               style={styles.modalCloseButton}
@@ -423,6 +440,38 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     lineHeight: 22,
+    marginBottom: 16,
+  },
+  probabilidadesContainer: {
+    width: "100%",
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+  },
+  probabilidadesTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  probabilidadeItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9ECEF",
+  },
+  probabilidadeLabel: {
+    fontSize: 14,
+    color: "#666",
+  },
+  probabilidadeValor: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#2E7D32",
   },
   modalCloseButton: {
     backgroundColor: "#2E7D32",

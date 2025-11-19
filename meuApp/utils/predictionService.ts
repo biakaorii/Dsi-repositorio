@@ -12,6 +12,14 @@ interface BookData {
   subGenero: string;
 }
 
+interface PredictionResult {
+  prediction: 0 | 1;
+  probabilities: {
+    impopular: number;
+    popular: number;
+  };
+}
+
 // Função para fazer a previsão
 // NOTA: Esta é uma implementação placeholder. 
 // Para usar o modelo .pkl real, você precisa:
@@ -19,7 +27,7 @@ interface BookData {
 // 2. Fazer uma requisição HTTP para essa API
 // 3. Ou usar TensorFlow.js se converter o modelo para esse formato
 
-export const predictPopularity = async (data: BookData): Promise<0 | 1> => {
+export const predictPopularity = async (data: BookData): Promise<PredictionResult> => {
   try {
     // CONFIGURAÇÃO DA API:
     // 1. Google Colab (Recomendado): Cole a URL do ngrok aqui
@@ -48,7 +56,10 @@ export const predictPopularity = async (data: BookData): Promise<0 | 1> => {
       throw new Error(result.error || 'Erro desconhecido na predição');
     }
     
-    return result.prediction as 0 | 1;
+    return {
+      prediction: result.prediction as 0 | 1,
+      probabilities: result.probabilities || { impopular: 0, popular: 0 }
+    };
   } catch (error) {
     console.error('Erro ao fazer previsão:', error);
     throw new Error('Não foi possível conectar à API. Certifique-se de que o servidor está rodando.');

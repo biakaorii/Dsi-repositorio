@@ -72,13 +72,22 @@ def predict():
         
         # Fazer predição
         prediction = model.predict(input_encoded)[0]
+        proba = model.predict_proba(input_encoded)[0]
         result = int(prediction)
         
-        print(f"📊 Predição: {result}")
+        print(f"📊 Predição: {result} (0=Impopular, 1=Popular)")
+        print(f"   Probabilidades: Impopular={proba[0]:.2%}, Popular={proba[1]:.2%}")
+        print(f"   Input: ano={data['ano']}, paginas={data['paginas']}, querem_ler={data['queremLer']}")
+        print(f"   Autor: {data['autor']}, Editora: {data['editora']}")
+        print(f"   Gênero: {data['generoPrimario']}/{data['subGenero']}")
         
         return jsonify({
             'prediction': result,
-            'success': True
+            'success': True,
+            'probabilities': {
+                'impopular': float(proba[0]),
+                'popular': float(proba[1])
+            }
         })
         
     except Exception as e:
