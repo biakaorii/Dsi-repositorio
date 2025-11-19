@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pickle
 import numpy as np
+import pandas as pd
 import os
 
 app = Flask(__name__)
@@ -29,18 +30,48 @@ def predict():
         
         data = request.get_json()
         
-        features = [
-            float(data['ano']),
-            float(data['paginas']),
-            float(data['queremLer']),
-            float(data['autor']),
-            float(data['editora']),
-            float(data['generoPrimario']),
-            float(data['subGenero'])
-        ]
+        # Criar DataFrame com os dados recebidos
+        input_data = pd.DataFrame([{
+            'ano': float(data['ano']),
+            'paginas': float(data['paginas']),
+            'querem_ler': float(data['queremLer']),
+            'autor': str(data['autor']),
+            'editora': str(data['editora']),
+            'GeneroPrimario': str(data['generoPrimario']),
+            'SubGenero': str(data['subGenero'])
+        }])
         
-        X = np.array([features])
-        prediction = model.predict(X)[0]
+        # Aplicar one-hot encoding (mesmo processo do treinamento)
+        input_encoded = pd.get_dummies(
+            input_data, 
+            columns=['autor', 'editora', 'GeneroPrimario', 'SubGenero'],
+            drop_first=True,
+            prefix=['autor', 'editora', 'genero_primario', 'subgenero']
+        )
+        
+        # Limpar nomes das colunas (mesmo do treinamento)
+        input_encoded.columns = input_encoded.columns.str.replace('[', '_', regex=False)\
+            .str.replace(']', '_', regex=False)\
+            .str.replace('<', '_', regex=False)\
+            .str.replace('>', '_', regex=False)\
+            .str.replace('"', '', regex=False)\
+            .str.replace(':', '_', regex=False)\
+            .str.replace(',', '_', regex=False)\
+            .str.replace('{', '_', regex=False)\
+            .str.replace('}', '_', regex=False)
+        
+        # Garantir que todas as colunas do modelo estejam presentes
+        # (adicionar colunas faltantes com 0)
+        model_columns = model.estimator.feature_names_in_
+        for col in model_columns:
+            if col not in input_encoded.columns:
+                input_encoded[col] = 0
+        
+        # Reordenar colunas na mesma ordem do treinamento
+        input_encoded = input_encoded[model_columns]
+        
+        # Fazer predição
+        prediction = model.predict(input_encoded)[0]
         result = int(prediction)
         
         print(f"📊 Predição: {result}")
@@ -52,6 +83,8 @@ def predict():
         
     except Exception as e:
         print(f"❌ Erro: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'error': str(e),
             'success': False
