@@ -27,8 +27,8 @@ export const predictPopularity = async (data: BookData): Promise<0 | 1> => {
     // 2. Local Android Emulator: 'http://10.0.2.2:5000/api/predict'
     // 3. Local iOS/Web: 'http://localhost:5000/api/predict'
     
-    // TODO: Substitua pela URL gerada no Colab
-    const API_URL = '';
+    // Railway API (produção - sempre online!)
+    const API_URL = 'https://dsi-repositorio-production.up.railway.app/api/predict';
     
     const response = await fetch(API_URL, {
       method: 'POST',
