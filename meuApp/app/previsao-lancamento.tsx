@@ -92,7 +92,7 @@ export default function PrevisaoLancamentoScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#2E7D32" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Previsão de Lançamento</Text>
+        <Text style={styles.headerTitle}>Previsão de Sucesso</Text>
         <TouchableOpacity onPress={limparFormulario}>
           <Ionicons name="refresh" size={24} color="#2E7D32" />
         </TouchableOpacity>
@@ -238,8 +238,8 @@ export default function PrevisaoLancamentoScreen() {
               </Text>
               <Text style={styles.modalResultadoDescricao}>
                 {resultado === 1 
-                  ? "Este livro tem grande potencial de popularidade!" 
-                  : "Este livro pode ter popularidade limitada."}
+                  ? "Este livro possivelmente é popular" 
+                  : "Este livro possivelmente é impopular"}
               </Text>
               
               {probabilidades && (
