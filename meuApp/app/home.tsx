@@ -177,7 +177,7 @@ export default function HomeScreen() {
         <Text style={styles.headerTitle}>Início</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Recomendados */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recomendados para você</Text>
@@ -268,6 +268,16 @@ export default function HomeScreen() {
             ))}
           </ScrollView>
         </View>
+
+        {/* Botão de Previsão de Lançamento */}
+        <TouchableOpacity 
+          style={styles.previsaoButton}
+          onPress={() => router.push('/previsao-lancamento' as any)}
+        >
+          <Ionicons name="trending-up" size={24} color="#fff" />
+          <Text style={styles.previsaoButtonText}>Veja se seus livros favoritos são populares</Text>
+          <Ionicons name="chevron-forward" size={24} color="#fff" />
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Barra de navegação inferior */}
@@ -337,6 +347,31 @@ const styles = StyleSheet.create({
     fontSize: 10, 
     color: "#666", 
     marginTop: 2 
+  },
+
+  previsaoButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#2E7D32",
+    marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    shadowColor: "#2E7D32",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  previsaoButtonText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#fff",
+    marginLeft: 12,
   },
 
   readingCard: {
