@@ -8,7 +8,10 @@ app = Flask(__name__)
 CORS(app)
 
 # Carregar o modelo
-MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'meuApp', 'utils', 'xgb_rating_predictor.pkl')
+# Tenta carregar do diretório api/ ou do diretório pai (meuApp/utils/)
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'xgb_rating_predictor.pkl')
+if not os.path.exists(MODEL_PATH):
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'meuApp', 'utils', 'xgb_rating_predictor.pkl')
 
 try:
     with open(MODEL_PATH, 'rb') as f:
