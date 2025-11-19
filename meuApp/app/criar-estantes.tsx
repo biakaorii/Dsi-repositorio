@@ -150,6 +150,16 @@ export default function CriarEstanteScreen() {
       return;
     }
 
+    if (nome.trim().length < 3) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'O nome da estante deve ter pelo menos 3 caracteres.',
+        visibilityTime: 3000,
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {

@@ -16,7 +16,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import BottomNavBar from "../components/BottomNavBar";
 import Toast from 'react-native-toast-message';
 
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "@/config/firebaseConfig";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLivros } from "@/contexts/LivrosContext";
@@ -208,7 +208,7 @@ export default function Search() {
       }
 
       // Verificar se o livro já está na lista
-      const jaExiste = lendoAtual.some((l: any) => l.id === book.id);
+      const jaExiste = lendoAtual.some((l: any) => String(l.id) === String(book.id));
       if (jaExiste) {
         Toast.show({
           type: 'info',
@@ -221,16 +221,34 @@ export default function Search() {
 
       // Adicionar novo livro
       const novoLivro = {
-        id: Date.now(), // ID local para distinguir
+        id: book.isLocal ? book.id : String(Date.now()), // Usar ID original se for livro cadastrado
         titulo: book.title,
+        autor: book.author,
         paginasLidas: 0,
-        totalPaginas: 200, // Valor padrão; idealmente pegaria da API
-        imagem: book.img,
+        totalPaginas: book.paginas || 200, // Usar páginas do livro cadastrado ou padrão
+        imagem: book.img || '',
+        // Preservar informações adicionais de livros cadastrados
+        ...(book.isLocal && {
+          genero: book.genero,
+          ownerId: book.ownerId,
+          ownerName: book.ownerName,
+        }),
       };
 
-      await updateDoc(docRef, {
-        lendo: [...lendoAtual, novoLivro]
-      });
+      // Usar setDoc se o documento não existe, updateDoc se existe
+      if (docSnap.exists()) {
+        await updateDoc(docRef, {
+          lendo: [...lendoAtual, novoLivro]
+        });
+      } else {
+        // Criar novo documento para usuário
+        await setDoc(docRef, {
+          lendo: [novoLivro],
+          lidos: [],
+          queroLer: [],
+          estantes: [],
+        });
+      }
 
       Toast.show({
         type: 'success',
@@ -271,7 +289,7 @@ export default function Search() {
       }
 
       // Verificar se o livro já está na lista
-      const jaExiste = queroLerAtual.some((l: any) => l.id === book.id);
+      const jaExiste = queroLerAtual.some((l: any) => String(l.id) === String(book.id));
       if (jaExiste) {
         Toast.show({
           type: 'info',
@@ -284,17 +302,35 @@ export default function Search() {
 
       // Adicionar novo livro
       const novoLivro = {
-        id: Date.now(), // ID local para distinguir
+        id: book.isLocal ? book.id : String(Date.now()), // Usar ID original se for livro cadastrado
         titulo: book.title,
+        autor: book.author,
         paginasLidas: 0,
-        totalPaginas: 200, // Valor padrão
-        imagem: book.img,
+        totalPaginas: book.paginas || 200, // Usar páginas do livro cadastrado ou padrão
+        imagem: book.img || '',
         salvo: true, // Padrão
+        // Preservar informações adicionais de livros cadastrados
+        ...(book.isLocal && {
+          genero: book.genero,
+          ownerId: book.ownerId,
+          ownerName: book.ownerName,
+        }),
       };
 
-      await updateDoc(docRef, {
-        queroLer: [...queroLerAtual, novoLivro]
-      });
+      // Usar setDoc se o documento não existe, updateDoc se existe
+      if (docSnap.exists()) {
+        await updateDoc(docRef, {
+          queroLer: [...queroLerAtual, novoLivro]
+        });
+      } else {
+        // Criar novo documento para usuário
+        await setDoc(docRef, {
+          queroLer: [novoLivro],
+          lendo: [],
+          lidos: [],
+          estantes: [],
+        });
+      }
 
       Toast.show({
         type: 'success',
@@ -341,7 +377,7 @@ export default function Search() {
 
           // Procurar o livro em queroLer, lendo e lidos
           for (const livro of [...queroLerAtual, ...(dados.lendo || []), ...(dados.lidos || [])]) {
-            if (livro.id === book.id || livro.titulo === book.title || livro.title === book.title) {
+            if (String(livro.id) === String(book.id) || livro.titulo === book.title || livro.title === book.title) {
               livroExistente = livro;
               livroId = livro.id;
               break;
@@ -351,18 +387,27 @@ export default function Search() {
           // Se o livro não existe, criar um novo registro em queroLer
           if (!livroExistente) {
             const novoLivro = {
-              id: Date.now(),
+              id: book.isLocal ? book.id : String(Date.now()), // Usar ID original se for livro cadastrado
               titulo: book.title,
+              autor: book.author,
               paginasLidas: 0,
-              totalPaginas: 200,
-              imagem: book.img,
+              totalPaginas: book.paginas || 200, // Usar páginas do livro cadastrado ou padrão
+              imagem: book.img || '',
+              // Preservar informações adicionais de livros cadastrados
+              ...(book.isLocal && {
+                genero: book.genero,
+                ownerId: book.ownerId,
+                ownerName: book.ownerName,
+              }),
             };
             livroId = novoLivro.id;
             queroLerAtual.push(novoLivro);
           }
 
-          // Verificar se o livro já está na estante
-          const livroJaNaEstante = estantes[estanteIndex].livros.some((id: any) => id === livroId);
+          // Verificar se o livro já está na estante - normalizar IDs para string
+          const livroJaNaEstante = estantes[estanteIndex].livros.some(
+            (id: any) => String(id) === String(livroId)
+          );
           if (livroJaNaEstante) {
             Toast.show({
               type: 'info',
@@ -433,7 +478,7 @@ export default function Search() {
         // Procurar se o livro já existe nas coleções do usuário
         let livroExistente = null;
         for (const livro of [...queroLerAtual, ...(dados.lendo || []), ...(dados.lidos || [])]) {
-          if (livro.id === selectedBook.id || livro.titulo === selectedBook.title || livro.title === selectedBook.title) {
+          if (String(livro.id) === String(selectedBook.id) || livro.titulo === selectedBook.title || livro.title === selectedBook.title) {
             livroExistente = livro;
             livroId = livro.id;
             break;
@@ -443,11 +488,18 @@ export default function Search() {
         // Se o livro não existe, criar um novo registro em queroLer
         if (!livroExistente) {
           const novoLivro = {
-            id: Date.now(),
+            id: selectedBook.isLocal ? selectedBook.id : String(Date.now()), // Usar ID original se for livro cadastrado
             titulo: selectedBook.title,
+            autor: selectedBook.author,
             paginasLidas: 0,
-            totalPaginas: 200,
-            imagem: selectedBook.img,
+            totalPaginas: selectedBook.paginas || 200, // Usar páginas do livro cadastrado ou padrão
+            imagem: selectedBook.img || '',
+            // Preservar informações adicionais de livros cadastrados
+            ...(selectedBook.isLocal && {
+              genero: selectedBook.genero,
+              ownerId: selectedBook.ownerId,
+              ownerName: selectedBook.ownerName,
+            }),
           };
           livroId = novoLivro.id;
           queroLerAtual.push(novoLivro);
@@ -455,11 +507,18 @@ export default function Search() {
       } else {
         // Novo usuário, criar o livro do zero
         const novoLivro = {
-          id: Date.now(),
+          id: selectedBook.isLocal ? selectedBook.id : String(Date.now()), // Usar ID original se for livro cadastrado
           titulo: selectedBook.title,
+          autor: selectedBook.author,
           paginasLidas: 0,
-          totalPaginas: 200,
-          imagem: selectedBook.img,
+          totalPaginas: selectedBook.paginas || 200, // Usar páginas do livro cadastrado ou padrão
+          imagem: selectedBook.img || '',
+          // Preservar informações adicionais de livros cadastrados
+          ...(selectedBook.isLocal && {
+            genero: selectedBook.genero,
+            ownerId: selectedBook.ownerId,
+            ownerName: selectedBook.ownerName,
+          }),
         };
         livroId = novoLivro.id;
         queroLerAtual.push(novoLivro);
@@ -474,10 +533,21 @@ export default function Search() {
 
       estantesAtuais.push(novaEstante);
 
-      await updateDoc(docRef, {
-        estantes: estantesAtuais,
-        queroLer: queroLerAtual,
-      });
+      // Usar setDoc se o documento não existe, updateDoc se existe
+      if (docSnap.exists()) {
+        await updateDoc(docRef, {
+          estantes: estantesAtuais,
+          queroLer: queroLerAtual,
+        });
+      } else {
+        // Criar novo documento para usuário
+        await setDoc(docRef, {
+          estantes: estantesAtuais,
+          queroLer: queroLerAtual,
+          lendo: [],
+          lidos: [],
+        });
+      }
 
       Toast.show({
         type: 'success',
@@ -492,11 +562,12 @@ export default function Search() {
       // Atualiza a lista de estantes localmente
       setShelves(estantesAtuais);
     } catch (error) {
+      console.error('Erro ao criar a estante:', error);
       Toast.show({
         type: 'error',
         text1: 'Erro',
-        text2: 'Não foi possível criar a estante.',
-        visibilityTime: 3000,
+        text2: error instanceof Error ? error.message : 'Não foi possível criar a estante.',
+        visibilityTime: 4000,
       });
     }
   };

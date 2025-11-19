@@ -100,12 +100,12 @@ export default function ProgressoScreen() {
     }
   };
 
-  const atualizarPaginas = (id: number, paginas: number, categoria: Categoria) => {
+  const atualizarPaginas = (id: number | string, paginas: number, categoria: Categoria) => {
     setLivros(prev => {
       const novasListas = {
         ...prev,
         [categoria]: prev[categoria].map(livro => 
-          livro.id === id ? { ...livro, paginasLidas: Math.max(0, Math.min(livro.totalPaginas, paginas)) } : livro
+          String(livro.id) === String(id) ? { ...livro, paginasLidas: Math.max(0, Math.min(livro.totalPaginas, paginas)) } : livro
         )
       };
       salvarLivrosNoUsuario(novasListas);
@@ -113,14 +113,14 @@ export default function ProgressoScreen() {
     });
   };
 
-  const moverLivroParaLidos = (id: number) => {
+  const moverLivroParaLidos = (id: number | string) => {
     setLivros(prev => {
-      const livro = prev.lendo.find(l => l.id === id);
+      const livro = prev.lendo.find(l => String(l.id) === String(id));
       if (!livro) return prev;
 
       const novasListas = {
         ...prev,
-        lendo: prev.lendo.filter(l => l.id !== id),
+        lendo: prev.lendo.filter(l => String(l.id) !== String(id)),
         lidos: [...prev.lidos, { ...livro, paginasLidas: livro.totalPaginas }]
       };
       salvarLivrosNoUsuario(novasListas);
@@ -129,12 +129,12 @@ export default function ProgressoScreen() {
     });
   };
 
-  const alternarSalvo = (id: number) => {
+  const alternarSalvo = (id: number | string) => {
     setLivros(prev => {
       const novasListas = {
         ...prev,
         queroLer: prev.queroLer.map(livro => 
-          livro.id === id ? { ...livro, salvo: !livro.salvo } : livro
+          String(livro.id) === String(id) ? { ...livro, salvo: !livro.salvo } : livro
         )
       };
       salvarLivrosNoUsuario(novasListas);
