@@ -145,13 +145,36 @@ export default function CriarEventoScreen() {
     setLoading(false);
 
     if (result.success) {
+      // Limpar o formulário
+      setTitulo("");
+      setDescricao("");
+      setLocal("");
+      setCidade("");
+      setEstado("");
+      setLatitude("");
+      setLongitude("");
+      setLinkIngressos("");
+      setCategoria("lancamento");
+      setDataInicio(new Date());
+      setDataFim(undefined);
+      
       Toast.show({
         type: "success",
         text1: "Evento criado!",
         text2: "Seu evento foi adicionado ao mapa",
         visibilityTime: 2000,
       });
-      router.back();
+      
+      // Aguardar um momento e voltar para a tela anterior
+      setTimeout(() => {
+        try {
+          router.back();
+        } catch (error) {
+          console.log("Erro ao voltar:", error);
+          // Fallback: navegar para comunidades
+          router.push("/comunidades" as any);
+        }
+      }, 300);
     } else {
       Toast.show({
         type: "error",
@@ -202,7 +225,7 @@ export default function CriarEventoScreen() {
           </Text>
           <TextInput
             style={styles.input}
-            placeholder="Ex: Show da Peppa Pig"
+            placeholder="Ex: Evento de venda de livros"
             placeholderTextColor="#999"
             value={titulo}
             onChangeText={setTitulo}
@@ -249,7 +272,7 @@ export default function CriarEventoScreen() {
           </Text>
           <TextInput
             style={styles.input}
-            placeholder="Ex: Prédio Lafayette"
+            placeholder="Ex: Livraria Cultural"
             placeholderTextColor="#999"
             value={local}
             onChangeText={setLocal}

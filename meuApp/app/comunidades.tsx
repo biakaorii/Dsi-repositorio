@@ -35,6 +35,9 @@ export default function ComunidadesScreen() {
   const [showDialog, setShowDialog] = useState(false);
   const [joiningLoading, setJoiningLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'comunidades' | 'eventos'>('comunidades');
+  const [eventSearchText, setEventSearchText] = useState("");
+  const [selectedCategoria, setSelectedCategoria] = useState<string | null>(null);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
 
@@ -65,6 +68,58 @@ export default function ComunidadesScreen() {
       setOutrasComunidades(outras);
     }
   }, [searchQuery, comunidades, user]);
+
+  // Categorias de eventos
+  const categorias = [
+    { id: "lancamento", label: "Lançamentos", icon: "book", color: "#2E7D32" },
+    { id: "encontro", label: "Encontros", icon: "people", color: "#1976D2" },
+    { id: "feira", label: "Feiras", icon: "storefront", color: "#F57C00" },
+    { id: "outro", label: "Outros", icon: "ellipsis-horizontal", color: "#7B1FA2" },
+  ];
+
+  // Função para contar eventos por categoria
+  const getEventCountByCategory = (categoryId: string) => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas a data
+    
+    return eventos.filter(evento => {
+      const dataEvento = new Date(evento.dataInicio);
+      dataEvento.setHours(0, 0, 0, 0);
+      return evento.categoria === categoryId && dataEvento >= hoje;
+    }).length;
+  };
+
+  // Filtrar eventos futuros (remover eventos passados)
+  const eventosFuturos = eventos.filter((evento) => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const dataEvento = new Date(evento.dataInicio);
+    dataEvento.setHours(0, 0, 0, 0);
+    return dataEvento >= hoje;
+  });
+
+  // Filtrar eventos por categoria, texto de pesquisa e seleção (já filtrados por data)
+  const eventosFiltrados = eventosFuturos.filter((evento) => {
+    // Se NÃO tem filtro de categoria ou busca ativa, mostrar apenas selecionados
+    const temFiltroAtivo = selectedCategoria || eventSearchText.trim() !== "";
+    
+    if (!temFiltroAtivo) {
+      // Sem filtros: mostrar apenas eventos selecionados
+      if (!evento.selecionado) return false;
+    }
+    
+    // Filtro por categoria
+    const passaCategoria = selectedCategoria ? evento.categoria === selectedCategoria : true;
+    
+    // Filtro por texto de pesquisa
+    const passaPesquisa = eventSearchText.trim() === "" ? true : 
+      evento.titulo.toLowerCase().includes(eventSearchText.toLowerCase()) ||
+      evento.local.toLowerCase().includes(eventSearchText.toLowerCase()) ||
+      evento.cidade.toLowerCase().includes(eventSearchText.toLowerCase()) ||
+      (evento.descricao && evento.descricao.toLowerCase().includes(eventSearchText.toLowerCase()));
+    
+    return passaCategoria && passaPesquisa;
+  });
 
   const handleComunidadeClick = (comunidade: Comunidade) => {
     if (!user) return;
@@ -280,15 +335,15 @@ export default function ComunidadesScreen() {
                 style={styles.map}
                 provider={PROVIDER_GOOGLE}
                 initialRegion={{
-                  latitude: eventos.length > 0 ? eventos[0].latitude : -23.5505,
-                  longitude: eventos.length > 0 ? eventos[0].longitude : -46.6333,
+                  latitude: eventosFuturos.length > 0 ? eventosFuturos[0].latitude : -23.5505,
+                  longitude: eventosFuturos.length > 0 ? eventosFuturos[0].longitude : -46.6333,
                   latitudeDelta: 0.0922,
                   longitudeDelta: 0.0421,
                 }}
                 showsUserLocation={true}
                 showsMyLocationButton={true}
               >
-                {eventos.map((evento, index) => (
+                {eventosFuturos.map((evento, index) => (
                     <Marker
                       key={evento.id}
                       coordinate={{
@@ -327,10 +382,10 @@ export default function ComunidadesScreen() {
           {/* Lista de Eventos */}
           <View style={styles.eventsSection}>
             <View style={styles.sectionHeader}>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.sectionTitle}>Eventos Literários</Text>
                 <Text style={styles.sectionSubtitle}>
-                  {eventos.length} {eventos.length === 1 ? 'evento disponível' : 'eventos disponíveis'}
+                  {eventosFiltrados.length} {eventosFiltrados.length === 1 ? 'evento encontrado' : 'eventos encontrados'}
                 </Text>
               </View>
               <TouchableOpacity
@@ -342,16 +397,57 @@ export default function ComunidadesScreen() {
               </TouchableOpacity>
             </View>
 
-            {eventos.length === 0 ? (
+            {/* Botão de Filtros */}
+            <TouchableOpacity
+              style={styles.filterButtonBelow}
+              onPress={() => setFilterModalVisible(true)}
+            >
+              <Ionicons 
+                name={selectedCategoria ? "funnel" : "funnel-outline"} 
+                size={20} 
+                color={selectedCategoria ? "#2E7D32" : "#666"} 
+              />
+              <Text style={styles.filterButtonBelowText}>
+                Filtros {selectedCategoria && '• 1 ativo'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Barra de pesquisa */}
+            <View style={styles.eventSearchContainer}>
+              <View style={styles.searchInputContainer}>
+                <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Buscar eventos..."
+                  value={eventSearchText}
+                  onChangeText={setEventSearchText}
+                  placeholderTextColor="#999"
+                />
+                {eventSearchText.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setEventSearchText("")}
+                    style={styles.clearButton}
+                  >
+                    <Ionicons name="close-circle" size={20} color="#999" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            {eventosFiltrados.length === 0 ? (
               <View style={styles.emptyEventsContainer}>
                 <Ionicons name="calendar-outline" size={64} color="#ccc" />
-                <Text style={styles.emptyEventsText}>Nenhum evento cadastrado</Text>
+                <Text style={styles.emptyEventsText}>
+                  {eventos.length === 0 ? 'Nenhum evento cadastrado' : 'Nenhum evento encontrado'}
+                </Text>
                 <Text style={styles.emptyEventsSubtext}>
-                  Seja o primeiro a criar um evento literário!
+                  {eventos.length === 0 
+                    ? 'Seja o primeiro a criar um evento literário!' 
+                    : 'Tente ajustar os filtros ou a pesquisa'}
                 </Text>
               </View>
             ) : (
-              eventos.map((evento, index) => {
+              eventosFiltrados.map((evento, index) => {
                 const isOwner = user?.uid === evento.userId;
                 
                 return (
@@ -381,7 +477,7 @@ export default function ComunidadesScreen() {
                       <View style={styles.eventInfo}>
                         <View style={styles.eventHeader}>
                           <View style={[styles.eventCategoryBadge, { backgroundColor: getCategoryColor(evento.categoria) + '20' }]}>
-                            <Text style={[styles.eventCategory, { color: getCategoryColor(evento.categoria) }]}>
+                            <Text style={[styles.eventCategoryText, { color: getCategoryColor(evento.categoria) }]}>
                               {getCategoryLabel(evento.categoria)}
                             </Text>
                           </View>
@@ -653,6 +749,91 @@ export default function ComunidadesScreen() {
                 ) : (
                   <Text style={styles.joinButtonText}>Entrar</Text>
                 )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Filtros de Eventos */}
+      <Modal
+        visible={filterModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <View style={styles.filterModalOverlay}>
+          <View style={styles.filterModalContent}>
+            <View style={styles.filterModalHeader}>
+              <Text style={styles.filterModalTitle}>Filtrar Eventos</Text>
+              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.filterOptions}>
+              <Text style={styles.filterSectionTitle}>Categorias</Text>
+              
+              {categorias.map((categoria) => {
+                const count = getEventCountByCategory(categoria.id);
+                const isSelected = selectedCategoria === categoria.id;
+                
+                return (
+                  <TouchableOpacity
+                    key={categoria.id}
+                    style={[
+                      styles.filterOption,
+                      isSelected && { backgroundColor: categoria.color + '20', borderColor: categoria.color }
+                    ]}
+                    onPress={() => {
+                      setSelectedCategoria(isSelected ? null : categoria.id);
+                    }}
+                  >
+                    <View style={styles.filterOptionLeft}>
+                      <Ionicons 
+                        name={categoria.icon as any} 
+                        size={24} 
+                        color={isSelected ? categoria.color : '#666'} 
+                      />
+                      <Text style={[
+                        styles.filterOptionText,
+                        isSelected && { color: categoria.color, fontWeight: '600' }
+                      ]}>
+                        {categoria.label}
+                      </Text>
+                    </View>
+                    <View style={styles.filterOptionRight}>
+                      <View style={styles.eventCountBadge}>
+                        <Text style={styles.eventCountText}>
+                          {count}
+                        </Text>
+                      </View>
+                      {isSelected && (
+                        <Ionicons name="checkmark-circle" size={20} color={categoria.color} />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.filterModalFooter}>
+              <TouchableOpacity
+                style={styles.clearFiltersButton}
+                onPress={() => {
+                  setSelectedCategoria(null);
+                  setEventSearchText("");
+                }}
+              >
+                <Ionicons name="refresh" size={20} color="#666" />
+                <Text style={styles.clearFiltersText}>Limpar Filtros</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.applyFiltersButton}
+                onPress={() => setFilterModalVisible(false)}
+              >
+                <Text style={styles.applyFiltersText}>Aplicar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1236,16 +1417,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   filterButton: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#2E7D32",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
+    backgroundColor: "#fff",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 8,
-    gap: 8,
+    borderWidth: 1,
+    borderColor: "#2E7D32",
+    gap: 6,
   },
   filterButtonText: {
     color: "#2E7D32",
@@ -1315,6 +1495,27 @@ const styles = StyleSheet.create({
   },
   createEventButtonText: {
     color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  viewMapButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#fff",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#2E7D32",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  viewMapButtonText: {
+    color: "#2E7D32",
     fontSize: 14,
     fontWeight: "700",
   },
@@ -1421,6 +1622,12 @@ const styles = StyleSheet.create({
     color: "#555",
     flex: 1,
   },
+  eventDescription: {
+    color: "#666",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+  },
   eventActions: {
     flexDirection: "row",
     borderTopWidth: 1,
@@ -1463,5 +1670,170 @@ const styles = StyleSheet.create({
     color: "#D32F2F",
     fontSize: 14,
     fontWeight: "600",
+  },
+  // Estilos específicos do filtro de eventos (não confundir com filterButton de comunidades)
+  eventSearchContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  filterButtonBelow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+    gap: 8,
+  },
+  filterButtonBelowText: {
+    color: '#333',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  filterButtonTextActive: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  filterBadge: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  filterBadgeText: {
+    color: '#2E7D32',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  clearButton: {
+    padding: 4,
+  },
+  // Estilos do modal de filtros
+  filterModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  filterModalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+  },
+  filterModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E9ECEF',
+  },
+  filterModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+  },
+  filterOptions: {
+    padding: 20,
+  },
+  filterSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#F8F9FA',
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  filterOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  filterOptionText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  filterOptionRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  eventCountBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#F0F0F0',
+  },
+  eventCountText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#666',
+  },
+  filterModalFooter: {
+    flexDirection: 'row',
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E9ECEF',
+    gap: 12,
+  },
+  clearFiltersButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#F8F9FA',
+    gap: 8,
+  },
+  clearFiltersText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+  },
+  applyFiltersButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#2E7D32',
+    alignItems: 'center',
+  },
+  applyFiltersText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  eventCardSelected: {
+    borderColor: '#4CAF50',
+    backgroundColor: '#E8F5E9',
   },
 });

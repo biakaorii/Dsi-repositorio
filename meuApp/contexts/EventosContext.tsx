@@ -71,6 +71,7 @@ export const EventosProvider = ({ children }: { children: ReactNode }) => {
           updatedAt: data.updatedAt?.toDate() || new Date(),
         };
       });
+      
       setEventos(eventosData);
       setLoading(false);
     }, (error) => {
@@ -129,10 +130,19 @@ export const EventosProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const eventoRef = doc(db, 'eventos', id);
-      const updateData = {
-        ...updates,
+      
+      // Remover campos undefined para evitar erros do Firestore
+      const updateData: any = {
         updatedAt: Timestamp.now(),
       };
+
+      // Adicionar apenas campos que não são undefined
+      Object.keys(updates).forEach((key) => {
+        const value = (updates as any)[key];
+        if (value !== undefined) {
+          updateData[key] = value;
+        }
+      });
 
       await updateDoc(eventoRef, updateData);
       return { success: true };

@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Dimensions,
   Alert,
+  TextInput,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -21,12 +23,41 @@ export default function EventosMapaScreen() {
   const router = useRouter();
   const { eventos, loading, toggleSelecionado } = useEventos();
   const [selectedCategoria, setSelectedCategoria] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
   const mapRef = useRef<MapView>(null);
 
-  // Filtrar eventos por categoria
-  const eventosFiltrados = selectedCategoria
-    ? eventos.filter((e) => e.categoria === selectedCategoria)
-    : eventos;
+  // Filtrar eventos futuros (remover eventos passados)
+  const eventosFuturos = eventos.filter((evento) => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const dataEvento = new Date(evento.dataInicio);
+    dataEvento.setHours(0, 0, 0, 0);
+    return dataEvento >= hoje;
+  });
+
+  // Filtrar eventos por categoria, texto de pesquisa e seleção
+  const eventosFiltrados = eventosFuturos.filter((evento) => {
+    // Se NÃO tem filtro de categoria ou busca ativa, mostrar apenas selecionados
+    const temFiltroAtivo = selectedCategoria || searchText.trim() !== "";
+    
+    if (!temFiltroAtivo) {
+      // Sem filtros: mostrar apenas eventos selecionados
+      if (!evento.selecionado) return false;
+    }
+    
+    // Filtro por categoria
+    const passaCategoria = selectedCategoria ? evento.categoria === selectedCategoria : true;
+    
+    // Filtro por texto de pesquisa
+    const passaPesquisa = searchText.trim() === "" ? true : 
+      evento.titulo.toLowerCase().includes(searchText.toLowerCase()) ||
+      evento.local.toLowerCase().includes(searchText.toLowerCase()) ||
+      evento.cidade.toLowerCase().includes(searchText.toLowerCase()) ||
+      (evento.descricao && evento.descricao.toLowerCase().includes(searchText.toLowerCase()));
+    
+    return passaCategoria && passaPesquisa;
+  });
 
   // Região inicial do mapa (São Paulo como padrão)
   const initialRegion = {
@@ -107,12 +138,16 @@ export default function EventosMapaScreen() {
   };
 
   const categorias = [
-    { id: "show", label: "Shows", icon: "musical-notes" },
-    { id: "lancamento", label: "Lançamentos", icon: "book" },
-    { id: "encontro", label: "Encontros", icon: "people" },
-    { id: "feira", label: "Feiras", icon: "storefront" },
-    { id: "outro", label: "Outros", icon: "ellipsis-horizontal" },
+    { id: "lancamento", label: "Lançamentos", icon: "book", color: "#2E7D32" },
+    { id: "encontro", label: "Encontros", icon: "people", color: "#1976D2" },
+    { id: "feira", label: "Feiras", icon: "storefront", color: "#F57C00" },
+    { id: "outro", label: "Outros", icon: "ellipsis-horizontal", color: "#7B1FA2" },
   ];
+
+  // Função para contar eventos por categoria (apenas eventos futuros)
+  const getEventCountByCategory = (categoryId: string) => {
+    return eventosFuturos.filter(evento => evento.categoria === categoryId).length;
+  };
 
   return (
     <View style={styles.container}>
@@ -132,60 +167,26 @@ export default function EventosMapaScreen() {
           Visualize os pontos onde eventos literários estão acontecendo.
         </Text>
 
-        {/* Botões de Categoria */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesContainer}
-        >
-          <TouchableOpacity
-            style={[styles.categoryButton, !selectedCategoria && styles.categoryButtonActive]}
-            onPress={() => setSelectedCategoria(null)}
-          >
-            <Ionicons
-              name="apps"
-              size={18}
-              color={!selectedCategoria ? "#fff" : "#2E7D32"}
+        {/* Barra de Pesquisa */}
+        <View style={styles.searchSection}>
+          <View style={styles.searchContainer}>
+            <Ionicons name="search-outline" size={20} color="#666" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Pesquisar eventos..."
+              placeholderTextColor="#999"
+              value={searchText}
+              onChangeText={setSearchText}
             />
-            <Text
-              style={[
-                styles.categoryButtonText,
-                !selectedCategoria && styles.categoryButtonTextActive,
-              ]}
-            >
-              Todos
-            </Text>
-          </TouchableOpacity>
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchText("")} style={styles.clearButton}>
+                <Ionicons name="close" size={16} color="#999" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
-          {categorias.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              style={[
-                styles.categoryButton,
-                selectedCategoria === cat.id && styles.categoryButtonActive,
-              ]}
-              onPress={() =>
-                setSelectedCategoria(selectedCategoria === cat.id ? null : cat.id)
-              }
-            >
-              <Ionicons
-                name={cat.icon as any}
-                size={18}
-                color={selectedCategoria === cat.id ? "#fff" : "#2E7D32"}
-              />
-              <Text
-                style={[
-                  styles.categoryButtonText,
-                  selectedCategoria === cat.id && styles.categoryButtonTextActive,
-                ]}
-              >
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Botão Criar Evento */}
+        {/* Botão Criar Evento e Filtros */}
         <View style={styles.actionsRow}>
           <TouchableOpacity
             style={styles.createButton}
@@ -197,7 +198,7 @@ export default function EventosMapaScreen() {
 
           <TouchableOpacity
             style={styles.filterButton}
-            onPress={() => Alert.alert("Filtros", "Funcionalidade em desenvolvimento")}
+            onPress={() => setModalVisible(true)}
           >
             <Ionicons name="funnel-outline" size={20} color="#2E7D32" />
             <Text style={styles.filterButtonText}>Filtros</Text>
@@ -325,6 +326,93 @@ export default function EventosMapaScreen() {
           ))}
         </View>
       </ScrollView>
+
+      {/* Modal de Filtros */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Header do Modal */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Filtros</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={28} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Opções de Filtro */}
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              <Text style={styles.filterSectionTitle}>Categorias</Text>
+              
+              {/* Todos */}
+              <TouchableOpacity
+                style={[
+                  styles.filterOption,
+                  !selectedCategoria && styles.filterOptionActive
+                ]}
+                onPress={() => {
+                  setSelectedCategoria(null);
+                  setModalVisible(false);
+                }}
+              >
+                <View style={styles.filterOptionLeft}>
+                  <Ionicons name="apps" size={24} color="#2E7D32" />
+                  <View>
+                    <Text style={styles.filterOptionText}>Todos os eventos</Text>
+                    <Text style={styles.filterOptionCount}>{eventos.length} eventos</Text>
+                  </View>
+                </View>
+                {!selectedCategoria && (
+                  <Ionicons name="checkmark-circle" size={24} color="#2E7D32" />
+                )}
+              </TouchableOpacity>
+
+              {/* Categorias */}
+              {categorias.map((cat) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[
+                    styles.filterOption,
+                    selectedCategoria === cat.id && styles.filterOptionActive
+                  ]}
+                  onPress={() => {
+                    setSelectedCategoria(cat.id);
+                    setModalVisible(false);
+                  }}
+                >
+                  <View style={styles.filterOptionLeft}>
+                    <Ionicons name={cat.icon as any} size={24} color={cat.color} />
+                    <View>
+                      <Text style={styles.filterOptionText}>{cat.label}</Text>
+                      <Text style={styles.filterOptionCount}>
+                        {getEventCountByCategory(cat.id)} eventos
+                      </Text>
+                    </View>
+                  </View>
+                  {selectedCategoria === cat.id && (
+                    <Ionicons name="checkmark-circle" size={24} color="#2E7D32" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Botão Limpar Filtros */}
+            <TouchableOpacity
+              style={styles.clearFiltersButton}
+              onPress={() => {
+                setSelectedCategoria(null);
+                setModalVisible(false);
+              }}
+            >
+              <Text style={styles.clearFiltersText}>Limpar Filtros</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <BottomNavBar />
     </View>
@@ -612,5 +700,123 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#4CAF50",
     fontWeight: "600",
+  },
+  // Estilos da barra de pesquisa
+  searchSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+    paddingVertical: 8,
+  },
+  clearButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  // Estilos do Modal de Filtros
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 16,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  filterSectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 12,
+    textTransform: "uppercase",
+  },
+  filterOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "#f5f5f5",
+  },
+  filterOptionActive: {
+    backgroundColor: "#E8F5E9",
+    borderWidth: 2,
+    borderColor: "#2E7D32",
+  },
+  filterOptionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  filterOptionText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  filterOptionCount: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 2,
+  },
+  clearFiltersButton: {
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  clearFiltersText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2E7D32",
   },
 });
