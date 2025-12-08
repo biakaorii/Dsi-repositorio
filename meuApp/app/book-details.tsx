@@ -21,6 +21,7 @@ import { useFavorites } from "../contexts/FavoritesContext";
 import Toast from 'react-native-toast-message';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
+import { GlobalStyles, Colors } from '../styles/theme';
 
 export default function BookDetailsScreen() {
   const router = useRouter();
@@ -511,7 +512,7 @@ export default function BookDetailsScreen() {
           </Text>
 
           {bookReviews.length === 0 ? (
-            <View style={styles.emptyState}>
+            <View style={[GlobalStyles.emptyState, styles.emptyState]}>
               <Ionicons name="chatbubbles-outline" size={50} color={colors.border} />
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 Nenhuma avaliação ainda. Seja o primeiro!
@@ -793,7 +794,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   emptyState: {
-    alignItems: "center",
     paddingVertical: 40,
   },
   emptyText: {

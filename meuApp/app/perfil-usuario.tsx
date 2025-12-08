@@ -15,6 +15,7 @@ import { doc, getDoc, collection, query, where, getDocs } from "firebase/firesto
 import { db } from "../config/firebaseConfig";
 import { useReviews } from "../contexts/ReviewsContext";
 import { useComunidades } from "../contexts/ComunidadesContext";
+import { GlobalStyles, Colors } from '../styles/theme';
 
 interface UserProfile {
   uid: string;
@@ -193,8 +194,8 @@ export default function PerfilUsuarioScreen() {
                   <Text style={styles.genresTitle}>Gêneros Favoritos:</Text>
                   <View style={styles.genresContainer}>
                     {userProfile.genres.map((genre, index) => (
-                      <View key={index} style={styles.genreTag}>
-                        <Text style={styles.genreText}>{genre}</Text>
+                      <View key={index} style={[GlobalStyles.genreTag, styles.genreTag]}>
+                        <Text style={[GlobalStyles.genreText, styles.genreText]}>{genre}</Text>
                       </View>
                     ))}
                   </View>
@@ -413,7 +414,7 @@ export default function PerfilUsuarioScreen() {
           </Text>
           
           {userReviews.length === 0 ? (
-            <View style={styles.emptyState}>
+            <View style={[GlobalStyles.emptyState, styles.emptyState]}>
               <Ionicons name="chatbubbles-outline" size={50} color="#CCC" />
               <Text style={styles.emptyText}>
                 Nenhuma avaliação ainda
@@ -569,16 +570,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   genreTag: {
-    backgroundColor: "#E8F5E9",
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#2E7D32",
   },
   genreText: {
-    fontSize: 12,
-    color: "#2E7D32",
     fontWeight: "500",
   },
   statsSection: {
@@ -588,12 +583,12 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: Colors.background,
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E9ECEF",
+    borderColor: Colors.border,
   },
   statNumber: {
     fontSize: 24,
@@ -603,7 +598,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: "#666",
+    color: Colors.onSurface,
     marginTop: 4,
     textAlign: "center",
   },
@@ -617,11 +612,11 @@ const styles = StyleSheet.create({
   comunidadeCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
+    backgroundColor: Colors.background,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#E9ECEF",
+    borderColor: Colors.border,
     gap: 12,
   },
   comunidadeInfo: {
@@ -630,12 +625,12 @@ const styles = StyleSheet.create({
   comunidadeName: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#333",
+    color: Colors.onBackground,
     marginBottom: 2,
   },
   comunidadeMembers: {
     fontSize: 12,
-    color: "#666",
+    color: Colors.onSurface,
   },
   favoritesSection: {
     padding: 20,
@@ -657,13 +652,13 @@ const styles = StyleSheet.create({
   favoriteBookTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#333",
+    color: Colors.onBackground,
     marginBottom: 4,
     lineHeight: 18,
   },
   favoriteBookAuthor: {
     fontSize: 12,
-    color: "#666",
+    color: Colors.onSurface,
   },
   reviewsSection: {
     padding: 20,
@@ -671,20 +666,19 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: Colors.onBackground,
     marginBottom: 16,
   },
   emptyState: {
-    alignItems: "center",
     paddingVertical: 40,
   },
   emptyText: {
     fontSize: 16,
-    color: "#999",
+    color: Colors.disabled,
     marginTop: 10,
   },
   reviewCard: {
-    backgroundColor: "#F8F9FA",
+    backgroundColor: Colors.background,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,

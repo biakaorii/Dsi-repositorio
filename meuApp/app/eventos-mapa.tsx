@@ -16,6 +16,7 @@ import { useRouter } from "expo-router";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { useEventos } from "../contexts/EventosContext";
 import BottomNavBar from "../components/BottomNavBar";
+import { GlobalStyles, Colors } from '../styles/theme';
 
 const { width, height } = Dimensions.get("window");
 
@@ -163,7 +164,7 @@ export default function EventosMapaScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.subtitle}>
+        <Text style={[GlobalStyles.bodyText, styles.subtitle]}>
           Visualize os pontos onde eventos literários estão acontecendo.
         </Text>
 
@@ -422,7 +423,7 @@ export default function EventosMapaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.surface,
   },
   header: {
     flexDirection: "row",
@@ -431,7 +432,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 50,
     borderBottomWidth: 1,
-    borderBottomColor: "#E9ECEF",
+    borderBottomColor: Colors.border,
   },
   headerTitle: {
     fontSize: 20,
@@ -442,8 +443,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   subtitle: {
-    fontSize: 14,
-    color: "#666",
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,

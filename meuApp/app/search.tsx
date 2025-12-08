@@ -21,6 +21,7 @@ import { db } from "@/config/firebaseConfig";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLivros } from "@/contexts/LivrosContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { GlobalStyles, Colors } from '../styles/theme';
 
 // Definindo tipos localmente
 interface Book {
@@ -554,7 +555,7 @@ export default function Search() {
     };
 
     return (
-      <View style={[styles.bookCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
+      <View style={[GlobalStyles.bookCard, styles.bookCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
         <TouchableOpacity onPress={handlePress}>
           {item.img ? (
             <Image
@@ -902,12 +903,12 @@ const styles = StyleSheet.create({
   listContent: { paddingHorizontal: 12, paddingBottom: 100 },
   columnWrapper: { justifyContent: 'space-between', marginBottom: 16 },
   bookCard: {
-    width: '100%',borderRadius: 8,overflow: 'hidden',marginBottom: 12,
-    flexDirection: 'row',shadowOffset: { width: 0, height: 2 },shadowOpacity: 0.1,
-    shadowRadius: 4,elevation: 3
+    width: '100%', overflow: 'hidden', marginBottom: 12,
+    flexDirection: 'row', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1,
+    shadowRadius: 4, elevation: 3
   },
 
-  bookImage: { width: 70, height: 100, backgroundColor: '#f5f5f5', borderRadius: 4 },
+  bookImage: { width: 70, height: 100, backgroundColor: Colors.background, borderRadius: 4 },
   noImage: { width: 70, height: 100, justifyContent: 'center', alignItems: 'center', borderRadius: 4 },
   bookInfo: { flex: 1, padding: 12 },
   bookTitle: { fontSize: 14, fontWeight: '600', marginBottom: 4 },

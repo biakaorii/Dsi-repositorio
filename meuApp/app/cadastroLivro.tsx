@@ -18,6 +18,7 @@ import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "@/contexts/AuthContext";
+import { GlobalStyles, Colors } from '../styles/theme';
 import { useLivros, Livro as LivroModel } from "@/contexts/LivrosContext";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -400,7 +401,7 @@ export default function CadastroLivroScreen() {
           </Text>
         </TouchableOpacity>
 
-        <View style={[styles.divider, { borderBottomColor: colors.border }]} />
+        <View style={[GlobalStyles.divider, styles.divider, { borderBottomColor: colors.border }]} />
 
         <Text style={[styles.sectionListTitle, { color: colors.text }]}>Livros cadastrados</Text>
         {carregandoLivros ? (
@@ -416,7 +417,7 @@ export default function CadastroLivroScreen() {
           livros.map((livro) => {
             const isOwner = user?.uid === livro.ownerId;
             return (
-              <View key={livro.id} style={[styles.bookCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View key={livro.id} style={[GlobalStyles.bookCard, styles.bookCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.bookInfo}>
                   {livro.capaUri ? (
                     <Image source={{ uri: livro.capaUri }} style={styles.bookThumb} />
@@ -568,7 +569,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   divider: {
-    height: 1,
     marginVertical: 30,
   },
   sectionListTitle: {
@@ -589,7 +589,6 @@ const styles = StyleSheet.create({
   },
   bookCard: {
     borderWidth: 1,
-    borderRadius: 12,
     padding: 15,
     marginBottom: 15,
   },
