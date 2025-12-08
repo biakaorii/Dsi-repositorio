@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useReviews, Review } from "../contexts/ReviewsContext";
+import { GlobalStyles, Colors } from '../styles/theme';
 
 export default function MeusReviewsScreen() {
   const router = useRouter();
@@ -114,7 +115,7 @@ export default function MeusReviewsScreen() {
         {/* Lista de Reviews */}
         <View style={styles.reviewsSection}>
           {reviews.length === 0 ? (
-            <View style={styles.emptyState}>
+            <View style={[GlobalStyles.emptyState, styles.emptyState]}>
               <Ionicons name="chatbubbles-outline" size={80} color="#CCC" />
               <Text style={styles.emptyTitle}>Nenhuma avaliação ainda</Text>
               <Text style={styles.emptyText}>
@@ -254,7 +255,6 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   emptyState: {
-    alignItems: "center",
     paddingVertical: 60,
     paddingHorizontal: 40,
   },

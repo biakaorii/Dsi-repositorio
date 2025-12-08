@@ -11,8 +11,9 @@ import {
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../config/firebaseConfig'; // ✅ Ajuste o caminho se necessário
+import { auth } from '../config/firebaseConfig';
 import { useTheme } from '../contexts/ThemeContext';
+import { GlobalStyles, Colors } from '../styles/theme';
 
 const RecuperarSenha = () => {
   const [email, setEmail] = useState('');
@@ -72,9 +73,9 @@ const RecuperarSenha = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Esqueceu sua senha?</Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+    <View style={[GlobalStyles.screenContainer, styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[GlobalStyles.heading, styles.title, { color: colors.text }]}>Esqueceu sua senha?</Text>
+      <Text style={[GlobalStyles.bodyText, styles.subtitle, { color: colors.textSecondary }]}>
         Digite seu e-mail e enviaremos um link seguro para redefinir sua senha.
       </Text>
 
@@ -116,19 +117,14 @@ const RecuperarSenha = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
     paddingHorizontal: 20,

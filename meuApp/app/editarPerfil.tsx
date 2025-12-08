@@ -8,6 +8,7 @@ import Toast from 'react-native-toast-message';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadProfilePhoto, deleteProfilePhoto } from '@/utils/uploadProfilePhoto';
 import { useTheme } from "../contexts/ThemeContext";
+import { GlobalStyles, Colors } from '../styles/theme';
 
 export default function EditarPerfilScreen() {
   const router = useRouter();

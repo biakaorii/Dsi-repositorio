@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { GlobalStyles, Colors } from '../styles/theme';
 
 export default function SelectProfileScreen() {
   const router = useRouter();
@@ -24,8 +25,8 @@ export default function SelectProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Selecione seu perfil</Text>
+    <View style={[GlobalStyles.screenContainer, styles.container]}>
+      <Text style={[GlobalStyles.heading, styles.title]}>Selecione seu perfil</Text>
 
       <TouchableOpacity
         style={[styles.button, styles.profileButton]}
@@ -62,15 +63,9 @@ export default function SelectProfileScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.surface,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
     marginBottom: 40,
   },
   button: {
@@ -81,12 +76,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileButton: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#2E8B57', // borda verde
+    borderColor: '#2E8B57',
   },
   profileButtonText: {
-    color: '#2E8B57', // texto verde
+    color: '#2E8B57',
     fontWeight: 'bold',
   },
   continueButton: {
@@ -94,7 +89,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   buttonText: {
-    color: '#fff', // texto branco para o botão verde
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },

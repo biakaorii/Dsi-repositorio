@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { useAuth } from '../contexts/AuthContext';
+import { GlobalStyles, Colors } from '../styles/theme';
 
 
 const EntrepreneurFormScreen = () => {
@@ -116,8 +117,8 @@ const EntrepreneurFormScreen = () => {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
-        <Text style={styles.title}>Configure seu Negócio</Text>
-        <Text style={styles.subtitle}>Complete as informações da sua livraria</Text>
+        <Text style={[GlobalStyles.heading, styles.title]}>Configure seu Negócio</Text>
+        <Text style={[GlobalStyles.subtitle, styles.subtitle]}>Complete as informações da sua livraria</Text>
       </View>
 
       {/* Informações Básicas */}
@@ -372,29 +373,27 @@ const EntrepreneurFormScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.surface,
   },
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: Colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: Colors.border,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
     color: '#2E7D32',
     marginBottom: 5,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    color: Colors.onSurface,
   },
   section: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: Colors.background,
   },
   sectionHeader: {
     flexDirection: 'row',

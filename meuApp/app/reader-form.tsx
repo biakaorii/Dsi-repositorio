@@ -10,6 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import Toast from 'react-native-toast-message';
+import { GlobalStyles, Colors } from '../styles/theme';
 
 const ReaderFormScreen = () => {
   const router = useRouter();
@@ -90,8 +91,8 @@ const ReaderFormScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Informações adicionais</Text>
+    <View style={[GlobalStyles.screenContainer, styles.container]}>
+      <Text style={[GlobalStyles.heading, styles.title]}>Informações adicionais</Text>
 
       <TextInput
         style={styles.input}
@@ -111,7 +112,7 @@ const ReaderFormScreen = () => {
         onChangeText={setAge}
       />
 
-      <Text style={styles.subtitle}>Seus gêneros favoritos</Text>
+      <Text style={[GlobalStyles.subtitle, styles.subtitle]}>Seus gêneros favoritos</Text>
 
       <View style={styles.genresContainer}>
         {genres.map((genre) => (
@@ -147,30 +148,24 @@ const ReaderFormScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center', // Centraliza verticalmente
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.surface,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E9ECEF',
-    backgroundColor: '#F8F9FA',
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 15,
     fontSize: 16,
-    color: '#333',
+    color: Colors.onBackground,
   },
   subtitle: {
-    fontSize: 16,
     marginVertical: 10,
     textAlign: 'center',
   },
@@ -181,13 +176,13 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   genreChip: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: Colors.background,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
     margin: 5,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: Colors.border,
   },
   selectedGenre: {
     backgroundColor: '#2E8B57',
@@ -195,7 +190,7 @@ const styles = StyleSheet.create({
   },
   genreText: {
     fontSize: 14,
-    color: '#333',
+    color: Colors.onBackground,
   },
   selectedText: {
     color: '#fff',
@@ -204,10 +199,10 @@ const styles = StyleSheet.create({
     width: 312,
     height: 45,
     alignSelf: 'center',
-    backgroundColor: "#2E8B57",
+    backgroundColor: '#2E8B57',
     borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 20,
     marginBottom: 20,
   },
