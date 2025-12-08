@@ -20,6 +20,7 @@ import BottomNavBar from "../components/BottomNavBar";
 import { useComunidades, Comunidade } from "../contexts/ComunidadesContext";
 import { useEventos } from "../contexts/EventosContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import Toast from "react-native-toast-message";
 
 const { width, height } = Dimensions.get("window");
@@ -28,6 +29,7 @@ export default function ComunidadesScreen() {
   const { comunidades, loading, isMember, joinComunidade } = useComunidades();
   const { eventos, loading: eventosLoading, toggleSelecionado, deleteEvento } = useEventos();
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [minhasComunidades, setMinhasComunidades] = useState<Comunidade[]>([]);
   const [outrasComunidades, setOutrasComunidades] = useState<Comunidade[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -219,7 +221,7 @@ export default function ComunidadesScreen() {
 
     return (
       <TouchableOpacity 
-        style={styles.comunidadeCard}
+        style={[styles.comunidadeCard, { backgroundColor: colors.card }]}
         onPress={() => handleComunidadeClick(item)}
       >
         <View style={styles.comunidadeCardHeader}>
@@ -230,34 +232,34 @@ export default function ComunidadesScreen() {
               style={styles.comunidadeIcon}
             />
           ) : (
-            <View style={styles.comunidadeIconPlaceholder}>
-              <Ionicons name="people" size={24} color="#2E7D32" />
+            <View style={[styles.comunidadeIconPlaceholder, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="people" size={24} color={colors.primary} />
             </View>
           )}
 
           <View style={styles.comunidadeContent}>
             <View style={styles.headerRow}>
-              <Text style={styles.comunidadeNome}>{item.nome}</Text>
+              <Text style={[styles.comunidadeNome, { color: colors.text }]}>{item.nome}</Text>
               {user && isMember(item.id, user.uid) && (
-                <View style={styles.memberBadge}>
-                  <Text style={styles.memberBadgeText}>Membro</Text>
+                <View style={[styles.memberBadge, { backgroundColor: colors.primaryLight }]}>
+                  <Text style={[styles.memberBadgeText, { color: colors.primary }]}>Membro</Text>
                 </View>
               )}
             </View>
-            <Text style={styles.comunidadeDono}>De: {item.ownerName}</Text>
-            <Text style={styles.comunidadeDescricao} numberOfLines={1}>
+            <Text style={[styles.comunidadeDono, { color: colors.textSecondary }]}>De: {item.ownerName}</Text>
+            <Text style={[styles.comunidadeDescricao, { color: colors.textSecondary }]} numberOfLines={1}>
               {item.descricao}
             </Text>
             <View style={styles.comunidadeFooter}>
               <View style={styles.footerRow}>
-                <Ionicons name="people" size={16} color="#666" />
-                <Text style={styles.membrosCount}>
+                <Ionicons name="people" size={16} color={colors.textSecondary} />
+                <Text style={[styles.membrosCount, { color: colors.textSecondary }]}>
                   {item.membros?.length || 1} {item.membros?.length === 1 ? "membro" : "membros"}
                 </Text>
               </View>
               <View style={styles.footerRow}>
-                <Ionicons name="calendar-outline" size={16} color="#666" />
-                <Text style={styles.dataCount}>
+                <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
+                <Text style={[styles.dataCount, { color: colors.textSecondary }]}>
                   Criada em {formatDate(item.createdAt)}
                 </Text>
               </View>
@@ -269,39 +271,39 @@ export default function ComunidadesScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, { color: colors.primary }]}>
           {activeTab === 'comunidades' ? 'Comunidades' : 'Eventos'}
         </Text>
       </View>
 
       {/* Tabs de Navegação */}
-      <View style={styles.tabsContainer}>
+      <View style={[styles.tabsContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'comunidades' && styles.activeTab]}
+          style={[styles.tab, activeTab === 'comunidades' && [styles.activeTab, { borderBottomColor: colors.primary }]]}
           onPress={() => setActiveTab('comunidades')}
         >
           <Ionicons 
             name="people" 
             size={20} 
-            color={activeTab === 'comunidades' ? "#2E7D32" : "#666"} 
+            color={activeTab === 'comunidades' ? colors.primary : colors.textSecondary} 
           />
-          <Text style={[styles.tabText, activeTab === 'comunidades' && styles.activeTabText]}>
+          <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'comunidades' && [styles.activeTabText, { color: colors.primary }]]}>
             Comunidades
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'eventos' && styles.activeTab]}
+          style={[styles.tab, activeTab === 'eventos' && [styles.activeTab, { borderBottomColor: colors.primary }]]}
           onPress={() => setActiveTab('eventos')}
         >
           <Ionicons 
             name="calendar" 
             size={20} 
-            color={activeTab === 'eventos' ? "#2E7D32" : "#666"} 
+            color={activeTab === 'eventos' ? colors.primary : colors.textSecondary} 
           />
-          <Text style={[styles.tabText, activeTab === 'eventos' && styles.activeTabText]}>
+          <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'eventos' && [styles.activeTabText, { color: colors.primary }]]}>
             Eventos
           </Text>
         </TouchableOpacity>
@@ -318,14 +320,14 @@ export default function ComunidadesScreen() {
           <View style={styles.eventosMapContainer}>
             {eventosLoading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#2E7D32" />
-                <Text style={styles.loadingText}>Carregando eventos...</Text>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Carregando eventos...</Text>
               </View>
             ) : eventos.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Ionicons name="map-outline" size={64} color="#ccc" />
-                <Text style={styles.emptyText}>Nenhum evento encontrado</Text>
-                <Text style={styles.emptySubtext}>
+                <Ionicons name="map-outline" size={64} color={colors.border} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Nenhum evento encontrado</Text>
+                <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
                   Seja o primeiro a criar um evento!
                 </Text>
               </View>
@@ -366,9 +368,10 @@ export default function ComunidadesScreen() {
                     >
                       <View style={[
                         styles.markerContainer,
-                        evento.selecionado && styles.markerContainerSelected
+                        evento.selecionado && styles.markerContainerSelected,
+                        { backgroundColor: colors.primary, borderColor: colors.card, shadowColor: colors.shadow }
                       ]}>
-                        <Ionicons name="calendar" size={20} color="#fff" />
+                        <Ionicons name="calendar" size={20} color={colors.card} />
                       </View>
                     </Marker>
                   ))}
@@ -383,52 +386,52 @@ export default function ComunidadesScreen() {
           <View style={styles.eventsSection}>
             <View style={styles.sectionHeader}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.sectionTitle}>Eventos Literários</Text>
-                <Text style={styles.sectionSubtitle}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Eventos Literários</Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
                   {eventosFiltrados.length} {eventosFiltrados.length === 1 ? 'evento encontrado' : 'eventos encontrados'}
                 </Text>
               </View>
               <TouchableOpacity
-                style={styles.createEventButton}
+                style={[styles.createEventButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
                 onPress={() => router.push("/criar-evento" as any)}
               >
-                <Ionicons name="add-circle" size={22} color="#fff" />
-                <Text style={styles.createEventButtonText}>Novo</Text>
+                <Ionicons name="add-circle" size={22} color={colors.card} />
+                <Text style={[styles.createEventButtonText, { color: colors.card }]}>Novo</Text>
               </TouchableOpacity>
             </View>
 
             {/* Botão de Filtros */}
             <TouchableOpacity
-              style={styles.filterButtonBelow}
+              style={[styles.filterButtonBelow, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
               onPress={() => setFilterModalVisible(true)}
             >
               <Ionicons 
                 name={selectedCategoria ? "funnel" : "funnel-outline"} 
                 size={20} 
-                color={selectedCategoria ? "#2E7D32" : "#666"} 
+                color={selectedCategoria ? colors.primary : colors.textSecondary} 
               />
-              <Text style={styles.filterButtonBelowText}>
+              <Text style={[styles.filterButtonBelowText, { color: colors.text }]}>
                 Filtros {selectedCategoria && '• 1 ativo'}
               </Text>
             </TouchableOpacity>
 
             {/* Barra de pesquisa */}
             <View style={styles.eventSearchContainer}>
-              <View style={styles.searchInputContainer}>
-                <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+              <View style={[styles.searchInputContainer, { backgroundColor: colors.inputBackground }]}>
+                <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
                 <TextInput
-                  style={styles.searchInput}
+                  style={[styles.searchInput, { color: colors.text }]}
                   placeholder="Buscar eventos..."
                   value={eventSearchText}
                   onChangeText={setEventSearchText}
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.placeholder}
                 />
                 {eventSearchText.length > 0 && (
                   <TouchableOpacity
                     onPress={() => setEventSearchText("")}
                     style={styles.clearButton}
                   >
-                    <Ionicons name="close-circle" size={20} color="#999" />
+                    <Ionicons name="close-circle" size={20} color={colors.placeholder} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -436,11 +439,11 @@ export default function ComunidadesScreen() {
 
             {eventosFiltrados.length === 0 ? (
               <View style={styles.emptyEventsContainer}>
-                <Ionicons name="calendar-outline" size={64} color="#ccc" />
-                <Text style={styles.emptyEventsText}>
+                <Ionicons name="calendar-outline" size={64} color={colors.border} />
+                <Text style={[styles.emptyEventsText, { color: colors.placeholder }]}>
                   {eventos.length === 0 ? 'Nenhum evento cadastrado' : 'Nenhum evento encontrado'}
                 </Text>
-                <Text style={styles.emptyEventsSubtext}>
+                <Text style={[styles.emptyEventsSubtext, { color: colors.placeholder }]}>
                   {eventos.length === 0 
                     ? 'Seja o primeiro a criar um evento literário!' 
                     : 'Tente ajustar os filtros ou a pesquisa'}
@@ -455,7 +458,8 @@ export default function ComunidadesScreen() {
                     key={evento.id}
                     style={[
                       styles.eventCard,
-                      evento.selecionado && styles.eventCardSelected,
+                      { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.shadow },
+                      evento.selecionado && [styles.eventCardSelected, { backgroundColor: colors.primaryLight }],
                     ]}
                   >
                     <TouchableOpacity
@@ -465,10 +469,10 @@ export default function ComunidadesScreen() {
                     >
                       <View style={styles.eventIconContainer}>
                         <View style={[styles.eventIcon, { backgroundColor: getCategoryColor(evento.categoria) }]}>
-                          <Ionicons name={getCategoryIcon(evento.categoria)} size={24} color="#fff" />
+                          <Ionicons name={getCategoryIcon(evento.categoria)} size={24} color={colors.card} />
                         </View>
                         {evento.selecionado && (
-                          <View style={styles.selectedBadge}>
+                          <View style={[styles.selectedBadge, { borderColor: colors.card }]}>
                             <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
                           </View>
                         )}
@@ -483,19 +487,19 @@ export default function ComunidadesScreen() {
                           </View>
                         </View>
 
-                        <Text style={styles.eventTitle} numberOfLines={2}>{evento.titulo}</Text>
+                        <Text style={[styles.eventTitle, { color: colors.text }]} numberOfLines={2}>{evento.titulo}</Text>
 
                         <View style={styles.eventDetails}>
                           <View style={styles.eventDetailRow}>
-                            <Ionicons name="location" size={16} color="#666" />
-                            <Text style={styles.eventDetailText} numberOfLines={1}>
+                            <Ionicons name="location" size={16} color={colors.textSecondary} />
+                            <Text style={[styles.eventDetailText, { color: colors.textSecondary }]} numberOfLines={1}>
                               {evento.local}, {evento.cidade}
                             </Text>
                           </View>
 
                           <View style={styles.eventDetailRow}>
-                            <Ionicons name="calendar-outline" size={16} color="#666" />
-                            <Text style={styles.eventDetailText}>
+                            <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
+                            <Text style={[styles.eventDetailText, { color: colors.textSecondary }]}>
                               {new Intl.DateTimeFormat("pt-BR", {
                                 day: "2-digit",
                                 month: "short",
@@ -506,15 +510,15 @@ export default function ComunidadesScreen() {
                           </View>
 
                           <View style={styles.eventDetailRow}>
-                            <Ionicons name="person-outline" size={16} color="#666" />
-                            <Text style={styles.eventDetailText} numberOfLines={1}>
+                            <Ionicons name="person-outline" size={16} color={colors.textSecondary} />
+                            <Text style={[styles.eventDetailText, { color: colors.textSecondary }]} numberOfLines={1}>
                               {evento.userName}
                             </Text>
                           </View>
                         </View>
 
                         {evento.descricao && (
-                          <Text style={styles.eventDescription} numberOfLines={2}>
+                          <Text style={[styles.eventDescription, { color: colors.textSecondary }]} numberOfLines={2}>
                             {evento.descricao}
                           </Text>
                         )}
@@ -523,9 +527,9 @@ export default function ComunidadesScreen() {
 
                     {/* Botões de ação - apenas para o dono */}
                     {isOwner && (
-                      <View style={styles.eventActions}>
+                      <View style={[styles.eventActions, { borderTopColor: colors.border }]}>
                         <TouchableOpacity
-                          style={styles.editEventButton}
+                          style={[styles.editEventButton, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
                           onPress={() => router.push({
                             pathname: "/editar-evento",
                             params: {
@@ -545,12 +549,12 @@ export default function ComunidadesScreen() {
                             },
                           } as any)}
                         >
-                          <Ionicons name="pencil" size={18} color="#2E7D32" />
-                          <Text style={styles.editEventButtonText}>Editar</Text>
+                          <Ionicons name="pencil" size={18} color={colors.primary} />
+                          <Text style={[styles.editEventButtonText, { color: colors.primary }]}>Editar</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                          style={styles.deleteEventButton}
+                          style={[styles.deleteEventButton, { backgroundColor: '#FFEBEE' }]}
                           onPress={() => {
                             Alert.alert(
                               "Confirmar Exclusão",
@@ -592,17 +596,18 @@ export default function ComunidadesScreen() {
         <>
           {/* Conteúdo da aba Comunidades */}
           {/* Barra de pesquisa */}
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+          <View style={[styles.searchContainer, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+            <Ionicons name="search" size={20} color={colors.placeholder} style={styles.searchIcon} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               placeholder="Buscar comunidades..."
               value={searchQuery}
               onChangeText={setSearchQuery}
+              placeholderTextColor={colors.placeholder}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery("")}>
-                <Ionicons name="close-circle" size={20} color="#999" />
+                <Ionicons name="close-circle" size={20} color={colors.placeholder} />
               </TouchableOpacity>
             )}
           </View>
@@ -610,16 +615,16 @@ export default function ComunidadesScreen() {
           {/* Lista de comunidades */}
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#2E7D32" />
-              <Text style={styles.loadingText}>Carregando comunidades...</Text>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Carregando comunidades...</Text>
             </View>
           ) : minhasComunidades.length === 0 && outrasComunidades.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="people-outline" size={64} color="#ccc" />
-              <Text style={styles.emptyText}>
+              <Ionicons name="people-outline" size={64} color={colors.border} />
+              <Text style={[styles.emptyText, { color: colors.placeholder }]}>
                 {searchQuery ? "Nenhuma comunidade encontrada" : "Ainda não há comunidades"}
               </Text>
-              <Text style={styles.emptySubtext}>
+              <Text style={[styles.emptySubtext, { color: colors.placeholder }]}>
                 {searchQuery ? "Tente buscar por outro nome" : "Seja o primeiro a criar uma!"}
               </Text>
             </View>
@@ -632,7 +637,7 @@ export default function ComunidadesScreen() {
                   {/* Minhas Comunidades */}
                   {minhasComunidades.length > 0 && (
                     <>
-                      <Text style={styles.sectionLabel}>Minhas Comunidades</Text>
+                      <Text style={[styles.sectionLabel, { color: colors.primary }]}>Minhas Comunidades</Text>
                       {minhasComunidades.map((item) => (
                         <View key={item.id}>{renderComunidade({ item })}</View>
                       ))}
@@ -642,7 +647,7 @@ export default function ComunidadesScreen() {
                   {/* Outras Comunidades */}
                   {outrasComunidades.length > 0 && (
                     <>
-                      <Text style={styles.sectionLabel}>
+                      <Text style={[styles.sectionLabel, { color: colors.primary }]}>
                         {minhasComunidades.length > 0 ? "Descubra mais comunidades" : "Todas as Comunidades"}
                       </Text>
                       {outrasComunidades.map((item) => (
@@ -665,10 +670,10 @@ export default function ComunidadesScreen() {
       {/* Botão flutuante + (apenas na aba de comunidades) */}
       {activeTab === 'comunidades' && (
         <TouchableOpacity
-          style={styles.fab}
+          style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.shadow }]}
           onPress={() => router.push("/criar-comunidade")}
         >
-          <Ionicons name="add" size={28} color="#fff" />
+          <Ionicons name="add" size={28} color={colors.card} />
         </TouchableOpacity>
       )}
 
@@ -680,51 +685,51 @@ export default function ComunidadesScreen() {
         onRequestClose={() => setShowDialog(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Entrar na Comunidade</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.primary }]}>Entrar na Comunidade</Text>
             
             {selectedComunidade && (
               <>
                 <View style={styles.modalInfo}>
                   <View style={styles.modalInfoRow}>
-                    <Ionicons name="people" size={20} color="#2E7D32" />
-                    <Text style={styles.modalLabel}>Nome:</Text>
+                    <Ionicons name="people" size={20} color={colors.primary} />
+                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Nome:</Text>
                   </View>
-                  <Text style={styles.modalValue}>{selectedComunidade.nome}</Text>
+                  <Text style={[styles.modalValue, { color: colors.text }]}>{selectedComunidade.nome}</Text>
                 </View>
 
                 <View style={styles.modalInfo}>
                   <View style={styles.modalInfoRow}>
-                    <Ionicons name="document-text" size={20} color="#2E7D32" />
-                    <Text style={styles.modalLabel}>Descrição:</Text>
+                    <Ionicons name="document-text" size={20} color={colors.primary} />
+                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Descrição:</Text>
                   </View>
-                  <Text style={styles.modalValue}>{selectedComunidade.descricao}</Text>
+                  <Text style={[styles.modalValue, { color: colors.text }]}>{selectedComunidade.descricao}</Text>
                 </View>
 
                 <View style={styles.modalInfo}>
                   <View style={styles.modalInfoRow}>
-                    <Ionicons name="person" size={20} color="#2E7D32" />
-                    <Text style={styles.modalLabel}>Administrador:</Text>
+                    <Ionicons name="person" size={20} color={colors.primary} />
+                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Administrador:</Text>
                   </View>
-                  <Text style={styles.modalValue}>{selectedComunidade.ownerName}</Text>
+                  <Text style={[styles.modalValue, { color: colors.text }]}>{selectedComunidade.ownerName}</Text>
                 </View>
 
                 <View style={styles.modalInfo}>
                   <View style={styles.modalInfoRow}>
-                    <Ionicons name="calendar" size={20} color="#2E7D32" />
-                    <Text style={styles.modalLabel}>Criada em:</Text>
+                    <Ionicons name="calendar" size={20} color={colors.primary} />
+                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Criada em:</Text>
                   </View>
-                  <Text style={styles.modalValue}>
+                  <Text style={[styles.modalValue, { color: colors.text }]}>
                     {selectedComunidade.createdAt.toLocaleDateString('pt-BR')}
                   </Text>
                 </View>
 
                 <View style={styles.modalInfo}>
                   <View style={styles.modalInfoRow}>
-                    <Ionicons name="people-outline" size={20} color="#2E7D32" />
-                    <Text style={styles.modalLabel}>Membros:</Text>
+                    <Ionicons name="people-outline" size={20} color={colors.primary} />
+                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Membros:</Text>
                   </View>
-                  <Text style={styles.modalValue}>
+                  <Text style={[styles.modalValue, { color: colors.text }]}>
                     {selectedComunidade.membros?.length || 1} {selectedComunidade.membros?.length === 1 ? "membro" : "membros"}
                   </Text>
                 </View>
@@ -733,21 +738,21 @@ export default function ComunidadesScreen() {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
                 onPress={() => setShowDialog(false)}
                 disabled={joiningLoading}
               >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.joinButton]}
+                style={[styles.modalButton, styles.joinButton, { backgroundColor: '#2E8B57' }]}
                 onPress={handleJoinComunidade}
                 disabled={joiningLoading}
               >
                 {joiningLoading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.joinButtonText}>Entrar</Text>
+                  <Text style={[styles.joinButtonText, { color: '#fff' }]}>Entrar</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -848,7 +853,6 @@ export default function ComunidadesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     flexDirection: "row",
@@ -860,14 +864,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#2E7D32",
   },
   // Tabs
   tabsContainer: {
     flexDirection: "row",
-    backgroundColor: "#fff",
     borderBottomWidth: 2,
-    borderBottomColor: "#E9ECEF",
   },
   tab: {
     flex: 1,
@@ -880,43 +881,34 @@ const styles = StyleSheet.create({
     borderBottomColor: "transparent",
   },
   activeTab: {
-    borderBottomColor: "#2E7D32",
   },
   tabText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#666",
   },
   activeTabText: {
-    color: "#2E7D32",
   },
   // Conteúdo da aba Livrarias
   livrariasContent: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   mapContainerFullScreen: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
     position: "relative",
   },
   mapContainerFull: {
     height: "50%",
-    backgroundColor: "#f5f5f5",
     position: "relative",
   },
   // Seção do Mapa
   mapSection: {
-    backgroundColor: "#F8F9FA",
     borderBottomWidth: 1,
-    borderBottomColor: "#E9ECEF",
   },
   mapSectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
-    backgroundColor: "#fff",
   },
   mapHeaderLeft: {
     flexDirection: "row",
@@ -926,11 +918,9 @@ const styles = StyleSheet.create({
   mapSectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#2E7D32",
   },
   mapContainer: {
     height: 250,
-    backgroundColor: "#f5f5f5",
     position: "relative",
   },
   mapLoadingContainer: {
@@ -946,12 +936,10 @@ const styles = StyleSheet.create({
   livrariasList: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#fff",
   },
   livrariasListTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#2E7D32",
     marginBottom: 12,
   },
   livrariasListContent: {
@@ -959,19 +947,16 @@ const styles = StyleSheet.create({
   },
   livrariaCard: {
     flexDirection: "row",
-    backgroundColor: "#F8F9FA",
     borderRadius: 8,
     padding: 12,
     marginBottom: 10,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E9ECEF",
   },
   livrariaIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#E8F5E9",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -982,12 +967,10 @@ const styles = StyleSheet.create({
   livrariaName: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 4,
   },
   livrariaAddress: {
     fontSize: 12,
-    color: "#666",
     marginBottom: 6,
   },
   livrariaFooter: {
@@ -1007,19 +990,16 @@ const styles = StyleSheet.create({
   },
   distanceText: {
     fontSize: 12,
-    color: "#666",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
     marginHorizontal: 20,
     marginVertical: 15,
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E9ECEF",
   },
   searchIcon: {
     marginRight: 10,
@@ -1054,7 +1034,6 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#bbb",
     marginTop: 8,
     textAlign: "center",
   },
@@ -1065,13 +1044,11 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#2E7D32",
     marginTop: 8,
     marginBottom: 12,
     paddingHorizontal: 4,
   },
   comunidadeCard: {
-    backgroundColor: "#F1F8E9",
     borderRadius: 12,
     marginBottom: 15,
     overflow: "hidden",
@@ -1087,16 +1064,12 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     borderWidth: 2,
-    borderColor: "#2E7D32",
-    backgroundColor: "#E8F5E9",
   },
   comunidadeIconPlaceholder: {
     width: 50,
     height: 50,
     borderRadius: 25,
     borderWidth: 2,
-    borderColor: "#2E7D32",
-    backgroundColor: "#E8F5E9",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1112,11 +1085,9 @@ const styles = StyleSheet.create({
   comunidadeNome: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#2E7D32",
     flex: 1,
   },
   memberBadge: {
-    backgroundColor: "#2E7D32",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -1124,16 +1095,13 @@ const styles = StyleSheet.create({
   memberBadgeText: {
     fontSize: 11,
     fontWeight: "600",
-    color: "#fff",
   },
   comunidadeDono: {
     fontSize: 13,
-    color: "#666",
     marginBottom: 8,
   },
   comunidadeDescricao: {
     fontSize: 14,
-    color: "#333",
     marginBottom: 12,
     lineHeight: 20,
   },
@@ -1147,12 +1115,10 @@ const styles = StyleSheet.create({
   },
   membrosCount: {
     fontSize: 13,
-    color: "#666",
     marginLeft: 6,
   },
   dataCount: {
     fontSize: 13,
-    color: "#666",
     marginLeft: 6,
   },
   fab: {
@@ -1162,11 +1128,9 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#2E7D32",
     justifyContent: "center",
     alignItems: "center",
     elevation: 5,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -1179,7 +1143,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 24,
     width: "100%",
@@ -1188,7 +1151,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#2E7D32",
     marginBottom: 20,
     textAlign: "center",
   },
@@ -1204,11 +1166,9 @@ const styles = StyleSheet.create({
   modalLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#666",
   },
   modalValue: {
     fontSize: 15,
-    color: "#333",
     marginLeft: 28,
     lineHeight: 22,
   },
@@ -1224,12 +1184,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cancelButton: {
-    backgroundColor: "#F8F9FA",
     borderWidth: 1,
-    borderColor: "#E9ECEF",
   },
   cancelButtonText: {
-    color: "#666",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -1245,35 +1202,29 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
     margin: 40,
     padding: 60,
     borderRadius: 20,
     borderWidth: 3,
-    borderColor: "#2E7D32",
     borderStyle: "dashed",
   },
   openMapTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#2E7D32",
     marginTop: 20,
     marginBottom: 12,
   },
   openMapSubtitle: {
     fontSize: 16,
-    color: "#666",
     textAlign: "center",
     paddingHorizontal: 20,
   },
   eventosMapContent: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   categoriesContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#fff",
   },
   categoriesContentContainer: {
     gap: 8,
@@ -1285,24 +1236,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: "#F0F8F0",
     borderWidth: 1,
-    borderColor: "#2E7D32",
   },
   categoryButtonActive: {
-    backgroundColor: "#2E7D32",
   },
   categoryButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2E7D32",
   },
   categoryButtonTextActive: {
-    color: "#fff",
   },
   eventosMapContainer: {
     height: 400,
-    backgroundColor: "#E9ECEF",
     marginHorizontal: 16,
     borderRadius: 12,
     overflow: "hidden",
@@ -1314,7 +1259,6 @@ const styles = StyleSheet.create({
   },
   mapDivider: {
     height: 1,
-    backgroundColor: "#e0e0e0",
     marginHorizontal: 16,
     marginBottom: 8,
   },
@@ -1322,12 +1266,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#2E7D32",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
-    borderColor: "#fff",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -1337,12 +1278,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#2E7D32",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
-    borderColor: "#fff",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -1357,39 +1295,31 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
-    backgroundColor: "#F8F9FA",
     borderTopWidth: 1,
-    borderTopColor: "#E9ECEF",
   },
   eventosCount: {
     fontSize: 14,
-    color: "#666",
     fontWeight: "600",
   },
   addEventButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#F0F8F0",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#2E7D32",
   },
   addEventButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2E7D32",
   },
   // Estilos adicionais para a aba de eventos
   eventosScrollView: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   eventosSubtitle: {
     fontSize: 14,
-    color: "#666",
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 12,
@@ -1403,7 +1333,6 @@ const styles = StyleSheet.create({
   },
   createButton: {
     flex: 1,
-    backgroundColor: "#2E7D32",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -1412,23 +1341,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   createButtonText: {
-    color: "#fff",
     fontSize: 14,
     fontWeight: "600",
   },
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#2E7D32",
     gap: 6,
   },
   filterButtonText: {
-    color: "#2E7D32",
     fontSize: 14,
     fontWeight: "600",
   },
@@ -1440,12 +1365,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     marginBottom: 12,
-    backgroundColor: "#f5f5f5",
     borderRadius: 20,
     alignSelf: "center",
   },
   refreshButtonText: {
-    color: "#666",
     fontSize: 13,
   },
   markerContainerSelected: {
@@ -1454,7 +1377,6 @@ const styles = StyleSheet.create({
     borderColor: "#4CAF50",
   },
   markerText: {
-    color: "#fff",
     fontWeight: "bold",
     fontSize: 12,
   },
@@ -1472,29 +1394,24 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#1a1a1a",
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 13,
-    color: "#666",
   },
   createEventButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#2E7D32",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 12,
-    shadowColor: "#2E7D32",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
   },
   createEventButtonText: {
-    color: "#fff",
     fontSize: 14,
     fontWeight: "700",
   },
@@ -1502,20 +1419,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#fff",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#2E7D32",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
   viewMapButtonText: {
-    color: "#2E7D32",
     fontSize: 14,
     fontWeight: "700",
   },
@@ -1527,22 +1440,17 @@ const styles = StyleSheet.create({
   emptyEventsText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#999",
     marginTop: 16,
   },
   emptyEventsSubtext: {
     fontSize: 14,
-    color: "#bbb",
     marginTop: 8,
   },
   eventCard: {
     flexDirection: "column",
-    backgroundColor: "#fff",
     borderRadius: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
@@ -1576,7 +1484,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#fff",
   },
   eventInfo: {
     flex: 1,
@@ -1594,7 +1501,6 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#1a1a1a",
     marginBottom: 6,
   },
   eventCategoryBadge: {
@@ -1606,7 +1512,6 @@ const styles = StyleSheet.create({
   eventCategoryText: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#fff",
     textTransform: "uppercase",
   },
   eventDetails: {
@@ -1619,11 +1524,9 @@ const styles = StyleSheet.create({
   },
   eventDetailText: {
     fontSize: 14,
-    color: "#555",
     flex: 1,
   },
   eventDescription: {
-    color: "#666",
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
@@ -1631,7 +1534,6 @@ const styles = StyleSheet.create({
   eventActions: {
     flexDirection: "row",
     borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
     paddingTop: 12,
     paddingBottom: 12,
     paddingHorizontal: 16,
@@ -1643,14 +1545,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor: "#E8F5E9",
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#2E7D32",
   },
   editEventButtonText: {
-    color: "#2E7D32",
     fontSize: 14,
     fontWeight: "600",
   },
@@ -1660,7 +1559,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor: "#FFEBEE",
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
@@ -1679,28 +1577,23 @@ const styles = StyleSheet.create({
   filterButtonBelow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E9ECEF',
     gap: 8,
   },
   filterButtonBelowText: {
-    color: '#333',
     fontSize: 15,
     fontWeight: '500',
   },
   filterButtonTextActive: {
-    color: '#fff',
     fontSize: 14,
     fontWeight: '600',
   },
   filterBadge: {
-    backgroundColor: '#fff',
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -1709,14 +1602,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   filterBadgeText: {
-    color: '#2E7D32',
     fontSize: 11,
     fontWeight: '700',
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -1731,7 +1622,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   filterModalContent: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',
@@ -1742,12 +1632,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
   },
   filterModalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#333',
   },
   filterOptions: {
     padding: 20,
@@ -1755,7 +1643,6 @@ const styles = StyleSheet.create({
   filterSectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1766,7 +1653,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#F8F9FA',
     marginBottom: 12,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -1779,7 +1665,6 @@ const styles = StyleSheet.create({
   },
   filterOptionText: {
     fontSize: 16,
-    color: '#333',
     fontWeight: '500',
   },
   filterOptionRight: {
@@ -1791,18 +1676,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
   },
   eventCountText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#666',
   },
   filterModalFooter: {
     flexDirection: 'row',
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
     gap: 12,
   },
   clearFiltersButton: {
@@ -1812,28 +1694,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#F8F9FA',
     gap: 8,
   },
   clearFiltersText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666',
   },
   applyFiltersButton: {
     flex: 1,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#2E7D32',
     alignItems: 'center',
   },
   applyFiltersText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#fff',
   },
   eventCardSelected: {
     borderColor: '#4CAF50',
-    backgroundColor: '#E8F5E9',
   },
 });

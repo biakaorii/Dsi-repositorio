@@ -12,11 +12,13 @@ import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../config/firebaseConfig'; // ✅ Ajuste o caminho se necessário
+import { useTheme } from '../contexts/ThemeContext';
 
 const RecuperarSenha = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { colors } = useTheme();
 
   const showError = (message: string) => {
     Toast.show({
@@ -70,15 +72,16 @@ const RecuperarSenha = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Esqueceu sua senha?</Text>
-      <Text style={styles.subtitle}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Esqueceu sua senha?</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
         Digite seu e-mail e enviaremos um link seguro para redefinir sua senha.
       </Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
         placeholder="seu@email.com"
+        placeholderTextColor={colors.placeholder}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -87,14 +90,14 @@ const RecuperarSenha = () => {
       />
 
       <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
+        style={[styles.button, { backgroundColor: loading ? colors.border : colors.success }]}
         onPress={handleSendResetEmail}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" size="small" />
+          <ActivityIndicator color={colors.card} size="small" />
         ) : (
-          <Text style={styles.buttonText}>Enviar link de redefinição</Text>
+          <Text style={[styles.buttonText, { color: colors.card }]}>Enviar link de redefinição</Text>
         )}
       </TouchableOpacity>
 
@@ -103,7 +106,7 @@ const RecuperarSenha = () => {
         onPress={() => router.push('/login')}
         disabled={loading}
       >
-        <Text style={styles.backLink}>Voltar para o login</Text>
+        <Text style={[styles.backLink, { color: colors.primary }]}>Voltar para o login</Text>
       </TouchableOpacity>
 
       <Toast />
@@ -117,56 +120,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fbfbf9f9',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#000',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
-    color: '#666',
     paddingHorizontal: 20,
   },
   input: {
     width: 312,
     height: 45,
     alignSelf: 'center',
-    backgroundColor: '#F8F9FA',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E9ECEF',
     fontSize: 16,
-    color: '#333',
   },
   button: {
     width: 312,
     height: 45,
     alignSelf: 'center',
-    backgroundColor: '#2E8B57',
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
   },
-  buttonDisabled: {
-    backgroundColor: '#9CA3AF',
-  },
   buttonText: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
   backLink: {
-    color: '#2E8B57',
     fontWeight: '600',
     fontSize: 16,
   },

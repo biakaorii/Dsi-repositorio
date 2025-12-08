@@ -12,6 +12,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { useRouter, Link } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import Toast from 'react-native-toast-message';
 
 export default function LoginScreen() {
@@ -20,6 +21,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { signIn } = useAuth();
+  const { colors } = useTheme();
 
   const handleLogin = async (): Promise<void> => {
     if (!email || !password) {
@@ -55,12 +57,13 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Image style={styles.icon} source={require("../assets/images/icon.png")} />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
         placeholder="Insira o seu e-mail"
+        placeholderTextColor={colors.placeholder}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -69,8 +72,9 @@ export default function LoginScreen() {
       />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
         placeholder="Insira a sua senha"
+        placeholderTextColor={colors.placeholder}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -78,25 +82,25 @@ export default function LoginScreen() {
       />
       
       <Link href="/recuperar_senha" style={styles.forgotPasswordLink}>
-        <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
+        <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Esqueceu a senha?</Text>
       </Link>
 
       <TouchableOpacity 
-        style={[styles.button, loading && styles.buttonDisabled]} 
+        style={[styles.button, { backgroundColor: colors.success }, loading && styles.buttonDisabled]} 
         onPress={handleLogin}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.card} />
         ) : (
-          <Text style={styles.buttonText}>Entrar</Text>
+          <Text style={[styles.buttonText, { color: colors.card }]}>Entrar</Text>
         )}
       </TouchableOpacity>
 
-      <Text style={styles.cadastro}>Não tem uma conta?</Text>
+      <Text style={[styles.cadastro, { color: colors.textSecondary }]}>Não tem uma conta?</Text>
 
       <TouchableOpacity onPress={() => router.push("/cadastro")} disabled={loading}>
-        <Text style={styles.cadastrolink}>Cadastre-se</Text>
+        <Text style={[styles.cadastrolink, { color: colors.primary }]}>Cadastre-se</Text>
       </TouchableOpacity>
 
       <Toast />
@@ -110,7 +114,6 @@ const styles = StyleSheet.create({
     flex: 1, 
     justifyContent: "center", 
     padding: 20, 
-    backgroundColor: "#fbfbf9f9" 
   },
   icon: {
     width: 148,
@@ -122,21 +125,17 @@ const styles = StyleSheet.create({
     width: 312,
     height: 45,
     alignSelf: 'center',
-    backgroundColor: "#F8F9FA",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#E9ECEF",
     fontSize: 16,
-    color: "#333",
   },
   button: {
     width: 312,
     height: 45,
     alignSelf: 'center',
-    backgroundColor: "#2E8B57",
     borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
@@ -146,7 +145,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#9CA3AF",
   },
   buttonText: { 
-    color: "#fff", 
     fontSize: 18, 
     fontWeight: "bold",
   },
@@ -155,7 +153,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   cadastrolink: {
-    color: "#03168F", 
     textAlign: "center",
     textDecorationLine: "underline",
     fontWeight: 'bold', 
@@ -166,7 +163,6 @@ const styles = StyleSheet.create({
     textAlign :'center',
   },
   forgotPasswordText: {
-    color: '#2f7b45',
     fontWeight: '600',
     textAlign: 'center',
   },

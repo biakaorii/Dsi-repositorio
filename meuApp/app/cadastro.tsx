@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import Toast from 'react-native-toast-message';
 
 export default function RegisterScreen() {
@@ -21,6 +22,7 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { signUp } = useAuth();
+  const { colors } = useTheme();
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -98,20 +100,22 @@ export default function RegisterScreen() {
   };     
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Image style={styles.icon} source={require("../assets/images/icon.png")} />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
         placeholder="Nome"
+        placeholderTextColor={colors.placeholder}
         value={name}
         onChangeText={setName}
         editable={!loading}
       />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
         placeholder="E-mail"
+        placeholderTextColor={colors.placeholder}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -120,8 +124,9 @@ export default function RegisterScreen() {
       />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
         placeholder="Senha"
+        placeholderTextColor={colors.placeholder}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -129,8 +134,9 @@ export default function RegisterScreen() {
       />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
         placeholder="Confirmar senha"
+        placeholderTextColor={colors.placeholder}
         value={confirm}
         onChangeText={setConfirm}
         secureTextEntry
@@ -138,19 +144,19 @@ export default function RegisterScreen() {
       />
 
       <TouchableOpacity 
-        style={[styles.button, loading && styles.buttonDisabled]} 
+        style={[styles.button, { backgroundColor: loading ? colors.border : colors.success }]} 
         onPress={handleRegister}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.card} />
         ) : (
-          <Text style={styles.buttonText}>Cadastrar</Text>
+          <Text style={[styles.buttonText, { color: colors.card }]}>Cadastrar</Text>
         )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.back()} disabled={loading}>
-        <Text style={styles.link}>Já tem uma conta? Entrar</Text>
+        <Text style={[styles.link, { color: colors.primary }]}>Já tem uma conta? Entrar</Text>
       </TouchableOpacity>
 
       <Toast />
@@ -162,8 +168,7 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     justifyContent: "center", 
-    padding: 20, 
-    backgroundColor: "#fbfbf9f9" 
+    padding: 20,
   },
   icon: {
     width: 148,
@@ -175,38 +180,29 @@ const styles = StyleSheet.create({
     width: 312,
     height: 45,
     alignSelf: 'center',
-    backgroundColor: "#F8F9FA",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#E9ECEF",
     fontSize: 16,
-    color: "#333",
   },
   button: {
     width: 312,
     height: 45,
     alignSelf: 'center',
-    backgroundColor: "#2E8B57",
     borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 20,
     marginBottom: 20,
   },
-  buttonDisabled: {
-    backgroundColor: "#9CA3AF",
-  },
   buttonText: { 
-    color: "#fff", 
     fontSize: 18, 
     fontWeight: "bold",
   },
   link: {
     textAlign: "center",
-    color: "#03168F",
     textDecorationLine: "underline",
     fontWeight: "bold",
   },

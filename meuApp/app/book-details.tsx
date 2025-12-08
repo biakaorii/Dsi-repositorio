@@ -15,6 +15,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { useReviews, Review } from "../contexts/ReviewsContext";
 import { useFavorites } from "../contexts/FavoritesContext";
 import Toast from 'react-native-toast-message';
@@ -25,6 +26,7 @@ export default function BookDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuth();
+  const { colors } = useTheme();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const {
     reviews,
@@ -333,35 +335,35 @@ export default function BookDetailsScreen() {
 
   if (reviewsLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#2E7D32" />
+          <Ionicons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detalhes do Livro</Text>
+        <Text style={[styles.headerTitle, { color: colors.primary }]}>Detalhes do Livro</Text>
         <TouchableOpacity onPress={handleFavoriteToggle}>
           <Ionicons 
             name={isFavorite(bookId) ? "heart" : "heart-outline"} 
             size={24} 
-            color="#E63946" 
+            color={colors.error} 
           />
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Informações do Livro */}
-        <View style={styles.bookSection}>
+        <View style={[styles.bookSection, { backgroundColor: colors.card }]}>
           <Image source={{ uri: bookImage }} style={styles.bookCover} />
-          <Text style={styles.bookTitle}>{bookTitle}</Text>
-          <Text style={styles.bookAuthor}>{bookAuthor}</Text>
+          <Text style={[styles.bookTitle, { color: colors.text }]}>{bookTitle}</Text>
+          <Text style={[styles.bookAuthor, { color: colors.textSecondary }]}>{bookAuthor}</Text>
 
           {/* Avaliação Média */}
           <View style={styles.ratingSection}>
@@ -374,62 +376,62 @@ export default function BookDetailsScreen() {
           {/* Botão Mais Detalhes */}
           {(bookGenre || bookPages || bookPublisher || bookYear || bookDescription) && (
             <TouchableOpacity 
-              style={styles.moreDetailsButton}
+              style={[styles.moreDetailsButton, { backgroundColor: colors.primaryLight, borderColor: colors.border }]}
               onPress={() => setShowMoreDetails(!showMoreDetails)}
             >
-              <Text style={styles.moreDetailsButtonText}>
+              <Text style={[styles.moreDetailsButtonText, { color: colors.primary }]}>
                 {showMoreDetails ? "Menos Detalhes" : "Mais Detalhes"}
               </Text>
               <Ionicons 
                 name={showMoreDetails ? "chevron-up" : "chevron-down"} 
                 size={20} 
-                color="#2E7D32" 
+                color={colors.primary} 
               />
             </TouchableOpacity>
           )}
 
           {/* Seção Expansível de Detalhes */}
           {showMoreDetails && (
-            <View style={styles.detailsSection}>
+            <View style={[styles.detailsSection, { backgroundColor: colors.inputBackground }]}>
               {bookGenre && (
                 <View style={styles.detailRow}>
-                  <Ionicons name="pricetag-outline" size={18} color="#666" />
-                  <Text style={styles.detailLabel}>Gênero:</Text>
-                  <Text style={styles.detailValue}>{bookGenre}</Text>
+                  <Ionicons name="pricetag-outline" size={18} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.text }]}>Gênero:</Text>
+                  <Text style={[styles.detailValue, { color: colors.textSecondary }]}>{bookGenre}</Text>
                 </View>
               )}
 
               {bookPages && (
                 <View style={styles.detailRow}>
-                  <Ionicons name="book-outline" size={18} color="#666" />
-                  <Text style={styles.detailLabel}>Páginas:</Text>
-                  <Text style={styles.detailValue}>{bookPages}</Text>
+                  <Ionicons name="book-outline" size={18} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.text }]}>Páginas:</Text>
+                  <Text style={[styles.detailValue, { color: colors.textSecondary }]}>{bookPages}</Text>
                 </View>
               )}
 
               {bookPublisher && (
                 <View style={styles.detailRow}>
-                  <Ionicons name="business-outline" size={18} color="#666" />
-                  <Text style={styles.detailLabel}>Editora:</Text>
-                  <Text style={styles.detailValue}>{bookPublisher}</Text>
+                  <Ionicons name="business-outline" size={18} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.text }]}>Editora:</Text>
+                  <Text style={[styles.detailValue, { color: colors.textSecondary }]}>{bookPublisher}</Text>
                 </View>
               )}
 
               {bookYear && (
                 <View style={styles.detailRow}>
-                  <Ionicons name="calendar-outline" size={18} color="#666" />
-                  <Text style={styles.detailLabel}>Ano:</Text>
-                  <Text style={styles.detailValue}>{bookYear}</Text>
+                  <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.text }]}>Ano:</Text>
+                  <Text style={[styles.detailValue, { color: colors.textSecondary }]}>{bookYear}</Text>
                 </View>
               )}
 
               {bookDescription && (
                 <View style={styles.detailRowColumn}>
                   <View style={styles.detailRowHeader}>
-                    <Ionicons name="document-text-outline" size={18} color="#666" />
-                    <Text style={styles.detailLabel}>Descrição:</Text>
+                    <Ionicons name="document-text-outline" size={18} color={colors.textSecondary} />
+                    <Text style={[styles.detailLabel, { color: colors.text }]}>Descrição:</Text>
                   </View>
-                  <Text style={styles.detailDescription}>{bookDescription}</Text>
+                  <Text style={[styles.detailDescription, { color: colors.textSecondary }]}>{bookDescription}</Text>
                 </View>
               )}
             </View>
@@ -438,18 +440,19 @@ export default function BookDetailsScreen() {
 
         {/* Formulário de Review */}
         {user && (
-          <View style={styles.reviewForm}>
-            <Text style={styles.formTitle}>
+          <View style={[styles.reviewForm, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+            <Text style={[styles.formTitle, { color: colors.text }]}>
               {isEditing ? "Editar seu review" : "Avaliar este livro"}
             </Text>
 
-            <Text style={styles.label}>Sua avaliação:</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Sua avaliação:</Text>
             {renderStars(rating, setRating)}
 
-            <Text style={styles.label}>Seu comentário:</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Seu comentário:</Text>
             <TextInput
-              style={styles.textArea}
+              style={[styles.textArea, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
               placeholder="Escreva sua opinião sobre o livro..."
+              placeholderTextColor={colors.placeholder}
               value={comment}
               onChangeText={setComment}
               multiline
@@ -460,7 +463,7 @@ export default function BookDetailsScreen() {
 
             <View style={styles.formButtons}>
               <TouchableOpacity
-                style={[styles.submitButton, submitting && styles.buttonDisabled]}
+                style={[styles.submitButton, { backgroundColor: colors.primary }, submitting && styles.buttonDisabled]}
                 onPress={handleSubmitReview}
                 disabled={submitting}
               >
@@ -475,7 +478,7 @@ export default function BookDetailsScreen() {
 
               {isEditing && editingReviewId && (
                 <TouchableOpacity
-                  style={[styles.deleteButton, submitting && styles.buttonDisabled]}
+                  style={[styles.deleteButton, { backgroundColor: colors.error }, submitting && styles.buttonDisabled]}
                   onPress={handleDeleteReview}
                   disabled={submitting}
                 >
@@ -488,12 +491,12 @@ export default function BookDetailsScreen() {
         )}
 
         {!user && (
-          <View style={styles.loginPrompt}>
-            <Text style={styles.loginPromptText}>
+          <View style={[styles.loginPrompt, { backgroundColor: colors.card }]}>
+            <Text style={[styles.loginPromptText, { color: colors.textSecondary }]}>
               Faça login para avaliar este livro
             </Text>
             <TouchableOpacity
-              style={styles.loginButton}
+              style={[styles.loginButton, { backgroundColor: colors.primary }]}
               onPress={() => router.push("/login")}
             >
               <Text style={styles.loginButtonText}>Fazer Login</Text>
@@ -503,14 +506,14 @@ export default function BookDetailsScreen() {
 
         {/* Lista de Reviews */}
         <View style={styles.reviewsSection}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Avaliações ({bookReviews.length})
           </Text>
 
           {bookReviews.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="chatbubbles-outline" size={50} color="#CCC" />
-              <Text style={styles.emptyText}>
+              <Ionicons name="chatbubbles-outline" size={50} color={colors.border} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 Nenhuma avaliação ainda. Seja o primeiro!
               </Text>
             </View>
@@ -520,7 +523,7 @@ export default function BookDetailsScreen() {
               const currentUserPhoto = userPhotos[review.userId];
               
               return (
-                <View key={review.id} style={styles.reviewCard}>
+                <View key={review.id} style={[styles.reviewCard, { backgroundColor: colors.card }]}>
                   <View style={styles.reviewHeader}>
                     <View style={styles.reviewHeaderLeft}>
                       <TouchableOpacity
@@ -535,11 +538,11 @@ export default function BookDetailsScreen() {
                         {currentUserPhoto ? (
                           <Image
                             source={{ uri: `${currentUserPhoto}?t=${Date.now()}` }}
-                            style={styles.profilePhoto}
+                            style={[styles.profilePhoto, { backgroundColor: colors.inputBackground }]}
                           />
                         ) : (
-                          <View style={styles.profilePhotoPlaceholder}>
-                            <Ionicons name="person" size={24} color="#999" />
+                          <View style={[styles.profilePhotoPlaceholder, { backgroundColor: colors.inputBackground }]}>
+                            <Ionicons name="person" size={24} color={colors.textSecondary} />
                           </View>
                         )}
                       </TouchableOpacity>
@@ -565,7 +568,7 @@ export default function BookDetailsScreen() {
                               </View>
                             </View>
                           ) : (
-                            <Text style={styles.reviewerName}>
+                            <Text style={[styles.reviewerName, { color: colors.text }]}>
                               {review.userName}
                             </Text>
                           )}
@@ -573,15 +576,15 @@ export default function BookDetailsScreen() {
                         {renderStars(review.rating, undefined, 16)}
                       </View>
                     </View>
-                    <Text style={styles.reviewDate}>
+                    <Text style={[styles.reviewDate, { color: colors.textSecondary }]}>
                       {review.createdAt.toLocaleDateString("pt-BR")}
                     </Text>
                   </View>
 
-                  <Text style={styles.reviewComment}>{review.comment}</Text>
+                  <Text style={[styles.reviewComment, { color: colors.text }]}>{review.comment}</Text>
 
                   {review.updatedAt.getTime() !== review.createdAt.getTime() && (
-                    <Text style={styles.editedLabel}>(editado)</Text>
+                    <Text style={[styles.editedLabel, { color: colors.textSecondary }]}>(editado)</Text>
                   )}
 
                   {/* Botão de Like */}
@@ -598,11 +601,11 @@ export default function BookDetailsScreen() {
                       size={20}
                       color={
                         user && review.likedBy.includes(user.uid)
-                          ? "#E63946"
-                          : "#666"
+                          ? colors.error
+                          : colors.textSecondary
                       }
                     />
-                    <Text style={styles.likeCount}>{review.likes}</Text>
+                    <Text style={[styles.likeCount, { color: colors.textSecondary }]}>{review.likes}</Text>
                   </TouchableOpacity>
                 </View>
               );
@@ -621,22 +624,22 @@ export default function BookDetailsScreen() {
         onRequestClose={() => setShowDeleteModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Ionicons name="warning" size={50} color="#E63946" />
+              <Ionicons name="warning" size={50} color={colors.error} />
             </View>
             
-            <Text style={styles.modalTitle}>Excluir Review</Text>
-            <Text style={styles.modalMessage}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Excluir Review</Text>
+            <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>
               Tem certeza que deseja excluir sua avaliação? Esta ação não pode ser desfeita.
             </Text>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
+                style={[styles.modalButton, styles.modalButtonCancel, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
                 onPress={() => setShowDeleteModal(false)}
               >
-                <Text style={styles.modalButtonTextCancel}>Cancelar</Text>
+                <Text style={[styles.modalButtonTextCancel, { color: colors.text }]}>Cancelar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -658,13 +661,11 @@ export default function BookDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
   },
   header: {
     flexDirection: "row",
@@ -673,17 +674,14 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 50,
     borderBottomWidth: 1,
-    borderBottomColor: "#E9ECEF",
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#2E7D32",
   },
   bookSection: {
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#F8F9FA",
   },
   bookCover: {
     width: 150,
@@ -694,13 +692,11 @@ const styles = StyleSheet.create({
   bookTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#333",
     textAlign: "center",
     marginBottom: 5,
   },
   bookAuthor: {
     fontSize: 16,
-    color: "#666",
     marginBottom: 15,
   },
   ratingSection: {
@@ -708,7 +704,6 @@ const styles = StyleSheet.create({
   },
   averageRating: {
     fontSize: 14,
-    color: "#666",
     marginTop: 5,
   },
   starsContainer: {
@@ -717,30 +712,24 @@ const styles = StyleSheet.create({
   },
   reviewForm: {
     padding: 20,
-    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#E9ECEF",
   },
   formTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 15,
   },
   label: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
     marginBottom: 10,
     marginTop: 10,
   },
   textArea: {
     borderWidth: 1,
-    borderColor: "#E9ECEF",
     borderRadius: 12,
     padding: 15,
     fontSize: 16,
-    backgroundColor: "#F8F9FA",
     minHeight: 100,
     marginBottom: 15,
   },
@@ -750,7 +739,6 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     flex: 1,
-    backgroundColor: "#2E7D32",
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
@@ -765,7 +753,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E63946",
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,
@@ -782,15 +769,12 @@ const styles = StyleSheet.create({
   loginPrompt: {
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
   },
   loginPromptText: {
     fontSize: 16,
-    color: "#666",
     marginBottom: 15,
   },
   loginButton: {
-    backgroundColor: "#2E7D32",
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 12,
@@ -806,7 +790,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 15,
   },
   emptyState: {
@@ -815,11 +798,9 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: "#999",
     marginTop: 10,
   },
   reviewCard: {
-    backgroundColor: "#F8F9FA",
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
@@ -840,13 +821,11 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderRadius: 22.5,
-    backgroundColor: "#E9ECEF",
   },
   profilePhotoPlaceholder: {
     width: 45,
     height: 45,
     borderRadius: 22.5,
-    backgroundColor: "#E9ECEF",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -868,7 +847,6 @@ const styles = StyleSheet.create({
   reviewerName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
     textDecorationLine: "underline",
   },
   businessName: {
@@ -890,17 +868,14 @@ const styles = StyleSheet.create({
   },
   reviewDate: {
     fontSize: 12,
-    color: "#999",
   },
   reviewComment: {
     fontSize: 15,
-    color: "#555",
     lineHeight: 22,
     marginBottom: 10,
   },
   editedLabel: {
     fontSize: 12,
-    color: "#999",
     fontStyle: "italic",
     marginBottom: 10,
   },
@@ -911,7 +886,6 @@ const styles = StyleSheet.create({
   },
   likeCount: {
     fontSize: 14,
-    color: "#666",
   },
   bottomSpacing: {
     height: 30,
@@ -924,22 +898,18 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    backgroundColor: "#F1F8F4",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#C8E6C9",
     marginTop: 15,
   },
   moreDetailsButtonText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#2E7D32",
   },
   // Estilos da seção de detalhes expansível
   detailsSection: {
     marginTop: 15,
     padding: 15,
-    backgroundColor: "#FAFAFA",
     borderRadius: 10,
     gap: 12,
   },
@@ -959,17 +929,14 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#333",
     minWidth: 70,
   },
   detailValue: {
     fontSize: 14,
-    color: "#666",
     flex: 1,
   },
   detailDescription: {
     fontSize: 14,
-    color: "#666",
     lineHeight: 20,
     paddingLeft: 28,
   },
@@ -981,7 +948,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "#FFF",
     borderRadius: 20,
     padding: 25,
     width: "85%",
@@ -1002,13 +968,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 10,
     textAlign: "center",
   },
   modalMessage: {
     fontSize: 16,
-    color: "#666",
     textAlign: "center",
     marginBottom: 25,
     lineHeight: 22,
@@ -1026,9 +990,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   modalButtonCancel: {
-    backgroundColor: "#F0F0F0",
     borderWidth: 1,
-    borderColor: "#DDD",
   },
   modalButtonDelete: {
     backgroundColor: "#E63946",
@@ -1036,7 +998,6 @@ const styles = StyleSheet.create({
   modalButtonTextCancel: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#666",
   },
   modalButtonTextDelete: {
     fontSize: 16,

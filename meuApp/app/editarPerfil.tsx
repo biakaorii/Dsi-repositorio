@@ -7,10 +7,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import Toast from 'react-native-toast-message';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadProfilePhoto, deleteProfilePhoto } from '@/utils/uploadProfilePhoto';
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function EditarPerfilScreen() {
   const router = useRouter();
   const { user, loading: authLoading, updateUser } = useAuth();
+  const { colors } = useTheme();
 
   const [nome, setNome] = useState("");
   const [idade, setIdade] = useState("");
@@ -287,25 +289,25 @@ export default function EditarPerfilScreen() {
   // Mostrar loading enquanto carrega o usuário
   if (authLoading || !user) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#2E7D32" />
+          <Ionicons name="arrow-back" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Editar Perfil</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Editar Perfil</Text>
         <TouchableOpacity onPress={salvarPerfil} disabled={uploading}>
           {uploading ? (
-            <ActivityIndicator size="small" color="#2E7D32" />
+            <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <Text style={styles.saveButton}>Salvar</Text>
+            <Text style={[styles.saveButton, { color: colors.primary }]}>Salvar</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -313,7 +315,7 @@ export default function EditarPerfilScreen() {
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
         {/* Foto de Perfil */}
         <View style={styles.photoSection}>
-          <Text style={styles.sectionTitle}>Foto de Perfil</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Foto de Perfil</Text>
           <View style={styles.photoContainer}>
             <View style={styles.photoWrapper}>
               <Image
@@ -324,22 +326,22 @@ export default function EditarPerfilScreen() {
                 style={styles.profilePhoto}
               />
               {profileImage && profileImage !== user?.profilePhotoUrl && (
-                <View style={styles.newPhotoBadge}>
-                  <Ionicons name="checkmark-circle" size={24} color="#fff" />
+                <View style={[styles.newPhotoBadge, { backgroundColor: colors.success }]}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.card} />
                 </View>
               )}
             </View>
             <TouchableOpacity
-              style={styles.changePhotoButton}
+              style={[styles.changePhotoButton, { backgroundColor: colors.success }]}
               onPress={pickImage}
               disabled={uploading}
             >
-              <Ionicons name="camera" size={20} color="#fff" />
-              <Text style={styles.changePhotoText}>
+              <Ionicons name="camera" size={20} color={colors.card} />
+              <Text style={[styles.changePhotoText, { color: colors.card }]}>
                 {uploading ? "Enviando..." : "Escolher e Ajustar Foto"}
               </Text>
             </TouchableOpacity>
-            <Text style={styles.photoHint}>
+            <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
               Você poderá ajustar a posição e zoom da foto
             </Text>
           </View>
@@ -348,13 +350,13 @@ export default function EditarPerfilScreen() {
         {/* Campo Nome - Apenas para Leitores/Críticos */}
         {user.profileType !== 'empreendedor' && (
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome Completo</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Nome Completo</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
               value={nome}
               onChangeText={setNome}
               placeholder="Digite seu nome"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.placeholder}
             />
           </View>
         )}
@@ -362,13 +364,13 @@ export default function EditarPerfilScreen() {
         {/* Campo Idade - Apenas para Leitores/Críticos */}
         {user.profileType !== 'empreendedor' && (
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Idade</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Idade</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
               value={idade}
               onChangeText={setIdade}
               placeholder="Digite sua idade"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.placeholder}
               keyboardType="numeric"
               maxLength={3}
             />
@@ -377,12 +379,12 @@ export default function EditarPerfilScreen() {
 
         {/* Campo Email (somente leitura) */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Email</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
             value={user.email}
             editable={false}
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.placeholder}
           />
         </View>
 
@@ -391,30 +393,30 @@ export default function EditarPerfilScreen() {
           <>
             {/* Campo Bio */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Bio / Descrição</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Bio / Descrição</Text>
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={[styles.input, styles.textArea, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={bio}
                 onChangeText={setBio}
                 placeholder="Conte um pouco sobre você..."
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
 
             {/* Campo Gêneros Favoritos */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Gêneros Favoritos</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Gêneros Favoritos</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={generosFavoritos}
                 onChangeText={setGenerosFavoritos}
                 placeholder="Ex: Fantasia, Romance"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
               />
-              <Text style={styles.hint}>Separe os gêneros por vírgula</Text>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>Separe os gêneros por vírgula</Text>
             </View>
           </>
         )}
@@ -422,70 +424,70 @@ export default function EditarPerfilScreen() {
         {/* Campos específicos para Empreendedores */}
         {user.profileType === 'empreendedor' && (
           <>
-            <View style={styles.divider}>
-              <Text style={styles.dividerText}>Informações do Negócio</Text>
+            <View style={[styles.divider, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.dividerText, { color: colors.primary }]}>Informações do Negócio</Text>
             </View>
 
             {/* Informações Básicas */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                <Ionicons name="business" size={16} color="#2E7D32" /> Nome da Livraria *
+              <Text style={[styles.label, { color: colors.text }]}>
+                <Ionicons name="business" size={16} color={colors.primary} /> Nome da Livraria *
               </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={businessName}
                 onChangeText={setBusinessName}
                 placeholder="Ex: Livraria Central"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                <Ionicons name="document-text" size={16} color="#2E7D32" /> CNPJ
+              <Text style={[styles.label, { color: colors.text }]}>
+                <Ionicons name="document-text" size={16} color={colors.primary} /> CNPJ
               </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={cnpj}
                 onChangeText={setCnpj}
                 placeholder="00.000.000/0000-00"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 keyboardType="numeric"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                <Ionicons name="location" size={16} color="#2E7D32" /> Endereço Completo
+              <Text style={[styles.label, { color: colors.text }]}>
+                <Ionicons name="location" size={16} color={colors.primary} /> Endereço Completo
               </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={address}
                 onChangeText={setAddress}
                 placeholder="Rua, número, bairro"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
 
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 2 }]}>
-                <Text style={styles.label}>Cidade</Text>
+                <Text style={[styles.label, { color: colors.text }]}>Cidade</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                   value={city}
                   onChangeText={setCity}
                   placeholder="Cidade"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.placeholder}
                 />
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: 10 }]}>
-                <Text style={styles.label}>UF</Text>
+                <Text style={[styles.label, { color: colors.text }]}>UF</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                   value={state}
                   onChangeText={setState}
                   placeholder="SP"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.placeholder}
                   maxLength={2}
                   autoCapitalize="characters"
                 />
@@ -493,20 +495,20 @@ export default function EditarPerfilScreen() {
             </View>
 
             {/* Sobre o Negócio */}
-            <View style={styles.divider}>
-              <Text style={styles.dividerText}>Sobre o Negócio</Text>
+            <View style={[styles.divider, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.dividerText, { color: colors.primary }]}>Sobre o Negócio</Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                <Ionicons name="information-circle" size={16} color="#2E7D32" /> Descrição Curta
+              <Text style={[styles.label, { color: colors.text }]}>
+                <Ionicons name="information-circle" size={16} color={colors.primary} /> Descrição Curta
               </Text>
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={[styles.input, styles.textArea, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={businessDescription}
                 onChangeText={setBusinessDescription}
                 placeholder="Ex: Livraria independente especializada em literatura contemporânea"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
@@ -514,15 +516,15 @@ export default function EditarPerfilScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                <Ionicons name="flag" size={16} color="#2E7D32" /> Missão
+              <Text style={[styles.label, { color: colors.text }]}>
+                <Ionicons name="flag" size={16} color={colors.primary} /> Missão
               </Text>
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={[styles.input, styles.textArea, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={mission}
                 onChangeText={setMission}
                 placeholder="Ex: Promover o acesso à leitura e incentivar autores nacionais"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
@@ -531,15 +533,15 @@ export default function EditarPerfilScreen() {
 
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>
-                  <Ionicons name="calendar" size={16} color="#2E7D32" /> Ano de Fundação
+                <Text style={[styles.label, { color: colors.text }]}>
+                  <Ionicons name="calendar" size={16} color={colors.primary} /> Ano de Fundação
                 </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                   value={foundedYear}
                   onChangeText={setFoundedYear}
                   placeholder="2019"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.placeholder}
                   keyboardType="numeric"
                   maxLength={4}
                 />
@@ -547,46 +549,46 @@ export default function EditarPerfilScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Tipo de Negócio</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Tipo de Negócio</Text>
               <View style={styles.typeSelector}>
                 <TouchableOpacity
-                  style={[styles.typeButton, businessType === 'fisica' && styles.typeButtonActive]}
+                  style={[styles.typeButton, { borderColor: colors.border }, businessType === 'fisica' && { backgroundColor: colors.success }]}
                   onPress={() => setBusinessType('fisica')}
                 >
                   <Ionicons 
                     name="storefront" 
                     size={18} 
-                    color={businessType === 'fisica' ? '#fff' : '#4CAF50'} 
+                    color={businessType === 'fisica' ? colors.card : colors.success} 
                   />
-                  <Text style={[styles.typeButtonText, businessType === 'fisica' && styles.typeButtonTextActive]}>
+                  <Text style={[styles.typeButtonText, { color: businessType === 'fisica' ? colors.card : colors.text }]}>
                     Física
                   </Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
-                  style={[styles.typeButton, businessType === 'online' && styles.typeButtonActive]}
+                  style={[styles.typeButton, { borderColor: colors.border }, businessType === 'online' && { backgroundColor: colors.success }]}
                   onPress={() => setBusinessType('online')}
                 >
                   <Ionicons 
                     name="globe" 
                     size={18} 
-                    color={businessType === 'online' ? '#fff' : '#4CAF50'} 
+                    color={businessType === 'online' ? colors.card : colors.success} 
                   />
-                  <Text style={[styles.typeButtonText, businessType === 'online' && styles.typeButtonTextActive]}>
+                  <Text style={[styles.typeButtonText, { color: businessType === 'online' ? colors.card : colors.text }]}>
                     Online
                   </Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
-                  style={[styles.typeButton, businessType === 'hibrida' && styles.typeButtonActive]}
+                  style={[styles.typeButton, { borderColor: colors.border }, businessType === 'hibrida' && { backgroundColor: colors.success }]}
                   onPress={() => setBusinessType('hibrida')}
                 >
                   <Ionicons 
                     name="layers" 
                     size={18} 
-                    color={businessType === 'hibrida' ? '#fff' : '#4CAF50'} 
+                    color={businessType === 'hibrida' ? colors.card : colors.success} 
                   />
-                  <Text style={[styles.typeButtonText, businessType === 'hibrida' && styles.typeButtonTextActive]}>
+                  <Text style={[styles.typeButtonText, { color: businessType === 'hibrida' ? colors.card : colors.text }]}>
                     Híbrida
                   </Text>
                 </TouchableOpacity>
@@ -594,36 +596,36 @@ export default function EditarPerfilScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                <Ionicons name="time" size={16} color="#2E7D32" /> Horário de Funcionamento
+              <Text style={[styles.label, { color: colors.text }]}>
+                <Ionicons name="time" size={16} color={colors.primary} /> Horário de Funcionamento
               </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={workingHours}
                 onChangeText={setWorkingHours}
                 placeholder="Ex: Seg-Sex 9h-18h, Sáb 9h-13h"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
 
             {/* História */}
-            <View style={styles.divider}>
-              <Text style={styles.dividerText}>Sua História</Text>
+            <View style={[styles.divider, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.dividerText, { color: colors.primary }]}>Sua História</Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                <Ionicons name="book" size={16} color="#2E7D32" /> Conte sua história
+              <Text style={[styles.label, { color: colors.text }]}>
+                <Ionicons name="book" size={16} color={colors.primary} /> Conte sua história
               </Text>
-              <Text style={styles.hint}>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>
                 Compartilhe sua paixão por livros e a história do seu negócio
               </Text>
               <TextInput
-                style={[styles.input, styles.textArea, { height: 120 }]}
+                style={[styles.input, styles.textArea, { height: 120, backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={businessBio}
                 onChangeText={setBusinessBio}
                 placeholder="Conte a história do seu negócio..."
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 multiline
                 numberOfLines={6}
                 textAlignVertical="top"
@@ -631,71 +633,71 @@ export default function EditarPerfilScreen() {
             </View>
 
             {/* Contatos */}
-            <View style={styles.divider}>
-              <Text style={styles.dividerText}>Contatos</Text>
+            <View style={[styles.divider, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.dividerText, { color: colors.primary }]}>Contatos</Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
+              <Text style={[styles.label, { color: colors.text }]}>
                 <Ionicons name="logo-whatsapp" size={16} color="#25D366" /> WhatsApp
               </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={phoneWhatsApp}
                 onChangeText={setPhoneWhatsApp}
                 placeholder="(11) 98765-4321"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 keyboardType="phone-pad"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                <Ionicons name="globe-outline" size={16} color="#2E7D32" /> Website
+              <Text style={[styles.label, { color: colors.text }]}>
+                <Ionicons name="globe-outline" size={16} color={colors.primary} /> Website
               </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={website}
                 onChangeText={setWebsite}
                 placeholder="www.minhaliv raria.com"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 keyboardType="url"
                 autoCapitalize="none"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
+              <Text style={[styles.label, { color: colors.text }]}>
                 <Ionicons name="logo-instagram" size={16} color="#E4405F" /> Instagram
               </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={instagram}
                 onChangeText={setInstagram}
                 placeholder="@minhalivraria"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 autoCapitalize="none"
               />
             </View>
 
             {/* Diferenciais/Serviços */}
-            <View style={styles.divider}>
-              <Text style={styles.dividerText}>Diferenciais e Serviços</Text>
+            <View style={[styles.divider, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.dividerText, { color: colors.primary }]}>Diferenciais e Serviços</Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                <Ionicons name="star" size={16} color="#2E7D32" /> Serviços Oferecidos
+              <Text style={[styles.label, { color: colors.text }]}>
+                <Ionicons name="star" size={16} color={colors.primary} /> Serviços Oferecidos
               </Text>
-              <Text style={styles.hint}>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>
                 Digite um diferencial por linha
               </Text>
               <TextInput
-                style={[styles.input, styles.textArea, { height: 120 }]}
+                style={[styles.input, styles.textArea, { height: 120, backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                 value={servicesText}
                 onChangeText={setServicesText}
                 placeholder={"Clube do livro mensal\nVenda de livros usados\nEnvio para todo Brasil"}
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 multiline
                 numberOfLines={6}
                 textAlignVertical="top"
@@ -706,16 +708,16 @@ export default function EditarPerfilScreen() {
 
         {/* Botão Salvar Principal */}
         <TouchableOpacity 
-          style={[styles.saveButtonMain, uploading && styles.saveButtonMainDisabled]} 
+          style={[styles.saveButtonMain, { backgroundColor: uploading ? colors.border : colors.success }]} 
           onPress={salvarPerfil}
           disabled={uploading}
         >
           {uploading ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={colors.card} />
           ) : (
             <>
-              <Ionicons name="checkmark-circle" size={20} color="#fff" />
-              <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+              <Ionicons name="checkmark-circle" size={20} color={colors.card} />
+              <Text style={[styles.saveButtonText, { color: colors.card }]}>Salvar Alterações</Text>
             </>
           )}
         </TouchableOpacity>
@@ -733,12 +735,10 @@ const styles = StyleSheet.create({
   flex: 1,
   justifyContent: "center",
   alignItems: "center",
-  backgroundColor: "#fff",
 },
 
   container: { 
-    flex: 1, 
-    backgroundColor: "#fff" 
+    flex: 1,
   },
   header: {
     flexDirection: "row",
@@ -747,17 +747,14 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 50,
     borderBottomWidth: 1,
-    borderBottomColor: "#E9ECEF",
   },
   headerTitle: { 
     fontSize: 20, 
-    fontWeight: "bold", 
-    color: "#2E7D32" 
+    fontWeight: "bold",
   },
   saveButton: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2E7D32",
   },
 
   content: {
@@ -783,38 +780,32 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     marginBottom: 15,
     borderWidth: 3,
-    borderColor: "#2E7D32",
   },
   newPhotoBadge: {
     position: "absolute",
     top: 0,
     right: 0,
-    backgroundColor: "#2E7D32",
     borderRadius: 20,
     width: 32,
     height: 32,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#fff",
   },
   changePhotoButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2E7D32",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 25,
   },
   changePhotoText: {
-    color: "#fff",
     fontSize: 14,
     fontWeight: "600",
     marginLeft: 8,
   },
   photoHint: {
     fontSize: 12,
-    color: "#666",
     textAlign: "center",
     marginTop: 10,
     fontStyle: "italic",
@@ -826,18 +817,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#E9ECEF",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    backgroundColor: "#F8F9FA",
-    color: "#333",
   },
   textArea: {
     minHeight: 80,
@@ -845,7 +832,6 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 12,
-    color: "#666",
     marginTop: 4,
     fontStyle: "italic",
   },
@@ -855,14 +841,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#E9ECEF",
-    backgroundColor: "#F1F8E9",
     alignItems: "center",
   },
   dividerText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#2E7D32",
   },
 
   section: {
@@ -872,7 +855,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#333",
     marginBottom: 15,
   },
 
@@ -882,7 +864,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: "#F8F9FA",
     borderRadius: 12,
     marginBottom: 10,
   },
@@ -892,7 +873,6 @@ const styles = StyleSheet.create({
   },
   configText: {
     fontSize: 16,
-    color: "#333",
     marginLeft: 12,
   },
 
@@ -900,17 +880,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2E7D32",
     paddingVertical: 16,
     borderRadius: 12,
     marginTop: 20,
   },
-  saveButtonMainDisabled: {
-    backgroundColor: "#A5D6A7",
-    opacity: 0.6,
-  },
   saveButtonText: {
-    color: "#fff",
     fontSize: 18,
     fontWeight: "600",
     marginLeft: 8,
@@ -935,20 +909,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#4CAF50",
-    backgroundColor: "#fff",
-  },
-  typeButtonActive: {
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
   },
   typeButtonText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#4CAF50",
-  },
-  typeButtonTextActive: {
-    color: "#fff",
   },
 
   bottomSpacing: {
