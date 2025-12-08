@@ -10,8 +10,12 @@ import {
   Platform,
   Image,
   Alert,
+  Modal,
+  ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useComunidades } from "../contexts/ComunidadesContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -28,6 +32,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
+import { uploadChatImage } from "../utils/uploadChatImage";
 
 interface ChatMessage {
   id: string;
@@ -37,6 +42,7 @@ interface ChatMessage {
   createdAt: Date;
   isOwn: boolean;
   edited?: boolean;
+  imageUrl?: string;
 }
 
 export default function ChatComunidadeScreen() {
@@ -48,6 +54,9 @@ export default function ChatComunidadeScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
   const listRef = useRef<FlatList>(null);
 
   // Contexto da comunidade
@@ -80,6 +89,7 @@ export default function ChatComunidadeScreen() {
               createdAt,
               isOwn: user ? data.userId === user.uid : false,
               edited: !!data.edited,
+              imageUrl: data.imageUrl || undefined,
             });
           });
           setMessages(list);
@@ -130,9 +140,99 @@ export default function ChatComunidadeScreen() {
     );
   }
 
+  // Solicitar permissões de galeria
+  async function requestGalleryPermission() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão Negada', 'É necessário permitir o acesso à galeria para enviar fotos.');
+      return false;
+    }
+    return true;
+  }
+
+  // Solicitar permissões de câmera
+  async function requestCameraPermission() {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão Negada', 'É necessário permitir o acesso à câmera para tirar fotos.');
+      return false;
+    }
+    return true;
+  }
+
+  // Selecionar imagem da galeria
+  async function pickImageFromGallery() {
+    const hasPermission = await requestGalleryPermission();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar imagem:', error);
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Erro ao selecionar imagem', 
+        visibilityTime: 2000, 
+        topOffset: 50 
+      });
+    }
+  }
+
+  // Tirar foto com a câmera
+  async function takePhoto() {
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Erro ao tirar foto:', error);
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Erro ao tirar foto', 
+        visibilityTime: 2000, 
+        topOffset: 50 
+      });
+    }
+  }
+
+  // Mostrar opções de imagem
+  function showImageOptions() {
+    if (Platform.OS === 'web') {
+      pickImageFromGallery();
+      return;
+    }
+    Alert.alert(
+      'Enviar Foto',
+      'Escolha uma opção:',
+      [
+        { text: 'Tirar Foto', onPress: takePhoto },
+        { text: 'Escolher da Galeria', onPress: pickImageFromGallery },
+        { text: 'Cancelar', style: 'cancel' },
+      ]
+    );
+  }
+
   async function handleSend() {
     const text = message.trim();
-    if (!text) return;
+    if (!text && !selectedImage) return;
     if (!user) return;
     try {
       setSending(true);
@@ -151,19 +251,45 @@ export default function ChatComunidadeScreen() {
         setMessage("");
         return;
       }
+
+      let imageUrl: string | undefined = undefined;
+      
+      // Se tem imagem selecionada, fazer upload primeiro
+      if (selectedImage) {
+        setUploading(true);
+        const tempId = `${Date.now()}_${user.uid}`;
+        imageUrl = await uploadChatImage(selectedImage, comunidadeId, tempId) || undefined;
+        setUploading(false);
+        
+        if (!imageUrl) {
+          Toast.show({ 
+            type: 'error', 
+            text1: 'Erro ao enviar imagem', 
+            text2: 'Tente novamente',
+            visibilityTime: 2500, 
+            topOffset: 50 
+          });
+          setSending(false);
+          return;
+        }
+      }
+
       const ref = collection(db, "comunidades", comunidadeId, "mensagens");
       await addDoc(ref, {
-        message: text,
+        message: text || "",
         userId: user.uid,
         userName: (user as any)?.name || "Usuário",
         createdAt: Timestamp.now(),
+        ...(imageUrl && { imageUrl }),
       });
       setMessage("");
+      setSelectedImage(null);
     } catch (e) {
       console.error("Erro ao enviar mensagem:", e);
       Toast.show({ type: "error", text1: "Erro ao enviar", text2: "Tente novamente", visibilityTime: 2500, topOffset: 50 });
     } finally {
       setSending(false);
+      setUploading(false);
     }
   }
 
@@ -195,14 +321,30 @@ export default function ChatComunidadeScreen() {
       ]}
     >
       {!item.isOwn && <Text style={styles.userName}>{item.userName}</Text>}
-      <Text style={styles.messageText}>{item.message}</Text>
+      
+      {/* Renderizar imagem se existir */}
+      {item.imageUrl && (
+        <TouchableOpacity onPress={() => setViewingImage(item.imageUrl)}>
+          <Image 
+            source={{ uri: item.imageUrl }} 
+            style={styles.messageImage}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
+      )}
+      
+      {/* Renderizar texto se existir */}
+      {item.message ? (
+        <Text style={styles.messageText}>{item.message}</Text>
+      ) : null}
+      
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
         <Text style={styles.timestamp}>
           {new Date(item.createdAt).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
           {item.edited ? " • editada" : ""}
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {item.isOwn && (
+          {item.isOwn && !item.imageUrl && (
             <TouchableOpacity onPress={() => { setEditingMessageId(item.id); setMessage(item.message); }} style={{ marginRight: 12 }}>
               <Ionicons name="create-outline" size={18} color="#2E7D32" />
             </TouchableOpacity>
@@ -271,37 +413,94 @@ export default function ChatComunidadeScreen() {
 
       {/* Input de mensagem */}
       <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder={editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem..."}
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          maxLength={500}
-          onKeyPress={(e) => {
-            if (Platform.OS === 'web' && (e as any).nativeEvent.key === 'Enter' && !((e as any).shiftKey)) {
-              e.preventDefault?.();
-              handleSend();
-            }
-          }}
-        />
-        {editingMessageId && (
-          <TouchableOpacity
-            style={[styles.sendButton, { backgroundColor: '#A5A5A5' }]}
-            onPress={() => { setEditingMessageId(null); setMessage(""); }}
-            disabled={sending}
-          >
-            <Ionicons name="close-outline" size={24} color="#fff" />
-          </TouchableOpacity>
+        {/* Preview da imagem selecionada */}
+        {selectedImage && (
+          <View style={styles.imagePreviewContainer}>
+            <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+            <TouchableOpacity 
+              style={styles.removeImageButton}
+              onPress={() => setSelectedImage(null)}
+            >
+              <Ionicons name="close-circle" size={24} color="#E63946" />
+            </TouchableOpacity>
+          </View>
         )}
-        <TouchableOpacity
-          style={[styles.sendButton, (!message.trim() || sending) && { opacity: 0.5 }]}
-          onPress={handleSend}
-          disabled={!message.trim() || sending}
-        >
-          <Ionicons name={editingMessageId ? "checkmark" : "send"} size={24} color="#fff" />
-        </TouchableOpacity>
+        
+        <View style={styles.inputRow}>
+          {/* Botão de adicionar imagem */}
+          <TouchableOpacity
+            style={styles.attachButton}
+            onPress={showImageOptions}
+            disabled={sending || uploading || editingMessageId !== null}
+          >
+            <Ionicons name="camera" size={24} color={editingMessageId ? "#ccc" : "#2E7D32"} />
+          </TouchableOpacity>
+          
+          <TextInput
+            style={styles.input}
+            placeholder={editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem..."}
+            value={message}
+            onChangeText={setMessage}
+            multiline
+            maxLength={500}
+            onKeyPress={(e) => {
+              if (Platform.OS === 'web' && (e as any).nativeEvent.key === 'Enter' && !((e as any).shiftKey)) {
+                e.preventDefault?.();
+                handleSend();
+              }
+            }}
+          />
+          {editingMessageId && (
+            <TouchableOpacity
+              style={[styles.sendButton, { backgroundColor: '#A5A5A5' }]}
+              onPress={() => { setEditingMessageId(null); setMessage(""); }}
+              disabled={sending}
+            >
+              <Ionicons name="close-outline" size={24} color="#fff" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[styles.sendButton, ((!message.trim() && !selectedImage) || sending || uploading) && { opacity: 0.5 }]}
+            onPress={handleSend}
+            disabled={(!message.trim() && !selectedImage) || sending || uploading}
+          >
+            {uploading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name={editingMessageId ? "checkmark" : "send"} size={24} color="#fff" />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Modal de visualização de imagem */}
+      <Modal
+        visible={viewingImage !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setViewingImage(null)}
+      >
+        <Pressable 
+          style={styles.imageViewModal}
+          onPress={() => setViewingImage(null)}
+        >
+          <View style={styles.imageViewContainer}>
+            <TouchableOpacity
+              style={styles.closeModalButton}
+              onPress={() => setViewingImage(null)}
+            >
+              <Ionicons name="close" size={30} color="#fff" />
+            </TouchableOpacity>
+            {viewingImage && (
+              <Image
+                source={{ uri: viewingImage }}
+                style={styles.fullImage}
+                resizeMode="contain"
+              />
+            )}
+          </View>
+        </Pressable>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -410,19 +609,49 @@ const styles = StyleSheet.create({
     color: "#333",
     lineHeight: 20,
   },
+  messageImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
   timestamp: {
     fontSize: 11,
     color: "#666",
     alignSelf: "flex-end",
   },
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
     backgroundColor: "#fff",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: "#E9ECEF",
+  },
+  imagePreviewContainer: {
+    position: "relative",
+    marginBottom: 8,
+  },
+  imagePreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+  },
+  attachButton: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   input: {
     flex: 1,
@@ -475,6 +704,31 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  imageViewModal: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageViewContainer: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  closeModalButton: {
+    position: "absolute",
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 20,
+    padding: 8,
+  },
+  fullImage: {
+    width: "90%",
+    height: "80%",
   },
 });
 
