@@ -351,30 +351,24 @@ export default function BookDetailsLocalScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Informações do Livro */}
         <View style={styles.bookSection}>
-          <Image source={{ uri: livro.capaUri || "https://via.placeholder.com/150" }} style={styles.bookCover} />
-          <Text style={styles.bookTitle}>{livro.titulo}</Text>
-          <Text style={styles.bookAuthor}>{livro.autor}</Text>
-
-          {livro.genero && (
-            <Text style={styles.bookGenre}>{livro.genero}</Text>
-          )}
-
-          {livro.paginas && (
-            <Text style={styles.bookPages}>{livro.paginas} páginas</Text>
-          )}
-
-          {livro.descricao && (
-            <Text style={styles.bookDescription}>{livro.descricao}</Text>
-          )}
-
-          {/* Avaliação Média */}
-          <View style={styles.ratingSection}>
-            {renderStars(Number(calculateAverageRating()), undefined, 20)}
-            <Text style={styles.averageRating}>
-              {calculateAverageRating()} ({bookReviews.length} avaliações)
-            </Text>
-          </View>
+          <Image source={{ uri: livro?.capaUri || "https://via.placeholder.com/150" }} style={styles.bookCover} />
+          <Text style={styles.bookTitle}>{livro?.titulo}</Text>
+          <Text style={styles.bookAuthor}>{livro?.autor}</Text>
+          {livro?.genero && <Text style={styles.bookGenre}>{livro.genero}</Text>}
+          {livro?.paginas && <Text style={styles.bookPages}>{livro.paginas} páginas</Text>}
+          {livro?.descricao && <Text style={styles.bookDescription}>{livro.descricao}</Text>}
         </View>
+
+        {/* Botão Ver Avaliações */}
+        <TouchableOpacity
+          style={styles.reviewsButton}
+          onPress={() => {
+            // Scroll automático ou ação para ver reviews
+          }}
+        >
+          <Text style={styles.reviewsButtonText}>Ver Avaliações</Text>
+          <Ionicons name="chevron-down" size={20} color="#2E7D32" />
+        </TouchableOpacity>
 
         {/* Formulário de Review */}
         {user && (
@@ -656,6 +650,24 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 15,
     lineHeight: 20,
+  },
+  reviewsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    marginHorizontal: 20,
+    marginBottom: 10,
+    backgroundColor: "#F1F8F4",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#C8E6C9",
+  },
+  reviewsButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#2E7D32",
   },
   ratingSection: {
     alignItems: "center",
