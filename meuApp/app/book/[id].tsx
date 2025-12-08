@@ -25,6 +25,10 @@ interface Book {
   description?: string;
   averageRating?: number;
   ratingsCount?: number;
+  publisher?: string;
+  publishedDate?: string;
+  pageCount?: number;
+  categories?: string[];
 }
 
 export default function BookDetails() {
@@ -51,7 +55,7 @@ export default function BookDetails() {
         const rating = info.averageRating || 0;
         const count = info.ratingsCount || 0;
 
-        setBook({
+        const bookData = {
           id: data.id,
           title: info.title || 'Título Desconhecido',
           author: info.authors?.[0] || 'Autor Desconhecido',
@@ -59,6 +63,28 @@ export default function BookDetails() {
           description: info.description || 'Sem descrição disponível.',
           averageRating: rating,
           ratingsCount: count,
+          publisher: info.publisher,
+          publishedDate: info.publishedDate,
+          pageCount: info.pageCount,
+          categories: info.categories,
+        };
+
+        setBook(bookData);
+
+        // Redirecionar para book-details com todos os parâmetros
+        router.replace({
+          pathname: '/book-details',
+          params: {
+            id: bookData.id,
+            title: bookData.title,
+            author: bookData.author,
+            image: bookData.img || '',
+            description: bookData.description || '',
+            genre: bookData.categories?.join(', ') || '',
+            pages: bookData.pageCount?.toString() || '',
+            publisher: bookData.publisher || '',
+            year: bookData.publishedDate?.split('-')[0] || '', // Extrair apenas o ano
+          }
         });
       }
     } catch (error) {

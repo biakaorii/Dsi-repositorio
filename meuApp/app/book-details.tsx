@@ -43,6 +43,11 @@ export default function BookDetailsScreen() {
   const bookTitle = params.title as string || "Livro Exemplo";
   const bookAuthor = params.author as string || "Autor Desconhecido";
   const bookImage = params.image as string || "https://via.placeholder.com/150";
+  const bookGenre = params.genre as string;
+  const bookPages = params.pages as string;
+  const bookPublisher = params.publisher as string;
+  const bookYear = params.year as string;
+  const bookDescription = params.description as string;
 
   // Estados
   const [rating, setRating] = useState(0);
@@ -51,6 +56,7 @@ export default function BookDetailsScreen() {
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
 
   const [bookReviews, setBookReviews] = useState<Review[]>([]);
   const [userReview, setUserReview] = useState<Review | undefined>(undefined);
@@ -364,6 +370,70 @@ export default function BookDetailsScreen() {
               {calculateAverageRating()} ({bookReviews.length} avaliações)
             </Text>
           </View>
+
+          {/* Botão Mais Detalhes */}
+          {(bookGenre || bookPages || bookPublisher || bookYear || bookDescription) && (
+            <TouchableOpacity 
+              style={styles.moreDetailsButton}
+              onPress={() => setShowMoreDetails(!showMoreDetails)}
+            >
+              <Text style={styles.moreDetailsButtonText}>
+                {showMoreDetails ? "Menos Detalhes" : "Mais Detalhes"}
+              </Text>
+              <Ionicons 
+                name={showMoreDetails ? "chevron-up" : "chevron-down"} 
+                size={20} 
+                color="#2E7D32" 
+              />
+            </TouchableOpacity>
+          )}
+
+          {/* Seção Expansível de Detalhes */}
+          {showMoreDetails && (
+            <View style={styles.detailsSection}>
+              {bookGenre && (
+                <View style={styles.detailRow}>
+                  <Ionicons name="pricetag-outline" size={18} color="#666" />
+                  <Text style={styles.detailLabel}>Gênero:</Text>
+                  <Text style={styles.detailValue}>{bookGenre}</Text>
+                </View>
+              )}
+
+              {bookPages && (
+                <View style={styles.detailRow}>
+                  <Ionicons name="book-outline" size={18} color="#666" />
+                  <Text style={styles.detailLabel}>Páginas:</Text>
+                  <Text style={styles.detailValue}>{bookPages}</Text>
+                </View>
+              )}
+
+              {bookPublisher && (
+                <View style={styles.detailRow}>
+                  <Ionicons name="business-outline" size={18} color="#666" />
+                  <Text style={styles.detailLabel}>Editora:</Text>
+                  <Text style={styles.detailValue}>{bookPublisher}</Text>
+                </View>
+              )}
+
+              {bookYear && (
+                <View style={styles.detailRow}>
+                  <Ionicons name="calendar-outline" size={18} color="#666" />
+                  <Text style={styles.detailLabel}>Ano:</Text>
+                  <Text style={styles.detailValue}>{bookYear}</Text>
+                </View>
+              )}
+
+              {bookDescription && (
+                <View style={styles.detailRowColumn}>
+                  <View style={styles.detailRowHeader}>
+                    <Ionicons name="document-text-outline" size={18} color="#666" />
+                    <Text style={styles.detailLabel}>Descrição:</Text>
+                  </View>
+                  <Text style={styles.detailDescription}>{bookDescription}</Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
         {/* Formulário de Review */}
@@ -845,6 +915,63 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 30,
+  },
+  // Estilos do botão Mais Detalhes
+  moreDetailsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: "#F1F8F4",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#C8E6C9",
+    marginTop: 15,
+  },
+  moreDetailsButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#2E7D32",
+  },
+  // Estilos da seção de detalhes expansível
+  detailsSection: {
+    marginTop: 15,
+    padding: 15,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 10,
+    gap: 12,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  detailRowColumn: {
+    gap: 8,
+  },
+  detailRowHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  detailLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    minWidth: 70,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: "#666",
+    flex: 1,
+  },
+  detailDescription: {
+    fontSize: 14,
+    color: "#666",
+    lineHeight: 20,
+    paddingLeft: 28,
   },
   // Estilos do Modal
   modalOverlay: {
