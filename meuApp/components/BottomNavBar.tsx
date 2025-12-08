@@ -4,6 +4,7 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const navItems = [
   { route: "/home", icon: "home", activeIcon: "home", hideForEntrepreneur: false },
@@ -18,11 +19,12 @@ export default function BottomNavBar() {
   const router = useRouter();
   const currentRoute = usePathname();
   const { user } = useAuth();
+  const { colors } = useTheme();
   
   const isEntrepreneur = user?.profileType === 'empreendedor';
 
   const getIconColor = (route: string) => {
-    return currentRoute === route ? "#2E7D32" : "#777";
+    return currentRoute === route ? colors.primary : colors.textSecondary;
   };
 
   const getIconName = (item: typeof navItems[number]) => {
@@ -30,7 +32,7 @@ export default function BottomNavBar() {
   };
 
   return (
-    <View style={styles.navbar}>
+    <View style={[styles.navbar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
       {navItems
         .filter(item => !(item.hideForEntrepreneur && isEntrepreneur))
         .map((item) => (
@@ -55,11 +57,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    backgroundColor: "#fff",
     paddingVertical: 14,
     paddingHorizontal: 10,
     borderTopWidth: 1,
-    borderTopColor: "#eee",
     position: "absolute",
     bottom: 0,
     left: 0,

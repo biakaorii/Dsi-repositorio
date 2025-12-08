@@ -20,6 +20,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/config/firebaseConfig";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLivros } from "@/contexts/LivrosContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // Definindo tipos localmente
 interface Book {
@@ -52,6 +53,7 @@ const categories = [
 export default function Search() {
   const router = useRouter();
   const { shelfId } = useLocalSearchParams<{ shelfId?: string }>();
+  const { colors } = useTheme();
 
   // Estado para estantes (vai ser carregado do Firebase)
   const [shelves, setShelves] = useState<Shelf[]>([]);
@@ -531,10 +533,10 @@ export default function Search() {
   const renderCategory = (category: string) => (
     <TouchableOpacity
       key={category}
-      style={styles.chip}
+      style={[styles.chip, { backgroundColor: colors.primaryLight }]}
       onPress={() => setQuery(category)}
     >
-      <Text style={styles.chipText}>{category}</Text>
+      <Text style={[styles.chipText, { color: colors.primary }]}>{category}</Text>
     </TouchableOpacity>
   );
 
@@ -552,7 +554,7 @@ export default function Search() {
     };
 
     return (
-      <View style={styles.bookCard}>
+      <View style={[styles.bookCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
         <TouchableOpacity onPress={handlePress}>
           {item.img ? (
             <Image
@@ -561,32 +563,32 @@ export default function Search() {
               resizeMode="cover"
             />
           ) : (
-            <View style={styles.noImage}>
-              <Ionicons name="book" size={40} color="#ccc" />
+            <View style={[styles.noImage, { backgroundColor: colors.inputBackground }]}>
+              <Ionicons name="book" size={40} color={colors.border} />
             </View>
           )}
         </TouchableOpacity>
 
         <View style={styles.bookInfo}>
-          <Text style={styles.bookTitle} numberOfLines={2}>
+          <Text style={[styles.bookTitle, { color: colors.text }]} numberOfLines={2}>
             {item.title || 'Título Desconhecido'}
           </Text>
-          <Text style={styles.bookAuthor} numberOfLines={1}>
+          <Text style={[styles.bookAuthor, { color: colors.textSecondary }]} numberOfLines={1}>
             {item.author || 'Autor Desconhecido'}
           </Text>
 
           {/* Badge para livros cadastrados */}
           {item.isLocal && (
-            <View style={styles.localBadge}>
-              <Ionicons name="checkmark-circle" size={12} color="#2E7D32" />
-              <Text style={styles.localBadgeText}>
+            <View style={[styles.localBadge, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="checkmark-circle" size={12} color={colors.primary} />
+              <Text style={[styles.localBadgeText, { color: colors.primary }]}>
                 Cadastrado{item.ownerName ? ` por ${item.ownerName}` : ''}
               </Text>
             </View>
           )}
 
           {item.genero && item.isLocal && (
-            <Text style={styles.bookGenre} numberOfLines={1}>
+            <Text style={[styles.bookGenre, { color: colors.primary }]} numberOfLines={1}>
               {item.genero}
             </Text>
           )}
@@ -606,13 +608,13 @@ export default function Search() {
             style={styles.addButton}
             onPress={() => handleAddToProgress(item)}
           >
-            <Ionicons name="book-outline" size={20} color="#2E7D32" />
+            <Ionicons name="book-outline" size={20} color={colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => handleAddToShelf(item)}
           >
-            <Ionicons name="add-circle" size={20} color="#2E7D32" />
+            <Ionicons name="add-circle" size={20} color={colors.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -622,7 +624,7 @@ export default function Search() {
   const renderShelfOption = (shelf: any) => (
     <TouchableOpacity
       key={shelf.id}
-      style={styles.shelfOption}
+      style={[styles.shelfOption, { borderBottomColor: colors.border }]}
       onPress={() => {
         if (selectedBook) {
           handleAddBookToShelf(selectedBook, shelf.id);
@@ -631,10 +633,10 @@ export default function Search() {
       }}
     >
       <View style={styles.shelfOptionContent}>
-        <Text style={styles.shelfOptionName}>{shelf.nome || shelf.name}</Text>
-        <Text style={styles.shelfOptionCount}>{shelf.livros?.length || 0} livros</Text>
+        <Text style={[styles.shelfOptionName, { color: colors.text }]}>{shelf.nome || shelf.name}</Text>
+        <Text style={[styles.shelfOptionCount, { color: colors.textSecondary }]}>{shelf.livros?.length || 0} livros</Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#999" />
+      <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
     </TouchableOpacity>
   );
 
@@ -643,7 +645,7 @@ export default function Search() {
       <View style={styles.categoriesContainer}>
         {categories.map(renderCategory)}
       </View>
-      <Text style={styles.sectionTitle}>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>
         {query ? `Resultados para "${query}"` : 'Livros Recomendados'}
       </Text>
     </View>
@@ -653,16 +655,16 @@ export default function Search() {
     if (loading) {
       return (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2E7D32" />
-          <Text style={styles.loadingText}>Buscando livros...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Buscando livros...</Text>
         </View>
       );
     }
     if (!query) {
       return (
         <View style={styles.centerContainer}>
-          <Ionicons name="search" size={64} color="#ddd" />
-          <Text style={styles.emptyText}>
+          <Ionicons name="search" size={64} color={colors.border} />
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
             Digite algo para buscar livros
           </Text>
         </View>
@@ -670,8 +672,8 @@ export default function Search() {
     }
     return (
       <View style={styles.centerContainer}>
-        <Ionicons name="book-outline" size={64} color="#ddd" />
-        <Text style={styles.emptyText}>
+        <Ionicons name="book-outline" size={64} color={colors.border} />
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
           Nenhum livro encontrado para "{query}"
         </Text>
       </View>
@@ -679,17 +681,17 @@ export default function Search() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, { color: colors.primary }]}>
           {shelfId ? 'Adicionar Livro' : 'Pesquisar'}
         </Text>
         {user ? (
           <View style={{ position: 'absolute', right: 20, top: 50 }}>
             <TouchableOpacity
               onPress={() => router.push('/cadastroLivro')}
-              style={{ backgroundColor: '#2E7D32', padding: 8, borderRadius: 10, flexDirection: 'row', alignItems: 'center' }}
+              style={{ backgroundColor: colors.primary, padding: 8, borderRadius: 10, flexDirection: 'row', alignItems: 'center' }}
             >
               <Ionicons name="add" size={18} color="#fff" />
               <Text style={{ color: '#fff', marginLeft: 6, fontWeight: '600' }}>Cadastrar</Text>
@@ -699,19 +701,20 @@ export default function Search() {
       </View>
 
       {/* Barra de Pesquisa */}
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={20} color="#555" />
+      <View style={[styles.searchBar, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+        <Ionicons name="search" size={20} color={colors.textSecondary} />
         <TextInput
           placeholder="livro, autor, gênero..."
+          placeholderTextColor={colors.placeholder}
           value={query}
           onChangeText={setQuery}
-          style={styles.input}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.border }]}
           autoCapitalize="none"
           autoCorrect={false}
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => setQuery('')}>
-            <Ionicons name="close-circle" size={24} color="#808080" />
+            <Ionicons name="close-circle" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>
@@ -736,11 +739,11 @@ export default function Search() {
         onRequestClose={() => setShelfModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Adicionar a Estante</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.primary }]}>Adicionar a Estante</Text>
               <TouchableOpacity onPress={() => setShelfModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#333" />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -749,24 +752,24 @@ export default function Search() {
                 <>
                   {shelves.map(renderShelfOption)}
                   <TouchableOpacity
-                    style={styles.shelfOption}
+                    style={[styles.shelfOption, { borderBottomColor: colors.border }]}
                     onPress={openCreateShelfModal}
                   >
                     <View style={styles.shelfOptionContent}>
-                      <Text style={styles.shelfOptionName}>Criar Nova Estante</Text>
+                      <Text style={[styles.shelfOptionName, { color: colors.text }]}>Criar Nova Estante</Text>
                     </View>
-                    <Ionicons name="add" size={20} color="#2E7D32" />
+                    <Ionicons name="add" size={20} color={colors.primary} />
                   </TouchableOpacity>
                 </>
               ) : (
                 <TouchableOpacity
-                  style={styles.shelfOption}
+                  style={[styles.shelfOption, { borderBottomColor: colors.border }]}
                   onPress={openCreateShelfModal}
                 >
                   <View style={styles.shelfOptionContent}>
-                    <Text style={styles.shelfOptionName}>Criar Primeira Estante</Text>
+                    <Text style={[styles.shelfOptionName, { color: colors.text }]}>Criar Primeira Estante</Text>
                   </View>
-                  <Ionicons name="add" size={20} color="#2E7D32" />
+                  <Ionicons name="add" size={20} color={colors.primary} />
                 </TouchableOpacity>
               )}
             </ScrollView>
@@ -782,46 +785,46 @@ export default function Search() {
         onRequestClose={() => setCreateShelfModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Criar Nova Estante</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.primary }]}>Criar Nova Estante</Text>
               <TouchableOpacity onPress={() => setCreateShelfModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#333" />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.modalForm}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.border }]}
                 placeholder="Nome da estante"
+                placeholderTextColor={colors.placeholder}
                 value={novaEstanteNome}
                 onChangeText={setNovaEstanteNome}
                 autoFocus
-                placeholderTextColor="#999"
               />
 
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={[styles.input, styles.textArea, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.border }]}
                 placeholder="Descrição (opcional)"
+                placeholderTextColor={colors.placeholder}
                 value={novaEstanteDescricao}
                 onChangeText={setNovaEstanteDescricao}
                 multiline
                 numberOfLines={3}
-                placeholderTextColor="#999"
               />
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
+                  style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.inputBackground }]}
                   onPress={() => setCreateShelfModalVisible(false)}
                 >
-                  <Text style={styles.modalButtonText}>Cancelar</Text>
+                  <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.confirmButton]}
+                  style={[styles.modalButton, styles.confirmButton, { backgroundColor: colors.primary }]}
                   onPress={handleCreateNewShelf}
                 >
-                  <Text style={styles.modalButtonText}>Criar</Text>
+                  <Text style={[styles.modalButtonText, { color: '#fff' }]}>Criar</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -837,16 +840,16 @@ export default function Search() {
         onRequestClose={() => setProgressModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Adicionar à Leitura</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.primary }]}>Adicionar à Leitura</Text>
               <TouchableOpacity onPress={() => setProgressModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#333" />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity
-              style={styles.progressOption}
+              style={[styles.progressOption, { borderBottomColor: colors.border }]}
               onPress={() => {
                 if (selectedBook) {
                   handleAddToReading(selectedBook);
@@ -854,11 +857,11 @@ export default function Search() {
                 }
               }}
             >
-              <Text style={styles.progressOptionText}>Adicionar à "Lendo"</Text>
+              <Text style={[styles.progressOptionText, { color: colors.text }]}>Adicionar à "Lendo"</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.progressOption}
+              style={[styles.progressOption, { borderBottomColor: colors.border }]}
               onPress={() => {
                 if (selectedBook) {
                   handleAddToWishlist(selectedBook);
@@ -866,7 +869,7 @@ export default function Search() {
                 }
               }}
             >
-              <Text style={styles.progressOptionText}>Adicionar à "Quero Ler"</Text>
+              <Text style={[styles.progressOptionText, { color: colors.text }]}>Adicionar à "Quero Ler"</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -879,13 +882,13 @@ export default function Search() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1 },
   header: { padding: 20, paddingTop: 50 },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#2E7D32' },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', marginHorizontal: 12, marginBottom: 12, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E9ECEF', gap: 8 },
+  headerTitle: { fontSize: 20, fontWeight: 'bold' },
+  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 12, marginBottom: 12, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1, gap: 8 },
   input: {
-    flex: 1,fontSize: 16,color: '#000',backgroundColor: '#fff',paddingVertical: 12,paddingHorizontal: 12,borderWidth: 1,
-    borderColor: '#ccc',borderRadius: 8,marginBottom: 12,shadowColor: '#000',shadowOffset: { width: 0, height: 1 },
+    flex: 1,fontSize: 16,paddingVertical: 12,paddingHorizontal: 12,borderWidth: 1,
+    borderRadius: 8,marginBottom: 12,shadowColor: '#000',shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 2,elevation: 2,
   },
   textArea: {
@@ -893,23 +896,23 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   categoriesContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, marginBottom: 12, gap: 8 },
-  chip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#E8F5E9' },
-  chipText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 12, paddingHorizontal: 12, color: '#333' },
+  chip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20 },
+  chipText: { fontSize: 14, fontWeight: '600' },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 12, paddingHorizontal: 12 },
   listContent: { paddingHorizontal: 12, paddingBottom: 100 },
   columnWrapper: { justifyContent: 'space-between', marginBottom: 16 },
   bookCard: {
-    width: '100%',backgroundColor: '#fff',borderRadius: 8,overflow: 'hidden',marginBottom: 12,
-    flexDirection: 'row',shadowColor: '#000',shadowOffset: { width: 0, height: 2 },shadowOpacity: 0.1,
+    width: '100%',borderRadius: 8,overflow: 'hidden',marginBottom: 12,
+    flexDirection: 'row',shadowOffset: { width: 0, height: 2 },shadowOpacity: 0.1,
     shadowRadius: 4,elevation: 3
   },
 
   bookImage: { width: 70, height: 100, backgroundColor: '#f5f5f5', borderRadius: 4 },
-  noImage: { width: 70, height: 100, backgroundColor: '#f5f5f5', justifyContent: 'center', alignItems: 'center', borderRadius: 4 },
+  noImage: { width: 70, height: 100, justifyContent: 'center', alignItems: 'center', borderRadius: 4 },
   bookInfo: { flex: 1, padding: 12 },
-  bookTitle: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 4 },
-  bookAuthor: { fontSize: 12, color: '#666', marginBottom: 6 },
-  bookGenre: { fontSize: 11, color: '#2E7D32', marginBottom: 4, fontStyle: 'italic' },
+  bookTitle: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  bookAuthor: { fontSize: 12, marginBottom: 6 },
+  bookGenre: { fontSize: 11, marginBottom: 4, fontStyle: 'italic' },
   localBadge: { 
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -917,37 +920,36 @@ const styles = StyleSheet.create({
     marginTop: 4, 
     paddingHorizontal: 8, 
     paddingVertical: 4, 
-    backgroundColor: '#E8F5E9', 
     borderRadius: 8, 
     alignSelf: 'flex-start' 
   },
-  localBadgeText: { fontSize: 10, color: '#2E7D32', fontWeight: '600' },
+  localBadgeText: { fontSize: 10, fontWeight: '600' },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   ratingText: { fontSize: 12, color: '#ff6b6b', fontWeight: '600' },
   ratingsCount: { fontSize: 10, color: '#888' },
   buttonGroup: { flexDirection: 'column', justifyContent: 'space-around', padding: 8 },
   addButton: { padding: 8, justifyContent: 'center', alignItems: 'center' },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#666' },
-  emptyText: { marginTop: 16, fontSize: 16, color: '#666', textAlign: 'center', paddingHorizontal: 40 },
+  loadingText: { marginTop: 12, fontSize: 14 },
+  emptyText: { marginTop: 16, fontSize: 16, textAlign: 'center', paddingHorizontal: 40 },
   // Modal styles
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '80%', padding: 0 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0', paddingBottom: 12, paddingHorizontal: 16, paddingTop: 16 },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#2E7D32' },
+  modalContent: { borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '80%', padding: 0 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, paddingBottom: 12, paddingHorizontal: 16, paddingTop: 16 },
+  modalTitle: { fontSize: 18, fontWeight: '700' },
   shelfList: { paddingHorizontal: 12, paddingVertical: 8 },
-  shelfOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  shelfOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 16, borderBottomWidth: 1 },
   shelfOptionContent: { flex: 1 },
-  shelfOptionName: { fontSize: 14, fontWeight: '600', color: '#333' },
-  shelfOptionCount: { fontSize: 12, color: '#999', marginTop: 4 },
+  shelfOptionName: { fontSize: 14, fontWeight: '600' },
+  shelfOptionCount: { fontSize: 12, marginTop: 4 },
   noShelvesContainer: { justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
-  noShelvesText: { fontSize: 14, color: '#999', marginTop: 12 },
+  noShelvesText: { fontSize: 14, marginTop: 12 },
   
   progressOption: {
-    paddingHorizontal: 16,paddingVertical: 16,borderBottomWidth: 1,borderBottomColor: '#f0f0f0',
+    paddingHorizontal: 16,paddingVertical: 16,borderBottomWidth: 1,
   },
   progressOptionText: {
-    fontSize: 16,color: '#333',fontWeight: '600',
+    fontSize: 16,fontWeight: '600',
   },
   modalForm: {
     paddingHorizontal: 16,paddingTop: 8,paddingBottom: 20,
@@ -959,13 +961,11 @@ const styles = StyleSheet.create({
     flex: 1,paddingVertical: 12,borderRadius: 8,alignItems: 'center',marginHorizontal: 4,
   },
   cancelButton: {
-    backgroundColor: '#f0f0f0',
   },
   confirmButton: {
-    backgroundColor: '#2E7D32',
   },
   modalButtonText: {
-    fontSize: 16,fontWeight: '600',color: '#333',
+    fontSize: 16,fontWeight: '600',
   },
   confirmButtonText: {
     color: '#fff',

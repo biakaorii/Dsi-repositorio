@@ -5,6 +5,7 @@ import { useRouter, Link } from "expo-router";
 import BottomNavBar from "../components/BottomNavBar";
 import { useReviews } from "../contexts/ReviewsContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/config/firebaseConfig";
 
@@ -110,6 +111,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { reviews } = useReviews();
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [topRatedBooks, setTopRatedBooks] = useState<BookWithRating[]>([]);
   const [livrosLendo, setLivrosLendo] = useState<LivroProgresso[]>([]);
 
@@ -171,21 +173,21 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Início</Text>
+        <Text style={[styles.headerTitle, { color: colors.primary }]}>Início</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Recomendados */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recomendados para você</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Recomendados para você</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {books.map((b) => (
-              <TouchableOpacity key={b.title} style={styles.card} onPress={() => openDetails(b)}>
+              <TouchableOpacity key={b.title} style={[styles.card, { backgroundColor: colors.card }]} onPress={() => openDetails(b)}>
                 <Image source={{ uri: b.coverUrl }} style={styles.bookImage} />
-                <Text numberOfLines={2} style={styles.bookTitle}>{b.title}</Text>
+                <Text numberOfLines={2} style={[styles.bookTitle, { color: colors.primary }]}>{b.title}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -195,18 +197,18 @@ export default function HomeScreen() {
         {topRatedBooks.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}> Mais Bem Avaliados</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}> Mais Bem Avaliados</Text>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {topRatedBooks.map((book) => (
-                <TouchableOpacity key={book.id} style={styles.ratedCard} onPress={() => openDetails(book)}>
+                <TouchableOpacity key={book.id} style={[styles.ratedCard, { backgroundColor: colors.card }]} onPress={() => openDetails(book)}>
                   <Image source={{ uri: book.coverUrl }} style={styles.bookImage} />
                   <View style={styles.ratingBadge}>
                     <Ionicons name="star" size={12} color="#FFB800" />
                     <Text style={styles.ratingText}>{book.avgRating.toFixed(1)}</Text>
                   </View>
-                  <Text numberOfLines={2} style={styles.bookTitle}>{book.title}</Text>
-                  <Text style={styles.reviewCount}>{book.reviewCount} {book.reviewCount === 1 ? 'avaliação' : 'avaliações'}</Text>
+                  <Text numberOfLines={2} style={[styles.bookTitle, { color: colors.primary }]}>{book.title}</Text>
+                  <Text style={[styles.reviewCount, { color: colors.textSecondary }]}>{book.reviewCount} {book.reviewCount === 1 ? 'avaliação' : 'avaliações'}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -216,13 +218,13 @@ export default function HomeScreen() {
         {/* Continuar Lendo */}
         {livrosLendo.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Continuar lendo</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Continuar lendo</Text>
             {livrosLendo.map((livro) => {
               const progresso = (livro.paginasLidas / livro.totalPaginas) * 100;
               return (
                 <TouchableOpacity 
                   key={livro.id} 
-                  style={styles.readingCard}
+                  style={[styles.readingCard, { backgroundColor: colors.card }]}
                   onPress={() => router.push('/progresso')}
                 >
                   <Image
@@ -230,15 +232,15 @@ export default function HomeScreen() {
                     style={styles.readingImage}
                   />
                   <View style={{ flex: 1, marginLeft: 10 }}>
-                    <Text style={styles.readingTitle}>{livro.titulo}</Text>
-                    <Text style={styles.readingProgress}>
+                    <Text style={[styles.readingTitle, { color: colors.text }]}>{livro.titulo}</Text>
+                    <Text style={[styles.readingProgress, { color: colors.primary }]}>
                       Página {livro.paginasLidas} de {livro.totalPaginas} ({Math.round(progresso)}%)
                     </Text>
-                    <View style={styles.progressBar}>
-                      <View style={[styles.progressFill, { width: `${progresso}%` }]} />
+                    <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
+                      <View style={[styles.progressFill, { backgroundColor: colors.primary }]} />
                     </View>
                   </View>
-                  <Ionicons name="chevron-forward" size={20} color="#2E7D32" />
+                  <Ionicons name="chevron-forward" size={20} color={colors.primary} />
                 </TouchableOpacity>
               );
             })}
@@ -247,23 +249,31 @@ export default function HomeScreen() {
 
         {/* Gêneros Populares */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Gêneros Populares</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Gêneros Populares</Text>
           <View style={styles.tagsContainer}>
-            <View style={styles.tag}><Text style={styles.tagText}>Fantasia</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>Romance</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>Suspense</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>Ciência</Text></View>
+            <View style={[styles.tag, { backgroundColor: colors.primaryLight }]}>
+              <Text style={[styles.tagText, { color: colors.primary }]}>Fantasia</Text>
+            </View>
+            <View style={[styles.tag, { backgroundColor: colors.primaryLight }]}>
+              <Text style={[styles.tagText, { color: colors.primary }]}>Romance</Text>
+            </View>
+            <View style={[styles.tag, { backgroundColor: colors.primaryLight }]}>
+              <Text style={[styles.tagText, { color: colors.primary }]}>Suspense</Text>
+            </View>
+            <View style={[styles.tag, { backgroundColor: colors.primaryLight }]}>
+              <Text style={[styles.tagText, { color: colors.primary }]}>Ciência</Text>
+            </View>
           </View>
         </View>
 
         {/* Mais Livros para Explorar (Carrossel duplicado) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mais Livros para Explorar</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Mais Livros para Explorar</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {books.map((b) => (
-              <TouchableOpacity key={`explore-${b.title}`} style={styles.card} onPress={() => openDetails(b)}>
+              <TouchableOpacity key={`explore-${b.title}`} style={[styles.card, { backgroundColor: colors.card }]} onPress={() => openDetails(b)}>
                 <Image source={{ uri: b.coverUrl }} style={styles.bookImage} />
-                <Text numberOfLines={2} style={styles.bookTitle}>{b.title}</Text>
+                <Text numberOfLines={2} style={[styles.bookTitle, { color: colors.primary }]}>{b.title}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -271,7 +281,7 @@ export default function HomeScreen() {
 
         {/* Botão de Previsão de Lançamento */}
         <TouchableOpacity 
-          style={styles.previsaoButton}
+          style={[styles.previsaoButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/previsao-lancamento' as any)}
         >
           <Ionicons name="trending-up" size={24} color="#fff" />
@@ -287,7 +297,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
 
   header: {
     flexDirection: "row",
@@ -296,15 +306,14 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     alignItems: "center",
   },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#2E7D32" },
+  headerTitle: { fontSize: 20, fontWeight: "bold" },
 
   section: { marginBottom: 20, paddingHorizontal: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 10, color: "#333" },
+  sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 10 },
   sectionHeader: { marginBottom: 10 },
-  sectionSubtitle: { fontSize: 12, color: "#666", marginTop: -5, marginBottom: 10 },
+  sectionSubtitle: { fontSize: 12, marginTop: -5, marginBottom: 10 },
 
   card: {
-    backgroundColor: "#F1F8E9",
     padding: 10,
     borderRadius: 12,
     marginRight: 10,
@@ -312,7 +321,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   ratedCard: {
-    backgroundColor: "#F1F8E9",
     padding: 10,
     borderRadius: 12,
     marginRight: 10,
@@ -321,7 +329,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   bookImage: { width: 90, height: 120, borderRadius: 8, marginBottom: 8 },
-  bookTitle: { fontSize: 12, fontWeight: "600", textAlign: "center", color: "#2E7D32" },
+  bookTitle: { fontSize: 12, fontWeight: "600", textAlign: "center" },
   
   ratingBadge: {
     flexDirection: "row",
@@ -345,7 +353,6 @@ const styles = StyleSheet.create({
   },
   reviewCount: { 
     fontSize: 10, 
-    color: "#666", 
     marginTop: 2 
   },
 
@@ -353,7 +360,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#2E7D32",
     marginHorizontal: 20,
     marginTop: 10,
     marginBottom: 20,
@@ -376,39 +382,35 @@ const styles = StyleSheet.create({
 
   readingCard: {
     flexDirection: "row",
-    backgroundColor: "#F1F8E9",
     borderRadius: 12,
     padding: 10,
     alignItems: "center",
     marginBottom: 10,
   },
   readingImage: { width: 50, height: 70, borderRadius: 8 },
-  readingTitle: { fontSize: 14, fontWeight: "bold", color: "#333" },
-  readingProgress: { fontSize: 12, color: "#2E7D32", marginTop: 4, marginBottom: 6 },
+  readingTitle: { fontSize: 14, fontWeight: "bold" },
+  readingProgress: { fontSize: 12, marginTop: 4, marginBottom: 6 },
   
   progressBar: {
     height: 6,
-    backgroundColor: "#E0E0E0",
     borderRadius: 3,
     marginTop: 4,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#2E7D32",
     borderRadius: 3,
   },
 
   tagsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tag: {
-    backgroundColor: "#C8E6C9",
     paddingVertical: 5,
     paddingHorizontal: 12,
     borderRadius: 20,
     marginRight: 10,
     marginBottom: 10,
   },
-  tagText: { fontSize: 13, color: "#2E7D32", fontWeight: "500" },
+  tagText: { fontSize: 13, fontWeight: "500" },
 
   navbar: {
     flexDirection: "row",

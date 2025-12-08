@@ -19,6 +19,7 @@ import Toast from "react-native-toast-message";
 import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLivros, Livro as LivroModel } from "@/contexts/LivrosContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 type FormState = {
   titulo: string;
@@ -44,6 +45,7 @@ export default function CadastroLivroScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { livros, carregandoLivros, adicionarLivro, atualizarLivro, removerLivro } = useLivros();
+  const { colors } = useTheme();
   const [form, setForm] = useState<FormState>(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [capaUri, setCapaUri] = useState<string | undefined>(undefined);
@@ -272,54 +274,58 @@ export default function CadastroLivroScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={{ flex: 1 }}
     >
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-        <View style={styles.header}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 40 }}>
+        <View style={[styles.header, { backgroundColor: colors.card }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color="#2E7D32" />
+            <Ionicons name="chevron-back" size={24} color={colors.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Cadastrar Livro</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Cadastrar Livro</Text>
           <View style={{ width: 32 }} />
         </View>
 
-        <Text style={styles.sectionSubtitle}>
+        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
           Preencha os campos abaixo para adicionar um novo livro à sua coleção.
         </Text>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Título *</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Título *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
             placeholder="Ex.: A Revolução dos Bichos"
+            placeholderTextColor={colors.placeholder}
             value={form.titulo}
             onChangeText={(value) => handleChange("titulo", value)}
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Autor *</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Autor *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
             placeholder="Ex.: George Orwell"
+            placeholderTextColor={colors.placeholder}
             value={form.autor}
             onChangeText={(value) => handleChange("autor", value)}
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Gênero</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Gênero</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
             placeholder="Fantasia, Suspense, Romance..."
+            placeholderTextColor={colors.placeholder}
             value={form.genero}
             onChangeText={(value) => handleChange("genero", value)}
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Número de páginas</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Número de páginas</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
             placeholder="Ex.: 320"
+            placeholderTextColor={colors.placeholder}
             value={form.paginas}
             onChangeText={(value) => handleChange("paginas", value.replace(/[^0-9]/g, ""))}
             keyboardType="numeric"
@@ -327,20 +333,22 @@ export default function CadastroLivroScreen() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Editora</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Editora</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
             placeholder="Ex.: Companhia das Letras"
+            placeholderTextColor={colors.placeholder}
             value={form.editora}
             onChangeText={(value) => handleChange("editora", value)}
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Ano de lançamento</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Ano de lançamento</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
             placeholder="Ex.: 2020"
+            placeholderTextColor={colors.placeholder}
             value={form.anoLancamento}
             onChangeText={(value) => handleChange("anoLancamento", value.replace(/[^0-9]/g, ""))}
             keyboardType="numeric"
@@ -349,19 +357,19 @@ export default function CadastroLivroScreen() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Capa do livro</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Capa do livro</Text>
           <View style={styles.coverRow}>
             {capaUri ? (
               <Image source={{ uri: capaUri }} style={styles.coverPreview} />
             ) : (
-              <View style={[styles.coverPreview, styles.coverPlaceholder]}>
-                <Ionicons name="image-outline" size={28} color="#999" />
-                <Text style={styles.coverPlaceholderText}>Sem capa</Text>
+              <View style={[styles.coverPreview, styles.coverPlaceholder, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                <Ionicons name="image-outline" size={28} color={colors.placeholder} />
+                <Text style={[styles.coverPlaceholderText, { color: colors.placeholder }]}>Sem capa</Text>
               </View>
             )}
-            <TouchableOpacity style={styles.coverButton} onPress={pickImage}>
-              <Ionicons name="cloud-upload-outline" size={18} color="#2E7D32" />
-              <Text style={styles.coverButtonText}>
+            <TouchableOpacity style={[styles.coverButton, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={pickImage}>
+              <Ionicons name="cloud-upload-outline" size={18} color={colors.primary} />
+              <Text style={[styles.coverButtonText, { color: colors.primary }]}>
                 {capaUri ? "Trocar capa" : "Selecionar capa"}
               </Text>
             </TouchableOpacity>
@@ -369,10 +377,11 @@ export default function CadastroLivroScreen() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Descrição</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Descrição</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.input, styles.textArea, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
             placeholder="Conte um pouco sobre o livro..."
+            placeholderTextColor={colors.placeholder}
             value={form.descricao}
             onChangeText={(value) => handleChange("descricao", value)}
             multiline
@@ -381,49 +390,49 @@ export default function CadastroLivroScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.submitButton, submitting && { opacity: 0.7 }]}
+          style={[styles.submitButton, { backgroundColor: submitting ? colors.border : colors.success }]}
           onPress={handleSubmit}
           disabled={submitting}
         >
-          <Ionicons name="save-outline" size={20} color="#fff" />
-          <Text style={styles.submitText}>
+          <Ionicons name="save-outline" size={20} color={colors.card} />
+          <Text style={[styles.submitText, { color: colors.card }]}>
             {submitting ? "Salvando..." : editingId ? "Atualizar livro" : "Salvar livro"}
           </Text>
         </TouchableOpacity>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { borderBottomColor: colors.border }]} />
 
-        <Text style={styles.sectionListTitle}>Livros cadastrados</Text>
+        <Text style={[styles.sectionListTitle, { color: colors.text }]}>Livros cadastrados</Text>
         {carregandoLivros ? (
           <View style={styles.loadingList}>
-            <ActivityIndicator size="small" color="#2E7D32" />
-            <Text style={styles.loadingListText}>Carregando livros salvos...</Text>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={[styles.loadingListText, { color: colors.textSecondary }]}>Carregando livros salvos...</Text>
           </View>
         ) : livros.length === 0 ? (
-          <Text style={styles.emptyListText}>
+          <Text style={[styles.emptyListText, { color: colors.textSecondary }]}>
             Nenhum livro cadastrado ainda. Cadastre o primeiro usando o formulário acima.
           </Text>
         ) : (
           livros.map((livro) => {
             const isOwner = user?.uid === livro.ownerId;
             return (
-              <View key={livro.id} style={styles.bookCard}>
+              <View key={livro.id} style={[styles.bookCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.bookInfo}>
                   {livro.capaUri ? (
                     <Image source={{ uri: livro.capaUri }} style={styles.bookThumb} />
                   ) : (
-                    <View style={[styles.bookThumb, styles.coverPlaceholder]}>
-                      <Ionicons name="book-outline" size={20} color="#999" />
+                    <View style={[styles.bookThumb, styles.coverPlaceholder, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                      <Ionicons name="book-outline" size={20} color={colors.placeholder} />
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.bookTitle}>{livro.titulo}</Text>
-                    <Text style={styles.bookAuthor}>{livro.autor}</Text>
-                    <Text style={styles.bookOwner}>
+                    <Text style={[styles.bookTitle, { color: colors.text }]}>{livro.titulo}</Text>
+                    <Text style={[styles.bookAuthor, { color: colors.textSecondary }]}>{livro.autor}</Text>
+                    <Text style={[styles.bookOwner, { color: colors.textSecondary }]}>
                       Cadastrado por {livro.ownerName ?? "outro leitor"}
                     </Text>
                     {(livro.genero || livro.paginas || livro.editora || livro.anoLancamento) && (
-                      <Text style={styles.bookMeta}>
+                      <Text style={[styles.bookMeta, { color: colors.textSecondary }]}>
                         {livro.genero}
                         {livro.paginas ? ` • ${livro.paginas} páginas` : ""}
                         {livro.editora ? ` • ${livro.editora}` : ""}
@@ -433,28 +442,28 @@ export default function CadastroLivroScreen() {
                   </View>
                 </View>
                 {livro.descricao ? (
-                  <Text style={styles.bookDescription}>{livro.descricao}</Text>
+                  <Text style={[styles.bookDescription, { color: colors.textSecondary }]}>{livro.descricao}</Text>
                 ) : null}
 
                 {isOwner ? (
                   <View style={styles.cardActions}>
                     <TouchableOpacity
-                      style={[styles.cardButton, styles.editButton]}
+                      style={[styles.cardButton, styles.editButton, { borderColor: colors.border }]}
                       onPress={() => handleEditBook(livro)}
                     >
-                      <Ionicons name="create-outline" size={18} color="#2E7D32" />
-                      <Text style={styles.cardButtonText}>Editar</Text>
+                      <Ionicons name="create-outline" size={18} color={colors.primary} />
+                      <Text style={[styles.cardButtonText, { color: colors.primary }]}>Editar</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.cardButton, styles.deleteButton]}
+                      style={[styles.cardButton, styles.deleteButton, { borderColor: colors.border }]}
                       onPress={() => handleDeleteBook(livro)}
                     >
-                      <Ionicons name="trash-outline" size={18} color="#2E7D32" />
-                      <Text style={styles.cardButtonText}>Remover</Text>
+                      <Ionicons name="trash-outline" size={18} color={colors.primary} />
+                      <Text style={[styles.cardButtonText, { color: colors.primary }]}>Remover</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  <Text style={styles.readOnlyNote}>
+                  <Text style={[styles.readOnlyNote, { color: colors.textSecondary }]}>
                     Apenas quem cadastrou pode editar ou remover este livro.
                   </Text>
                 )}
@@ -470,7 +479,6 @@ export default function CadastroLivroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     paddingHorizontal: 20,
     paddingTop: 50,
   },
@@ -486,16 +494,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 16,
-    backgroundColor: "#E8F5E9",
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#2E7D32",
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: "#666",
     marginBottom: 25,
   },
   formGroup: {
@@ -503,19 +508,15 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: "#2E7D32",
     marginBottom: 6,
     fontWeight: "600",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#DCE5DD",
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: "#333",
-    backgroundColor: "#F9FBF9",
   },
   textArea: {
     minHeight: 110,
@@ -530,17 +531,14 @@ const styles = StyleSheet.create({
     width: 80,
     height: 110,
     borderRadius: 8,
-    backgroundColor: "#F1F1F1",
   },
   coverPlaceholder: {
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E0E0E0",
   },
   coverPlaceholderText: {
     fontSize: 12,
-    color: "#999",
     marginTop: 4,
   },
   coverButton: {
@@ -551,42 +549,34 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#C8E6C9",
-    backgroundColor: "#F5FBF5",
   },
   coverButtonText: {
     marginLeft: 8,
-    color: "#2E7D32",
     fontWeight: "600",
   },
   submitButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2E7D32",
     paddingVertical: 15,
     borderRadius: 12,
     marginTop: 10,
   },
   submitText: {
     marginLeft: 8,
-    color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
   divider: {
     height: 1,
-    backgroundColor: "#E0E0E0",
     marginVertical: 30,
   },
   sectionListTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#2E7D32",
     marginBottom: 15,
   },
   emptyListText: {
-    color: "#666",
     fontStyle: "italic",
   },
   loadingList: {
@@ -595,16 +585,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   loadingListText: {
-    color: "#666",
     fontSize: 13,
   },
   bookCard: {
     borderWidth: 1,
-    borderColor: "#E0E0E0",
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
-    backgroundColor: "#FAFFFA",
   },
   bookInfo: {
     flexDirection: "row",
@@ -616,30 +603,24 @@ const styles = StyleSheet.create({
     width: 60,
     height: 80,
     borderRadius: 6,
-    backgroundColor: "#EDEDED",
   },
   bookTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
   },
   bookAuthor: {
     fontSize: 14,
-    color: "#666",
   },
   bookOwner: {
     fontSize: 12,
-    color: "#2E7D32",
     marginTop: 2,
   },
   bookMeta: {
     fontSize: 12,
-    color: "#999",
     marginTop: 2,
   },
   bookDescription: {
     fontSize: 13,
-    color: "#555",
     marginBottom: 12,
   },
   cardActions: {
@@ -656,22 +637,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
   },
-  editButton: {
-    borderColor: "#C8E6C9",
-    backgroundColor: "#F5FBF5",
-  },
-  deleteButton: {
-    borderColor: "#F8D7DA",
-    backgroundColor: "#FFF5F5",
-  },
+  editButton: {},
+  deleteButton: {},
   cardButtonText: {
     marginLeft: 6,
-    color: "#2E7D32",
     fontWeight: "600",
   },
   readOnlyNote: {
     fontSize: 12,
-    color: "#999",
     fontStyle: "italic",
   },
 });
