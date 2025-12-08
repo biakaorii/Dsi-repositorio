@@ -25,6 +25,8 @@ type FormState = {
   autor: string;
   genero: string;
   paginas: string;
+  editora: string;
+  anoLancamento: string;
   descricao: string;
 };
 
@@ -33,6 +35,8 @@ const initialForm: FormState = {
   autor: "",
   genero: "",
   paginas: "",
+  editora: "",
+  anoLancamento: "",
   descricao: "",
 };
 
@@ -99,7 +103,7 @@ export default function CadastroLivroScreen() {
   };
 
   const handleSubmit = async () => {
-    const { titulo, autor, paginas } = form;
+    const { titulo, autor, paginas, anoLancamento } = form;
 
     if (!titulo.trim() || !autor.trim()) {
       showToast("error", "Campos obrigatórios", "Informe pelo menos título e autor.");
@@ -109,6 +113,15 @@ export default function CadastroLivroScreen() {
     if (paginas && Number(paginas) <= 0) {
       showToast("error", "Número de páginas inválido", "Use um valor maior que zero.");
       return;
+    }
+
+    if (anoLancamento) {
+      const ano = Number(anoLancamento);
+      const anoAtual = new Date().getFullYear();
+      if (isNaN(ano) || ano < 1000 || ano > anoAtual) {
+        showToast("error", "Ano inválido", `Digite um ano entre 1000 e ${anoAtual}.`);
+        return;
+      }
     }
 
     if (!user) {
@@ -157,7 +170,7 @@ export default function CadastroLivroScreen() {
   };
 
   const saveBook = async () => {
-    const { titulo, autor, paginas } = form;
+    const { titulo, autor, paginas, editora, anoLancamento } = form;
 
     if (!user) return;
 
@@ -172,6 +185,8 @@ export default function CadastroLivroScreen() {
         autor: autor.trim(),
         genero: form.genero.trim() || undefined,
         paginas: paginas ? Number(paginas) : undefined,
+        editora: editora.trim() || undefined,
+        anoLancamento: anoLancamento ? Number(anoLancamento) : undefined,
         capaUri,
         descricao: form.descricao.trim() || undefined,
         ownerId: user.uid,
@@ -206,6 +221,8 @@ export default function CadastroLivroScreen() {
       autor: livro.autor,
       genero: livro.genero || "",
       paginas: livro.paginas ? String(livro.paginas) : "",
+      editora: livro.editora || "",
+      anoLancamento: livro.anoLancamento ? String(livro.anoLancamento) : "",
       descricao: livro.descricao || "",
     });
     setCapaUri(livro.capaUri);
@@ -310,6 +327,28 @@ export default function CadastroLivroScreen() {
         </View>
 
         <View style={styles.formGroup}>
+          <Text style={styles.label}>Editora</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex.: Companhia das Letras"
+            value={form.editora}
+            onChangeText={(value) => handleChange("editora", value)}
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Ano de lançamento</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex.: 2020"
+            value={form.anoLancamento}
+            onChangeText={(value) => handleChange("anoLancamento", value.replace(/[^0-9]/g, ""))}
+            keyboardType="numeric"
+            maxLength={4}
+          />
+        </View>
+
+        <View style={styles.formGroup}>
           <Text style={styles.label}>Capa do livro</Text>
           <View style={styles.coverRow}>
             {capaUri ? (
@@ -383,10 +422,12 @@ export default function CadastroLivroScreen() {
                     <Text style={styles.bookOwner}>
                       Cadastrado por {livro.ownerName ?? "outro leitor"}
                     </Text>
-                    {livro.genero && (
+                    {(livro.genero || livro.paginas || livro.editora || livro.anoLancamento) && (
                       <Text style={styles.bookMeta}>
                         {livro.genero}
                         {livro.paginas ? ` • ${livro.paginas} páginas` : ""}
+                        {livro.editora ? ` • ${livro.editora}` : ""}
+                        {livro.anoLancamento ? ` • ${livro.anoLancamento}` : ""}
                       </Text>
                     )}
                   </View>

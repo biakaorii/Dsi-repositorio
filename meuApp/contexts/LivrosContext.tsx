@@ -26,6 +26,8 @@ export type Livro = {
   autor: string;
   genero?: string;
   paginas?: number;
+  editora?: string;
+  anoLancamento?: number;
   capaUri?: string;
   descricao?: string;
   ownerId: string;
