@@ -33,6 +33,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
 import { uploadChatImage } from "../utils/uploadChatImage";
+import StickerPicker from "../components/StickerPicker";
+import { useStickers } from "../contexts/StickersContext";
 
 interface ChatMessage {
   id: string;
@@ -43,6 +45,7 @@ interface ChatMessage {
   isOwn: boolean;
   edited?: boolean;
   imageUrl?: string;
+  stickerUrl?: string;
 }
 
 export default function ChatComunidadeScreen() {
@@ -50,6 +53,7 @@ export default function ChatComunidadeScreen() {
   const params = useLocalSearchParams();
   const { comunidades, isMember, isOwner } = useComunidades();
   const { user } = useAuth();
+  const { addFavorite } = useStickers();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
@@ -57,6 +61,7 @@ export default function ChatComunidadeScreen() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [stickerPickerVisible, setStickerPickerVisible] = useState(false);
   const listRef = useRef<FlatList>(null);
 
   // Contexto da comunidade
@@ -90,6 +95,7 @@ export default function ChatComunidadeScreen() {
               isOwn: user ? data.userId === user.uid : false,
               edited: !!data.edited,
               imageUrl: data.imageUrl || undefined,
+              stickerUrl: data.stickerUrl || undefined,
             });
           });
           setMessages(list);
@@ -167,10 +173,8 @@ export default function ChatComunidadeScreen() {
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
+        mediaTypes: ['images'],
+        quality: 1.0,
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -194,9 +198,7 @@ export default function ChatComunidadeScreen() {
 
     try {
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
+        quality: 1.0,
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -228,6 +230,33 @@ export default function ChatComunidadeScreen() {
         { text: 'Cancelar', style: 'cancel' },
       ]
     );
+  }
+
+  // Enviar sticker
+  async function handleSendSticker(stickerUrl: string) {
+    if (!user) return;
+    
+    try {
+      setSending(true);
+      const ref = collection(db, "comunidades", comunidadeId, "mensagens");
+      await addDoc(ref, {
+        message: "",
+        userId: user.uid,
+        userName: (user as any)?.name || "Usuário",
+        createdAt: Timestamp.now(),
+        stickerUrl,
+      });
+    } catch (e) {
+      console.error("Erro ao enviar sticker:", e);
+      Toast.show({ 
+        type: "error", 
+        text1: "Erro ao enviar sticker", 
+        visibilityTime: 2000, 
+        topOffset: 50 
+      });
+    } finally {
+      setSending(false);
+    }
   }
 
   async function handleSend() {
@@ -329,6 +358,49 @@ export default function ChatComunidadeScreen() {
             source={{ uri: item.imageUrl }} 
             style={styles.messageImage}
             resizeMode="cover"
+          />
+        </TouchableOpacity>
+      )}
+      
+      {/* Renderizar sticker se existir */}
+      {item.stickerUrl && (
+        <TouchableOpacity onLongPress={async () => {
+          if (!item.isOwn && item.stickerUrl) {
+            Alert.alert(
+              'Adicionar aos Favoritos',
+              'Deseja salvar este sticker nos seus favoritos?',
+              [
+                { text: 'Cancelar', style: 'cancel' },
+                { 
+                  text: 'Adicionar', 
+                  onPress: async () => {
+                    try {
+                      await addFavorite(item.stickerUrl);
+                      Toast.show({
+                        type: 'success',
+                        text1: 'Sticker favoritado!',
+                        visibilityTime: 2000,
+                        topOffset: 50,
+                      });
+                    } catch (error) {
+                      console.error('Erro ao favoritar:', error);
+                      Toast.show({
+                        type: 'error',
+                        text1: 'Erro ao favoritar sticker',
+                        visibilityTime: 2000,
+                        topOffset: 50,
+                      });
+                    }
+                  }
+                }
+              ]
+            );
+          }
+        }}>
+          <Image 
+            source={{ uri: item.stickerUrl }} 
+            style={styles.stickerImage}
+            resizeMode="contain"
           />
         </TouchableOpacity>
       )}
@@ -436,6 +508,15 @@ export default function ChatComunidadeScreen() {
             <Ionicons name="camera" size={24} color={editingMessageId ? "#ccc" : "#2E7D32"} />
           </TouchableOpacity>
           
+          {/* Botão de stickers */}
+          <TouchableOpacity
+            style={styles.attachButton}
+            onPress={() => setStickerPickerVisible(true)}
+            disabled={sending || uploading || editingMessageId !== null}
+          >
+            <Ionicons name="happy" size={24} color={editingMessageId ? "#ccc" : "#2E7D32"} />
+          </TouchableOpacity>
+          
           <TextInput
             style={styles.input}
             placeholder={editingMessageId ? "Edite sua mensagem..." : "Digite uma mensagem..."}
@@ -484,23 +565,23 @@ export default function ChatComunidadeScreen() {
           style={styles.imageViewModal}
           onPress={() => setViewingImage(null)}
         >
-          <View style={styles.imageViewContainer}>
-            <TouchableOpacity
-              style={styles.closeModalButton}
-              onPress={() => setViewingImage(null)}
-            >
-              <Ionicons name="close" size={30} color="#fff" />
-            </TouchableOpacity>
-            {viewingImage && (
-              <Image
-                source={{ uri: viewingImage }}
-                style={styles.fullImage}
-                resizeMode="contain"
-              />
-            )}
-          </View>
+          <Image 
+            source={{ uri: viewingImage || '' }} 
+            style={styles.fullImage}
+            resizeMode="contain"
+          />
         </Pressable>
       </Modal>
+
+      {/* Modal de seleção de stickers */}
+      <StickerPicker
+        visible={stickerPickerVisible}
+        onClose={() => setStickerPickerVisible(false)}
+        onSelect={(stickerUrl: string) => {
+          setStickerPickerVisible(false);
+          handleSendSticker(stickerUrl);
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -613,6 +694,11 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 8,
+    marginBottom: 8,
+  },
+  stickerImage: {
+    width: 120,
+    height: 120,
     marginBottom: 8,
   },
   timestamp: {

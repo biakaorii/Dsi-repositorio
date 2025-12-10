@@ -11,6 +11,7 @@ import { LivrosProvider } from '../contexts/LivrosContext';
 import { CitacoesProvider } from '../contexts/CitacoesContext';
 import { EventosProvider } from '../contexts/EventosContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
+import { StickersProvider } from '../contexts/StickersContext';
 import { ReactNode } from 'react';
 
 const { height } = Dimensions.get('window');
@@ -31,7 +32,8 @@ export default function Layout() {
               <FavoritesProvider>
                 <CitacoesProvider>
                   <EventosProvider>
-                    <LivrosProviderWrapper>
+                    <StickersProvider>
+                      <LivrosProviderWrapper>
                       <Stack screenOptions={{ headerShown: false }}>
                         <Stack.Screen name="index" />
                         <Stack.Screen name="login" />
@@ -64,13 +66,14 @@ export default function Layout() {
                       </Stack>
                       <Toast topOffset={height / 2 - 60} />
                     </LivrosProviderWrapper>
-                  </EventosProvider>
-                </CitacoesProvider>
-              </FavoritesProvider>
-            </CommunityMessagesProvider>
-          </ComunidadesProvider>
-        </ReviewsProvider>
-      </AuthProvider>
-    </ThemeProvider>
+                  </StickersProvider>
+                </EventosProvider>
+              </CitacoesProvider>
+            </FavoritesProvider>
+          </CommunityMessagesProvider>
+        </ComunidadesProvider>
+      </ReviewsProvider>
+    </AuthProvider>
+  </ThemeProvider>
   );
 }
