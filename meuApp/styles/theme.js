@@ -135,6 +135,17 @@ const GlobalStyles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+
+  // Botão/elemento desabilitado
+  disabled: {
+    opacity: 0.5,
+    backgroundColor: Colors.disabled,
+  },
+  disabledText: {
+    color: Colors.disabled,
+    fontSize: 16,
+    fontWeight: '500',
+  },
 });
 
 export { Colors, GlobalStyles };

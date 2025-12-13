@@ -315,7 +315,6 @@ export default function Search() {
     }
   };
 
-  // Função para adicionar livro a uma estante existente
   const handleAddBookToShelf = async (book: Book, shelfId: string) => {
     if (!user?.uid) {
       Toast.show({
@@ -702,22 +701,29 @@ export default function Search() {
       </View>
 
       {/* Barra de Pesquisa */}
-      <View style={[styles.searchBar, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
-        <Ionicons name="search" size={20} color={colors.textSecondary} />
-        <TextInput
-          placeholder="livro, autor, gênero..."
-          placeholderTextColor={colors.placeholder}
-          value={query}
-          onChangeText={setQuery}
-          style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.border }]}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        {query.length > 0 && (
-          <TouchableOpacity onPress={() => setQuery('')}>
-            <Ionicons name="close-circle" size={24} color={colors.textSecondary} />
-          </TouchableOpacity>
-        )}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={22} color={colors.primary} style={styles.searchIcon} />
+          <TextInput
+            placeholder="Pesquisar livro, autor..."
+            placeholderTextColor={Colors.disabled}
+            value={query}
+            onChangeText={setQuery}
+            style={[styles.searchInput, { color: colors.text }]}
+            autoCapitalize="none"
+            autoCorrect={false}
+            selectionColor={colors.primary}
+          />
+          {query.length > 0 && (
+            <TouchableOpacity 
+              onPress={() => setQuery('')}
+              style={styles.clearButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="close-circle-sharp" size={22} color={Colors.disabled} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Lista de Livros */}
@@ -886,7 +892,42 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 20, paddingTop: 50 },
   headerTitle: { fontSize: 20, fontWeight: 'bold' },
-  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 12, marginBottom: 12, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1, gap: 8 },
+  
+  // Barra de Pesquisa
+  searchContainer: { 
+    paddingHorizontal: 16, 
+    paddingVertical: 12,
+    paddingBottom: 16,
+    backgroundColor: Colors.background,
+  },
+  searchBar: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 12,
+    backgroundColor: Colors.surface,
+    borderColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 4,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 6,
+  },
+  clearButton: {
+    padding: 4,
+  },
+  
   input: {
     flex: 1,fontSize: 16,paddingVertical: 12,paddingHorizontal: 12,borderWidth: 1,
     borderRadius: 8,marginBottom: 12,shadowColor: '#000',shadowOffset: { width: 0, height: 1 },
