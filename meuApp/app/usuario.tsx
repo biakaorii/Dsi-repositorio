@@ -58,7 +58,10 @@ export default function PerfilScreen() {
         <Text style={[styles.headerTitle, { color: colors.primary }]}>Perfil</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
         <View style={styles.profileSection}>
           <Image source={{ uri: profileImageUrl }} style={styles.profileImage} />
           <Text style={[styles.profileName, { color: colors.text }]}>{displayName}</Text>
