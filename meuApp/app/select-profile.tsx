@@ -48,15 +48,6 @@ export default function SelectProfileScreen() {
       >
         <Text style={[styles.buttonText, styles.profileButtonText]}>Crítico</Text>
       </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, styles.continueButton]}
-        onPress={() => { 
-          router.push('/home')
-        }}
-      >
-        <Text style={styles.buttonText}>Continuar</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -64,9 +55,12 @@ export default function SelectProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     marginBottom: 40,
+    textAlign: 'center',
   },
   button: {
     width: '80%',
@@ -83,10 +77,6 @@ const styles = StyleSheet.create({
   profileButtonText: {
     color: '#2E8B57',
     fontWeight: 'bold',
-  },
-  continueButton: {
-    backgroundColor: '#2E8B57',
-    borderColor: 'transparent',
   },
   buttonText: {
     color: '#fff',
